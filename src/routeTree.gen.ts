@@ -10,18 +10,26 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BudgetRouteImport } from './routes/budget'
 import { Route as ContractsRouteImport } from './routes/contracts'
 import { Route as GoodsReceiptsIndexRouteImport } from './routes/goods-receipts/index'
 import { Route as InvoicesDetailRouteImport } from './routes/invoices/detail'
 import { Route as OrdersIndexRouteImport } from './routes/orders/index'
 import { Route as OrdersNewRouteImport } from './routes/orders/new'
 import { Route as PaymentsIndexRouteImport } from './routes/payments/index'
+import { Route as PaymentsDetailRouteImport } from './routes/payments/detail'
 import { Route as RfqsIndexRouteImport } from './routes/rfqs/index'
+import { Route as RfqsNewRouteImport } from './routes/rfqs/new'
 import { Route as SuppliersPerformanceRouteImport } from './routes/suppliers/performance'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BudgetRoute = BudgetRouteImport.update({
+  id: '/budget',
+  path: '/budget',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContractsRoute = ContractsRouteImport.update({
@@ -54,9 +62,19 @@ const PaymentsIndexRoute = PaymentsIndexRouteImport.update({
   path: '/payments/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PaymentsDetailRoute = PaymentsDetailRouteImport.update({
+  id: '/payments/detail',
+  path: '/payments/detail',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RfqsIndexRoute = RfqsIndexRouteImport.update({
   id: '/rfqs/',
   path: '/rfqs/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RfqsNewRoute = RfqsNewRouteImport.update({
+  id: '/rfqs/new',
+  path: '/rfqs/new',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SuppliersPerformanceRoute = SuppliersPerformanceRouteImport.update({
@@ -67,9 +85,12 @@ const SuppliersPerformanceRoute = SuppliersPerformanceRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/budget': typeof BudgetRoute
   '/contracts': typeof ContractsRoute
   '/invoices/detail': typeof InvoicesDetailRoute
   '/orders/new': typeof OrdersNewRoute
+  '/payments/detail': typeof PaymentsDetailRoute
+  '/rfqs/new': typeof RfqsNewRoute
   '/suppliers/performance': typeof SuppliersPerformanceRoute
   '/goods-receipts/': typeof GoodsReceiptsIndexRoute
   '/orders/': typeof OrdersIndexRoute
@@ -78,9 +99,12 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/budget': typeof BudgetRoute
   '/contracts': typeof ContractsRoute
   '/invoices/detail': typeof InvoicesDetailRoute
   '/orders/new': typeof OrdersNewRoute
+  '/payments/detail': typeof PaymentsDetailRoute
+  '/rfqs/new': typeof RfqsNewRoute
   '/suppliers/performance': typeof SuppliersPerformanceRoute
   '/goods-receipts': typeof GoodsReceiptsIndexRoute
   '/orders': typeof OrdersIndexRoute
@@ -90,9 +114,12 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/budget': typeof BudgetRoute
   '/contracts': typeof ContractsRoute
   '/invoices/detail': typeof InvoicesDetailRoute
   '/orders/new': typeof OrdersNewRoute
+  '/payments/detail': typeof PaymentsDetailRoute
+  '/rfqs/new': typeof RfqsNewRoute
   '/suppliers/performance': typeof SuppliersPerformanceRoute
   '/goods-receipts/': typeof GoodsReceiptsIndexRoute
   '/orders/': typeof OrdersIndexRoute
@@ -103,9 +130,12 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/budget'
     | '/contracts'
     | '/invoices/detail'
     | '/orders/new'
+    | '/payments/detail'
+    | '/rfqs/new'
     | '/suppliers/performance'
     | '/goods-receipts/'
     | '/orders/'
@@ -114,9 +144,12 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/budget'
     | '/contracts'
     | '/invoices/detail'
     | '/orders/new'
+    | '/payments/detail'
+    | '/rfqs/new'
     | '/suppliers/performance'
     | '/goods-receipts'
     | '/orders'
@@ -125,9 +158,12 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/budget'
     | '/contracts'
     | '/invoices/detail'
     | '/orders/new'
+    | '/payments/detail'
+    | '/rfqs/new'
     | '/suppliers/performance'
     | '/goods-receipts/'
     | '/orders/'
@@ -137,9 +173,12 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BudgetRoute: typeof BudgetRoute
   ContractsRoute: typeof ContractsRoute
   InvoicesDetailRoute: typeof InvoicesDetailRoute
   OrdersNewRoute: typeof OrdersNewRoute
+  PaymentsDetailRoute: typeof PaymentsDetailRoute
+  RfqsNewRoute: typeof RfqsNewRoute
   SuppliersPerformanceRoute: typeof SuppliersPerformanceRoute
   GoodsReceiptsIndexRoute: typeof GoodsReceiptsIndexRoute
   OrdersIndexRoute: typeof OrdersIndexRoute
@@ -154,6 +193,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/budget': {
+      id: '/budget'
+      path: '/budget'
+      fullPath: '/budget'
+      preLoaderRoute: typeof BudgetRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contracts': {
@@ -198,11 +244,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PaymentsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/payments/detail': {
+      id: '/payments/detail'
+      path: '/payments/detail'
+      fullPath: '/payments/detail'
+      preLoaderRoute: typeof PaymentsDetailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/rfqs/': {
       id: '/rfqs/'
       path: '/rfqs'
       fullPath: '/rfqs/'
       preLoaderRoute: typeof RfqsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rfqs/new': {
+      id: '/rfqs/new'
+      path: '/rfqs/new'
+      fullPath: '/rfqs/new'
+      preLoaderRoute: typeof RfqsNewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/suppliers/performance': {
@@ -217,9 +277,12 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BudgetRoute: BudgetRoute,
   ContractsRoute: ContractsRoute,
   InvoicesDetailRoute: InvoicesDetailRoute,
   OrdersNewRoute: OrdersNewRoute,
+  PaymentsDetailRoute: PaymentsDetailRoute,
+  RfqsNewRoute: RfqsNewRoute,
   SuppliersPerformanceRoute: SuppliersPerformanceRoute,
   GoodsReceiptsIndexRoute: GoodsReceiptsIndexRoute,
   OrdersIndexRoute: OrdersIndexRoute,
