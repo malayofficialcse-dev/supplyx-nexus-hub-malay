@@ -11,6 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ContractsRouteImport } from './routes/contracts'
+import { Route as GoodsReceiptsIndexRouteImport } from './routes/goods-receipts/index'
+import { Route as InvoicesDetailRouteImport } from './routes/invoices/detail'
+import { Route as OrdersIndexRouteImport } from './routes/orders/index'
+import { Route as PaymentsIndexRouteImport } from './routes/payments/index'
 import { Route as RfqsIndexRouteImport } from './routes/rfqs/index'
 import { Route as SuppliersPerformanceRouteImport } from './routes/suppliers/performance'
 
@@ -22,6 +26,26 @@ const IndexRoute = IndexRouteImport.update({
 const ContractsRoute = ContractsRouteImport.update({
   id: '/contracts',
   path: '/contracts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GoodsReceiptsIndexRoute = GoodsReceiptsIndexRouteImport.update({
+  id: '/goods-receipts/',
+  path: '/goods-receipts/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvoicesDetailRoute = InvoicesDetailRouteImport.update({
+  id: '/invoices/detail',
+  path: '/invoices/detail',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrdersIndexRoute = OrdersIndexRouteImport.update({
+  id: '/orders/',
+  path: '/orders/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaymentsIndexRoute = PaymentsIndexRouteImport.update({
+  id: '/payments/',
+  path: '/payments/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RfqsIndexRoute = RfqsIndexRouteImport.update({
@@ -38,34 +62,75 @@ const SuppliersPerformanceRoute = SuppliersPerformanceRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/contracts': typeof ContractsRoute
+  '/invoices/detail': typeof InvoicesDetailRoute
   '/suppliers/performance': typeof SuppliersPerformanceRoute
+  '/goods-receipts/': typeof GoodsReceiptsIndexRoute
+  '/orders/': typeof OrdersIndexRoute
+  '/payments/': typeof PaymentsIndexRoute
   '/rfqs/': typeof RfqsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/contracts': typeof ContractsRoute
+  '/invoices/detail': typeof InvoicesDetailRoute
   '/suppliers/performance': typeof SuppliersPerformanceRoute
+  '/goods-receipts': typeof GoodsReceiptsIndexRoute
+  '/orders': typeof OrdersIndexRoute
+  '/payments': typeof PaymentsIndexRoute
   '/rfqs': typeof RfqsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/contracts': typeof ContractsRoute
+  '/invoices/detail': typeof InvoicesDetailRoute
   '/suppliers/performance': typeof SuppliersPerformanceRoute
+  '/goods-receipts/': typeof GoodsReceiptsIndexRoute
+  '/orders/': typeof OrdersIndexRoute
+  '/payments/': typeof PaymentsIndexRoute
   '/rfqs/': typeof RfqsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/contracts' | '/suppliers/performance' | '/rfqs/'
+  fullPaths:
+    | '/'
+    | '/contracts'
+    | '/invoices/detail'
+    | '/suppliers/performance'
+    | '/goods-receipts/'
+    | '/orders/'
+    | '/payments/'
+    | '/rfqs/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/contracts' | '/suppliers/performance' | '/rfqs'
-  id: '__root__' | '/' | '/contracts' | '/suppliers/performance' | '/rfqs/'
+  to:
+    | '/'
+    | '/contracts'
+    | '/invoices/detail'
+    | '/suppliers/performance'
+    | '/goods-receipts'
+    | '/orders'
+    | '/payments'
+    | '/rfqs'
+  id:
+    | '__root__'
+    | '/'
+    | '/contracts'
+    | '/invoices/detail'
+    | '/suppliers/performance'
+    | '/goods-receipts/'
+    | '/orders/'
+    | '/payments/'
+    | '/rfqs/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ContractsRoute: typeof ContractsRoute
+  InvoicesDetailRoute: typeof InvoicesDetailRoute
   SuppliersPerformanceRoute: typeof SuppliersPerformanceRoute
+  GoodsReceiptsIndexRoute: typeof GoodsReceiptsIndexRoute
+  OrdersIndexRoute: typeof OrdersIndexRoute
+  PaymentsIndexRoute: typeof PaymentsIndexRoute
   RfqsIndexRoute: typeof RfqsIndexRoute
 }
 
@@ -83,6 +148,34 @@ declare module '@tanstack/react-router' {
       path: '/contracts'
       fullPath: '/contracts'
       preLoaderRoute: typeof ContractsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/goods-receipts/': {
+      id: '/goods-receipts/'
+      path: '/goods-receipts'
+      fullPath: '/goods-receipts/'
+      preLoaderRoute: typeof GoodsReceiptsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invoices/detail': {
+      id: '/invoices/detail'
+      path: '/invoices/detail'
+      fullPath: '/invoices/detail'
+      preLoaderRoute: typeof InvoicesDetailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/orders/': {
+      id: '/orders/'
+      path: '/orders'
+      fullPath: '/orders/'
+      preLoaderRoute: typeof OrdersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payments/': {
+      id: '/payments/'
+      path: '/payments'
+      fullPath: '/payments/'
+      preLoaderRoute: typeof PaymentsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/rfqs/': {
@@ -105,19 +198,13 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ContractsRoute: ContractsRoute,
+  InvoicesDetailRoute: InvoicesDetailRoute,
   SuppliersPerformanceRoute: SuppliersPerformanceRoute,
+  GoodsReceiptsIndexRoute: GoodsReceiptsIndexRoute,
+  OrdersIndexRoute: OrdersIndexRoute,
+  PaymentsIndexRoute: PaymentsIndexRoute,
   RfqsIndexRoute: RfqsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
