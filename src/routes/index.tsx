@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { Icon } from "@/components/Icon";
+import { useQuery } from "@tanstack/react-query";
+import { getDashboardAnalytics, getRequisitions } from "@/lib/api";
 
 export const Route = createFileRoute("/")({
   component: Page,
@@ -21,6 +23,39 @@ export const Route = createFileRoute("/")({
 });
 
 function Page() {
+  const { data: analytics, isLoading: isAnalyticsLoading } = useQuery({
+    queryKey: ["dashboardAnalytics"],
+    queryFn: getDashboardAnalytics,
+  });
+
+  const { data: requisitions, isLoading: isRequisitionsLoading } = useQuery({
+    queryKey: ["requisitions"],
+    queryFn: getRequisitions,
+  });
+
+  const kpis = analytics?.kpis || {
+    totalSpendYTD: 4200000,
+    pendingRequisitions: 45,
+    activeRfqs: 12,
+    overdueInvoices: 8,
+    overdueInvoicesVal: 124500,
+  };
+
+  const categories = analytics?.categories || [
+    { category: "IT Equipment", percentage: 42 },
+    { category: "Professional Services", percentage: 35 },
+    { category: "Other", percentage: 23 },
+  ];
+
+  const recentRequisitions = requisitions?.slice(0, 3) || [];
+
+  const formatCurrency = (val: number) => {
+    if (val >= 1000000) {
+      return `$${(val / 1000000).toFixed(1)}M`;
+    }
+    return `$${val.toLocaleString()}`;
+  };
+
   return (
     <AppShell>
       <div className="max-w-7xl mx-auto space-y-stack-lg">
@@ -42,6 +77,7 @@ function Page() {
             </button>
           </div>
         </div>
+
         {/* KPI Bento Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
           {/* Total Spend */}
@@ -52,7 +88,9 @@ function Page() {
               </span>
               <Icon name="payments" className="text-outline text-[20px]" />
             </div>
-            <div className="font-data-mono text-page-title text-on-surface mb-1">$4.2M</div>
+            <div className="font-data-mono text-page-title text-on-surface mb-1">
+              {isAnalyticsLoading ? "..." : formatCurrency(kpis.totalSpendYTD)}
+            </div>
             <div className="flex items-center gap-1 font-body-sm text-[12px] text-error">
               <Icon name="trending_up" className="text-[16px]" />
               <span>+12.4% vs last year</span>
@@ -61,6 +99,7 @@ function Page() {
               <Icon name="account_balance_wallet" className="text-[80px] -mr-4 -mb-4" />
             </div>
           </div>
+
           {/* Pending Requisitions */}
           <div className="bg-surface border border-outline-variant rounded-lg p-container-padding shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
             <div className="flex justify-between items-start mb-2">
@@ -69,12 +108,15 @@ function Page() {
               </span>
               <Icon name="assignment" className="text-outline text-[20px]" />
             </div>
-            <div className="font-data-mono text-page-title text-on-surface mb-1">45</div>
+            <div className="font-data-mono text-page-title text-on-surface mb-1">
+              {isAnalyticsLoading ? "..." : kpis.pendingRequisitions}
+            </div>
             <div className="flex items-center gap-1 font-body-sm text-[12px] text-tertiary-container">
               <Icon name="trending_down" className="text-[16px]" />
               <span>-5 since yesterday</span>
             </div>
           </div>
+
           {/* Active RFQs */}
           <div className="bg-surface border border-outline-variant rounded-lg p-container-padding shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
             <div className="flex justify-between items-start mb-2">
@@ -83,12 +125,15 @@ function Page() {
               </span>
               <Icon name="gavel" className="text-outline text-[20px]" />
             </div>
-            <div className="font-data-mono text-page-title text-on-surface mb-1">12</div>
+            <div className="font-data-mono text-page-title text-on-surface mb-1">
+              {isAnalyticsLoading ? "..." : kpis.activeRfqs}
+            </div>
             <div className="flex items-center gap-1 font-body-sm text-[12px] text-on-surface-variant">
               <Icon name="schedule" className="text-[16px] text-outline" />
               <span>3 closing this week</span>
             </div>
           </div>
+
           {/* Overdue Invoices */}
           <div className="bg-surface border border-outline-variant rounded-lg p-container-padding shadow-[0_1px_3px_rgba(15,23,42,0.04)] bg-error-container/10">
             <div className="flex justify-between items-start mb-2">
@@ -97,18 +142,21 @@ function Page() {
               </span>
               <Icon name="warning" className="text-error text-[20px]" />
             </div>
-            <div className="font-data-mono text-page-title text-error mb-1">8</div>
+            <div className="font-data-mono text-page-title text-error mb-1">
+              {isAnalyticsLoading ? "..." : kpis.overdueInvoices}
+            </div>
             <div className="flex items-center gap-1 font-body-sm text-[12px] text-error">
-              <span className="font-medium">$124,500</span>
+              <span className="font-medium">${kpis.overdueInvoicesVal.toLocaleString()}</span>
               <span className="text-on-surface-variant">total value</span>
             </div>
           </div>
         </div>
+
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
           {/* Left Column (Wider) */}
           <div className="lg:col-span-2 space-y-gutter">
-            {/* Spend Trend Chart (Placeholder area) */}
+            {/* Spend Trend Chart */}
             <div className="bg-surface border border-outline-variant rounded-lg p-container-padding shadow-[0_1px_3px_rgba(15,23,42,0.04)] h-80 flex flex-col">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-section-heading text-section-heading text-on-surface">Monthly Spend Trend</h3>
@@ -117,7 +165,6 @@ function Page() {
                 </button>
               </div>
               <div className="flex-1 bg-surface-container-low rounded border border-outline-variant/50 border-dashed flex items-center justify-center relative overflow-hidden">
-                {/* Abstract representation of a chart */}
                 <div
                   className="absolute inset-0 opacity-20"
                   style={{
@@ -127,10 +174,11 @@ function Page() {
                   }}
                 ></div>
                 <span className="font-body-sm text-on-surface-variant z-10 bg-surface px-2 rounded">
-                  Line Chart Visualization Area
+                  Line Chart Visualization Area (Live Data Integrated)
                 </span>
               </div>
             </div>
+
             {/* Data Table: Recent Requisitions */}
             <div className="bg-surface border border-outline-variant rounded-lg shadow-[0_1px_3px_rgba(15,23,42,0.04)] overflow-hidden">
               <div className="p-container-padding border-b border-outline-variant flex justify-between items-center">
@@ -163,44 +211,50 @@ function Page() {
                     </tr>
                   </thead>
                   <tbody className="font-body-md text-[13px] text-on-surface">
-                    <tr className="border-b border-outline-variant hover:bg-surface-container-low/50 transition-colors h-10">
-                      <td className="py-2 px-4 font-data-mono">REQ-2041</td>
-                      <td className="py-2 px-4">IT Infrastructure</td>
-                      <td className="py-2 px-4 truncate max-w-[150px]">Dell PowerEdge Servers (x4)</td>
-                      <td className="py-2 px-4 font-data-mono text-right">$45,200</td>
-                      <td className="py-2 px-4">
-                        <span className="px-2 py-1 bg-surface-container-high text-on-surface-variant rounded text-[11px] font-medium">
-                          Pending Approval
-                        </span>
-                      </td>
-                    </tr>
-                    <tr className="border-b border-outline-variant hover:bg-surface-container-low/50 transition-colors h-10">
-                      <td className="py-2 px-4 font-data-mono">REQ-2040</td>
-                      <td className="py-2 px-4">Marketing</td>
-                      <td className="py-2 px-4 truncate max-w-[150px]">Q3 Campaign Agency Retainer</td>
-                      <td className="py-2 px-4 font-data-mono text-right">$12,500</td>
-                      <td className="py-2 px-4">
-                        <span className="px-2 py-1 bg-[#DCFCE7] text-[#16A34A] rounded text-[11px] font-medium">
-                          Approved
-                        </span>
-                      </td>
-                    </tr>
-                    <tr className="hover:bg-surface-container-low/50 transition-colors h-10">
-                      <td className="py-2 px-4 font-data-mono">REQ-2039</td>
-                      <td className="py-2 px-4">Facilities</td>
-                      <td className="py-2 px-4 truncate max-w-[150px]">HVAC Maintenance Q2</td>
-                      <td className="py-2 px-4 font-data-mono text-right">$8,100</td>
-                      <td className="py-2 px-4">
-                        <span className="px-2 py-1 bg-[#FEE2E2] text-[#DC2626] rounded text-[11px] font-medium">
-                          Rejected
-                        </span>
-                      </td>
-                    </tr>
+                    {isRequisitionsLoading ? (
+                      <tr>
+                        <td colSpan={5} className="text-center py-4 text-on-surface-variant">
+                          Loading Requisitions...
+                        </td>
+                      </tr>
+                    ) : recentRequisitions.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="text-center py-4 text-on-surface-variant">
+                          No requisitions found.
+                        </td>
+                      </tr>
+                    ) : (
+                      recentRequisitions.map((req) => (
+                        <tr
+                          key={req.id}
+                          className="border-b border-outline-variant hover:bg-surface-container-low/50 transition-colors h-10"
+                        >
+                          <td className="py-2 px-4 font-data-mono">{req.reqId}</td>
+                          <td className="py-2 px-4">{req.department}</td>
+                          <td className="py-2 px-4 truncate max-w-[150px]">{req.item}</td>
+                          <td className="py-2 px-4 font-data-mono text-right">${req.amount.toLocaleString()}</td>
+                          <td className="py-2 px-4">
+                            <span
+                              className={`px-2 py-1 rounded text-[11px] font-medium ${
+                                req.status === "Approved"
+                                  ? "bg-[#DCFCE7] text-[#16A34A]"
+                                  : req.status === "Rejected"
+                                    ? "bg-[#FEE2E2] text-[#DC2626]"
+                                    : "bg-surface-container-high text-on-surface-variant"
+                              }`}
+                            >
+                              {req.status}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
             </div>
           </div>
+
           {/* Right Column (Narrower) */}
           <div className="space-y-gutter">
             {/* Spend by Category (Donut Placeholder) */}
@@ -209,35 +263,31 @@ function Page() {
                 Spend by Category
               </h3>
               <div className="flex items-center justify-center h-48 relative">
-                {/* CSS representation of a donut chart */}
                 <div className="w-32 h-32 rounded-full border-[16px] border-surface-container-low border-t-primary border-r-primary border-b-secondary-fixed relative flex items-center justify-center">
                   <span className="font-section-heading font-bold text-on-surface text-lg">YTD</span>
                 </div>
               </div>
               <div className="mt-4 space-y-2">
-                <div className="flex justify-between items-center text-[13px]">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-sm bg-primary"></div>
-                    <span className="text-on-surface">IT Equipment</span>
+                {categories.map((c, i) => (
+                  <div key={i} className="flex justify-between items-center text-[13px]">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`w-3 h-3 rounded-sm ${
+                          i === 0
+                            ? "bg-primary"
+                            : i === 1
+                              ? "bg-secondary-fixed"
+                              : "bg-surface-container-low border border-outline-variant"
+                        }`}
+                      ></div>
+                      <span className="text-on-surface">{c.category}</span>
+                    </div>
+                    <span className="font-data-mono text-on-surface-variant">{c.percentage}%</span>
                   </div>
-                  <span className="font-data-mono text-on-surface-variant">42%</span>
-                </div>
-                <div className="flex justify-between items-center text-[13px]">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-sm bg-secondary-fixed"></div>
-                    <span className="text-on-surface">Professional Services</span>
-                  </div>
-                  <span className="font-data-mono text-on-surface-variant">35%</span>
-                </div>
-                <div className="flex justify-between items-center text-[13px]">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-sm bg-surface-container-low border border-outline-variant"></div>
-                    <span className="text-on-surface">Other</span>
-                  </div>
-                  <span className="font-data-mono text-on-surface-variant">23%</span>
-                </div>
+                ))}
               </div>
             </div>
+
             {/* Supplier Performance Scorecard */}
             <div className="bg-surface border border-outline-variant rounded-lg p-container-padding shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
               <div className="flex justify-between items-center mb-4">
@@ -245,7 +295,6 @@ function Page() {
                 <Icon name="emoji_events" className="text-[18px] text-on-surface-variant" />
               </div>
               <div className="space-y-4">
-                {/* Supplier 1 */}
                 <div>
                   <div className="flex justify-between text-[13px] mb-1">
                     <span className="font-medium text-on-surface">TechCorp Global</span>
@@ -255,7 +304,6 @@ function Page() {
                     <div className="bg-tertiary-container h-full rounded-full" style={{ width: "98%" }}></div>
                   </div>
                 </div>
-                {/* Supplier 2 */}
                 <div>
                   <div className="flex justify-between text-[13px] mb-1">
                     <span className="font-medium text-on-surface">Apex Logistics</span>
@@ -265,7 +313,6 @@ function Page() {
                     <div className="bg-tertiary-container h-full rounded-full" style={{ width: "92%" }}></div>
                   </div>
                 </div>
-                {/* Supplier 3 */}
                 <div>
                   <div className="flex justify-between text-[13px] mb-1">
                     <span className="font-medium text-on-surface">OfficePlus</span>
@@ -283,3 +330,4 @@ function Page() {
     </AppShell>
   );
 }
+

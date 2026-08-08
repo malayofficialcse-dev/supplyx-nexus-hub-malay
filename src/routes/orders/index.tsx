@@ -1,6 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { Icon } from "@/components/Icon";
+import { useQuery } from "@tanstack/react-query";
+import { getOrders } from "@/lib/api";
 
 export const Route = createFileRoute("/orders/")({
   component: Page,
@@ -15,6 +17,17 @@ export const Route = createFileRoute("/orders/")({
 });
 
 function Page() {
+  const navigate = useNavigate();
+  const { data: orders, isLoading } = useQuery({
+    queryKey: ["orders"],
+    queryFn: getOrders,
+  });
+
+  const liveOrders = orders || [];
+
+  // Calculate sum and statistics
+  const totalSpend = liveOrders.reduce((sum, o) => sum + o.amount, 0);
+
   return (
     <AppShell>
       <div className="max-w-7xl mx-auto space-y-6">
@@ -35,7 +48,10 @@ function Page() {
               <Icon name="filter_list" className="text-[18px]" />
               Filters
             </button>
-            <button className="flex items-center gap-2 bg-[#2563EB] text-white py-2 px-4 rounded-[4px] font-medium text-[14px] hover:bg-blue-700 transition-colors">
+            <button
+              onClick={() => navigate({ to: "/orders/new" })}
+              className="flex items-center gap-2 bg-[#2563EB] text-white py-2 px-4 rounded-[4px] font-medium text-[14px] hover:bg-blue-700 transition-colors"
+            >
               <Icon name="add" className="text-[18px]" />
               Create PO
             </button>
@@ -45,7 +61,7 @@ function Page() {
         <div className="grid grid-cols-4 gap-gutter mb-stack-lg">
           <div className="bg-surface-container-lowest border border-[#E2E8F0] rounded-[4px] p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)] relative">
             <h3 className="text-[#64748B] text-[13px] font-medium mb-1">Total POs (YTD)</h3>
-            <div className="text-[20px] font-semibold text-on-surface">1,248</div>
+            <div className="text-[20px] font-semibold text-on-surface">{isLoading ? "..." : liveOrders.length}</div>
             <div className="absolute bottom-4 right-4 flex items-center text-[#16A34A] text-xs font-medium">
               <Icon name="trending_up" className="text-[14px] mr-0.5" />
               +12%
@@ -53,7 +69,9 @@ function Page() {
           </div>
           <div className="bg-surface-container-lowest border border-[#E2E8F0] rounded-[4px] p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)] relative">
             <h3 className="text-[#64748B] text-[13px] font-medium mb-1">Total Spend</h3>
-            <div className="text-[20px] font-semibold text-on-surface">$3.2M</div>
+            <div className="text-[20px] font-semibold text-on-surface">
+              {isLoading ? "..." : `$${totalSpend.toLocaleString()}`}
+            </div>
             <div className="absolute bottom-4 right-4 flex items-center text-[#16A34A] text-xs font-medium">
               <Icon name="trending_up" className="text-[14px] mr-0.5" />
               +5.4%
@@ -61,17 +79,19 @@ function Page() {
           </div>
           <div className="bg-surface-container-lowest border border-[#E2E8F0] rounded-[4px] p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)] relative">
             <h3 className="text-[#64748B] text-[13px] font-medium mb-1">Pending Delivery</h3>
-            <div className="text-[20px] font-semibold text-on-surface">142</div>
+            <div className="text-[20px] font-semibold text-on-surface">
+              {isLoading ? "..." : liveOrders.filter((o) => o.status === "Submitted").length}
+            </div>
             <div className="absolute bottom-4 right-4 flex items-center text-[#64748B] text-xs font-medium">
               <span>Active</span>
             </div>
           </div>
           <div className="bg-surface-container-lowest border border-[#E2E8F0] rounded-[4px] p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)] relative">
             <h3 className="text-[#64748B] text-[13px] font-medium mb-1">Exceptions / Delayed</h3>
-            <div className="text-[20px] font-semibold text-on-surface">12</div>
+            <div className="text-[20px] font-semibold text-on-surface">0</div>
             <div className="absolute bottom-4 right-4 flex items-center text-error text-xs font-medium">
               <Icon name="warning" className="text-[14px] mr-0.5" />
-              Needs Action
+              0 Needs Action
             </div>
           </div>
         </div>
@@ -120,125 +140,67 @@ function Page() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E2E8F0] text-[13px]">
-                {/* Row 1 */}
-                <tr className="hover:bg-[#F8FAFC] transition-colors h-[40px] group">
-                  <td className="px-4 text-center">
-                    <input className="rounded-[2px] border-[#c3c6d7] text-primary focus:ring-primary" type="checkbox" />
-                  </td>
-                  <td className="px-4 font-data-mono text-data-mono font-medium text-primary">PO-2023-8942</td>
-                  <td className="px-4 text-on-surface font-medium">Acme Corp Electronics</td>
-                  <td className="px-4 font-data-mono text-data-mono text-right">$24,500.00</td>
-                  <td className="px-4 text-on-surface-variant">Oct 15, 2023</td>
-                  <td className="px-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-medium bg-[#EFF6FF] text-[#2563EB]">Sent</span>
-                  </td>
-                  <td className="px-4">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-[11px] font-medium bg-[#F1F5F9] text-[#64748B]">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#94A3B8]"></span> Unpaid
-                    </span>
-                  </td>
-                  <td className="px-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="text-on-surface-variant hover:text-primary mr-2" title="Download PDF">
-                      <Icon name="picture_as_pdf" className="text-[16px]" />
-                    </button>
-                    <button className="text-on-surface-variant hover:text-primary" title="Track Shipment">
-                      <Icon name="local_shipping" className="text-[16px]" />
-                    </button>
-                  </td>
-                </tr>
-                {/* Row 2 */}
-                <tr className="hover:bg-[#F8FAFC] transition-colors h-[40px] group">
-                  <td className="px-4 text-center">
-                    <input className="rounded-[2px] border-[#c3c6d7] text-primary focus:ring-primary" type="checkbox" />
-                  </td>
-                  <td className="px-4 font-data-mono text-data-mono font-medium text-primary">PO-2023-8941</td>
-                  <td className="px-4 text-on-surface font-medium">Global Steel Works</td>
-                  <td className="px-4 font-data-mono text-data-mono text-right">$112,050.00</td>
-                  <td className="px-4 text-on-surface-variant">Oct 12, 2023</td>
-                  <td className="px-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-medium bg-[#DCFCE7] text-[#16A34A]">Received</span>
-                  </td>
-                  <td className="px-4">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-[11px] font-medium bg-[#DCFCE7] text-[#16A34A]">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#22C55E]"></span> Paid
-                    </span>
-                  </td>
-                  <td className="px-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="text-on-surface-variant hover:text-primary mr-2" title="Download PDF">
-                      <Icon name="picture_as_pdf" className="text-[16px]" />
-                    </button>
-                    <button className="text-on-surface-variant hover:text-primary" title="Track Shipment">
-                      <Icon name="local_shipping" className="text-[16px]" />
-                    </button>
-                  </td>
-                </tr>
-                {/* Row 3 */}
-                <tr className="hover:bg-[#F8FAFC] transition-colors h-[40px] group">
-                  <td className="px-4 text-center">
-                    <input className="rounded-[2px] border-[#c3c6d7] text-primary focus:ring-primary" type="checkbox" />
-                  </td>
-                  <td className="px-4 font-data-mono text-data-mono font-medium text-primary">PO-2023-8940</td>
-                  <td className="px-4 text-on-surface font-medium">Logix Packaging</td>
-                  <td className="px-4 font-data-mono text-data-mono text-right">$4,200.00</td>
-                  <td className="px-4 text-on-surface-variant">Oct 10, 2023</td>
-                  <td className="px-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-medium bg-[#FEF2F2] text-[#DC2626]">Cancelled</span>
-                  </td>
-                  <td className="px-4">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-[11px] font-medium bg-[#F1F5F9] text-[#64748B]">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#94A3B8]"></span> Unpaid
-                    </span>
-                  </td>
-                  <td className="px-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="text-on-surface-variant hover:text-primary mr-2" title="Download PDF">
-                      <Icon name="picture_as_pdf" className="text-[16px]" />
-                    </button>
-                    <button className="text-on-surface-variant hover:text-primary" title="Track Shipment">
-                      <Icon name="local_shipping" className="text-[16px]" />
-                    </button>
-                  </td>
-                </tr>
-                {/* Row 4 */}
-                <tr className="hover:bg-[#F8FAFC] transition-colors h-[40px] group">
-                  <td className="px-4 text-center">
-                    <input className="rounded-[2px] border-[#c3c6d7] text-primary focus:ring-primary" type="checkbox" />
-                  </td>
-                  <td className="px-4 font-data-mono text-data-mono font-medium text-primary">PO-2023-8939</td>
-                  <td className="px-4 text-on-surface font-medium">Advanced Micro Devices</td>
-                  <td className="px-4 font-data-mono text-data-mono text-right">$56,800.00</td>
-                  <td className="px-4 text-on-surface-variant">Oct 22, 2023</td>
-                  <td className="px-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-medium bg-[#EFF6FF] text-[#2563EB]">Sent</span>
-                  </td>
-                  <td className="px-4">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-[11px] font-medium bg-[#FEF9C3] text-[#A16207]">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#EAB308]"></span> Processing
-                    </span>
-                  </td>
-                  <td className="px-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="text-on-surface-variant hover:text-primary mr-2" title="Download PDF">
-                      <Icon name="picture_as_pdf" className="text-[16px]" />
-                    </button>
-                    <button className="text-on-surface-variant hover:text-primary" title="Track Shipment">
-                      <Icon name="local_shipping" className="text-[16px]" />
-                    </button>
-                  </td>
-                </tr>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={8} className="text-center py-8 text-on-surface-variant">
+                      Loading Purchase Orders...
+                    </td>
+                  </tr>
+                ) : liveOrders.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="text-center py-8 text-on-surface-variant">
+                      No purchase orders found.
+                    </td>
+                  </tr>
+                ) : (
+                  liveOrders.map((order) => (
+                    <tr key={order.id} className="hover:bg-[#F8FAFC] transition-colors h-[40px] group">
+                      <td className="px-4 text-center">
+                        <input className="rounded-[2px] border-[#c3c6d7] text-primary focus:ring-primary" type="checkbox" />
+                      </td>
+                      <td className="px-4 font-data-mono text-data-mono font-medium text-primary">{order.orderId}</td>
+                      <td className="px-4 text-on-surface font-medium">{order.supplier}</td>
+                      <td className="px-4 font-data-mono text-data-mono text-right">${order.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                      <td className="px-4 text-on-surface-variant">{order.deliveryDate}</td>
+                      <td className="px-4">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-[4px] text-[11px] font-medium ${
+                          order.status === "Approved"
+                            ? "bg-[#DCFCE7] text-[#16A34A]"
+                            : order.status === "Submitted"
+                              ? "bg-[#EFF6FF] text-[#2563EB]"
+                              : "bg-[#F1F5F9] text-[#64748B]"
+                        }`}>{order.status}</span>
+                      </td>
+                      <td className="px-4">
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-[11px] font-medium ${
+                          order.status === "Approved" ? "bg-[#DCFCE7] text-[#16A34A]" : "bg-[#F1F5F9] text-[#64748B]"
+                        }`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${order.status === "Approved" ? "bg-[#22C55E]" : "bg-[#94A3B8]"}`}></span> {order.status === "Approved" ? "Paid" : "Unpaid"}
+                        </span>
+                      </td>
+                      <td className="px-4 text-right opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button className="text-on-surface-variant hover:text-primary mr-2" title="Download PDF">
+                          <Icon name="picture_as_pdf" className="text-[16px]" />
+                        </button>
+                        <button className="text-on-surface-variant hover:text-primary" title="Track Shipment">
+                          <Icon name="local_shipping" className="text-[16px]" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
           {/* Pagination */}
           <div className="p-3 border-t border-[#E2E8F0] flex justify-between items-center bg-[#F8FAFC] text-[13px] text-on-surface-variant">
-            <div>Showing 1 to 10 of 1,248 entries</div>
+            <div>Showing 1 to {liveOrders.length} of {liveOrders.length} entries</div>
             <div className="flex items-center gap-2">
               <button className="p-1 border border-[#E2E8F0] rounded-[4px] hover:bg-surface-container-lowest disabled:opacity-50" disabled>
                 <Icon name="chevron_left" className="text-[16px]" />
               </button>
               <button className="px-2.5 py-1 border border-[#E2E8F0] rounded-[4px] bg-[#2563EB] text-white">1</button>
-              <button className="px-2.5 py-1 border border-[#E2E8F0] rounded-[4px] bg-surface-container-lowest hover:bg-[#F1F5F9]">2</button>
-              <button className="px-2.5 py-1 border border-[#E2E8F0] rounded-[4px] bg-surface-container-lowest hover:bg-[#F1F5F9]">3</button>
-              <span className="px-1">...</span>
-              <button className="p-1 border border-[#E2E8F0] rounded-[4px] bg-surface-container-lowest hover:bg-[#F1F5F9]">
+              <button className="p-1 border border-[#E2E8F0] rounded-[4px] bg-surface-container-lowest disabled:opacity-50" disabled>
                 <Icon name="chevron_right" className="text-[16px]" />
               </button>
             </div>
@@ -248,3 +210,4 @@ function Page() {
     </AppShell>
   );
 }
+

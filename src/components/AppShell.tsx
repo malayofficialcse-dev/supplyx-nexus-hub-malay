@@ -8,18 +8,19 @@ const NAV: NavItem[] = [
   { label: "Overview", icon: "dashboard", to: "/" },
   { label: "Procurement", icon: "shopping_cart", to: "/requisitions" },
   { label: "Inventory", icon: "inventory_2", to: "/goods-receipts" },
-  { label: "Warehouses", icon: "warehouse" },
+  { label: "Warehouses", icon: "warehouse", to: "/warehouses" },
   { label: "Orders", icon: "description", to: "/orders" },
-  { label: "Shipments", icon: "local_shipping" },
-  { label: "Logistics", icon: "hub" },
+  { label: "Shipments", icon: "local_shipping", to: "/shipments" },
+  { label: "Logistics", icon: "hub", to: "/logistics" },
   { label: "Suppliers", icon: "factory", to: "/suppliers/performance" },
-  { label: "Customers", icon: "groups" },
-  { label: "Carriers", icon: "local_shipping" },
+  { label: "Customers", icon: "groups", to: "/customers" },
+  { label: "Carriers", icon: "local_shipping", to: "/carriers" },
   { label: "Contracts", icon: "article", to: "/contracts" },
   { label: "Invoices", icon: "receipt_long", to: "/invoices" },
   { label: "Payments", icon: "payments", to: "/payments" },
   { label: "Analytics", icon: "query_stats", to: "/budget" },
 ];
+
 
 const linkBase =
   "flex items-center gap-3 px-4 py-2 transition-colors rounded-lg font-body-sm text-body-sm";

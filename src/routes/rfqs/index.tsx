@@ -1,6 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { Icon } from "@/components/Icon";
+import { useQuery } from "@tanstack/react-query";
+import { getRFQs } from "@/lib/api";
 
 export const Route = createFileRoute("/rfqs/")({
   component: Page,
@@ -15,6 +17,14 @@ export const Route = createFileRoute("/rfqs/")({
 });
 
 function Page() {
+  const navigate = useNavigate();
+  const { data: rfqs, isLoading } = useQuery({
+    queryKey: ["rfqs"],
+    queryFn: getRFQs,
+  });
+
+  const liveRfqs = rfqs || [];
+
   return (
     <AppShell>
       <div className="max-w-7xl mx-auto space-y-6">
@@ -28,7 +38,10 @@ function Page() {
             <button className="px-4 py-2 bg-surface border border-outline-variant text-on-surface font-body-sm text-body-sm font-medium rounded hover:bg-surface-container transition-colors flex items-center gap-2">
               <Icon name="download" className="text-[18px]" /> Export
             </button>
-            <button className="px-4 py-2 bg-primary-container text-on-primary font-body-sm text-body-sm font-medium rounded hover:bg-primary-container/90 transition-colors flex items-center gap-2">
+            <button
+              onClick={() => navigate({ to: "/rfqs/new" })}
+              className="px-4 py-2 bg-primary-container text-on-primary font-body-sm text-body-sm font-medium rounded hover:bg-primary-container/90 transition-colors flex items-center gap-2"
+            >
               <Icon name="add" className="text-[18px]" /> Create RFQ
             </button>
           </div>
@@ -81,7 +94,7 @@ function Page() {
                   <th className="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase">Title &amp; Category</th>
                   <th className="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase">Status</th>
                   <th className="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase whitespace-nowrap cursor-pointer hover:text-on-surface group">
-                    Expiry Date <Icon name="arrow_downward" className="text-[14px] align-middle opacity-100" />
+                    Deadline <Icon name="arrow_downward" className="text-[14px] align-middle opacity-100" />
                   </th>
                   <th className="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase text-right">Bidders</th>
                   <th className="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase">Created By</th>
@@ -89,165 +102,69 @@ function Page() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant">
-                {/* Row 1 */}
-                <tr className="hover:bg-surface-container-lowest transition-colors h-10">
-                  <td className="py-2 px-4">
-                    <input className="rounded border-outline-variant text-primary focus:ring-primary" type="checkbox" />
-                  </td>
-                  <td className="py-2 px-4 font-data-mono text-data-mono text-on-surface">RFQ-2023-089</td>
-                  <td className="py-2 px-4">
-                    <div className="font-body-sm text-body-sm font-medium text-on-surface truncate max-w-[200px]">Q3 Steel Procurement</div>
-                    <div className="text-[11px] text-on-surface-variant">Raw Materials</div>
-                  </td>
-                  <td className="py-2 px-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-[#FFF7ED] text-[#C2410C]">
-                      Evaluation
-                    </span>
-                  </td>
-                  <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant">Oct 15, 2023</td>
-                  <td className="py-2 px-4 font-data-mono text-data-mono text-on-surface text-right">4/5</td>
-                  <td className="py-2 px-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-surface-variant flex items-center justify-center text-[10px] font-bold text-on-surface">SJ</div>
-                      <span className="font-body-sm text-body-sm text-on-surface">Sarah J.</span>
-                    </div>
-                  </td>
-                  <td className="py-2 px-4 text-right">
-                    <button className="p-1 text-on-surface-variant hover:text-primary transition-colors"><Icon name="visibility" className="text-[18px]" /></button>
-                    <button className="p-1 text-on-surface-variant hover:text-primary transition-colors"><Icon name="more_vert" className="text-[18px]" /></button>
-                  </td>
-                </tr>
-                {/* Row 2 */}
-                <tr className="hover:bg-surface-container-lowest transition-colors h-10">
-                  <td className="py-2 px-4">
-                    <input className="rounded border-outline-variant text-primary focus:ring-primary" type="checkbox" />
-                  </td>
-                  <td className="py-2 px-4 font-data-mono text-data-mono text-on-surface">RFQ-2023-092</td>
-                  <td className="py-2 px-4">
-                    <div className="font-body-sm text-body-sm font-medium text-on-surface truncate max-w-[200px]">Corrugated Boxes Supply</div>
-                    <div className="text-[11px] text-on-surface-variant">Packaging</div>
-                  </td>
-                  <td className="py-2 px-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-[#EFF6FF] text-[#1D4ED8]">
-                      Responses Received
-                    </span>
-                  </td>
-                  <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant">Oct 18, 2023</td>
-                  <td className="py-2 px-4 font-data-mono text-data-mono text-on-surface text-right">3/8</td>
-                  <td className="py-2 px-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-surface-variant flex items-center justify-center text-[10px] font-bold text-on-surface">MC</div>
-                      <span className="font-body-sm text-body-sm text-on-surface">Mike C.</span>
-                    </div>
-                  </td>
-                  <td className="py-2 px-4 text-right">
-                    <button className="p-1 text-on-surface-variant hover:text-primary transition-colors"><Icon name="visibility" className="text-[18px]" /></button>
-                    <button className="p-1 text-on-surface-variant hover:text-primary transition-colors"><Icon name="more_vert" className="text-[18px]" /></button>
-                  </td>
-                </tr>
-                {/* Row 3 */}
-                <tr className="hover:bg-surface-container-lowest transition-colors h-10">
-                  <td className="py-2 px-4">
-                    <input className="rounded border-outline-variant text-primary focus:ring-primary" type="checkbox" />
-                  </td>
-                  <td className="py-2 px-4 font-data-mono text-data-mono text-on-surface">RFQ-2023-104</td>
-                  <td className="py-2 px-4">
-                    <div className="font-body-sm text-body-sm font-medium text-on-surface truncate max-w-[200px]">Server Rack Refresh</div>
-                    <div className="text-[11px] text-on-surface-variant">IT Hardware</div>
-                  </td>
-                  <td className="py-2 px-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-[#F3F4F6] text-[#374151]">
-                      Sent
-                    </span>
-                  </td>
-                  <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant">Oct 25, 2023</td>
-                  <td className="py-2 px-4 font-data-mono text-data-mono text-on-surface text-right">0/3</td>
-                  <td className="py-2 px-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-surface-variant flex items-center justify-center text-[10px] font-bold text-on-surface">SJ</div>
-                      <span className="font-body-sm text-body-sm text-on-surface">Sarah J.</span>
-                    </div>
-                  </td>
-                  <td className="py-2 px-4 text-right">
-                    <button className="p-1 text-on-surface-variant hover:text-primary transition-colors"><Icon name="visibility" className="text-[18px]" /></button>
-                    <button className="p-1 text-on-surface-variant hover:text-primary transition-colors"><Icon name="more_vert" className="text-[18px]" /></button>
-                  </td>
-                </tr>
-                {/* Row 4 */}
-                <tr className="hover:bg-surface-container-lowest transition-colors h-10">
-                  <td className="py-2 px-4">
-                    <input className="rounded border-outline-variant text-primary focus:ring-primary" type="checkbox" />
-                  </td>
-                  <td className="py-2 px-4 font-data-mono text-data-mono text-on-surface">RFQ-2023-076</td>
-                  <td className="py-2 px-4">
-                    <div className="font-body-sm text-body-sm font-medium text-on-surface truncate max-w-[200px]">EU Freight Forwarding</div>
-                    <div className="text-[11px] text-on-surface-variant">Logistics Services</div>
-                  </td>
-                  <td className="py-2 px-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-[#DCFCE7] text-[#16A34A]">
-                      Awarded
-                    </span>
-                  </td>
-                  <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant">Sep 30, 2023</td>
-                  <td className="py-2 px-4 font-data-mono text-data-mono text-on-surface text-right">6/6</td>
-                  <td className="py-2 px-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-surface-variant flex items-center justify-center text-[10px] font-bold text-on-surface">AT</div>
-                      <span className="font-body-sm text-body-sm text-on-surface">Alex T.</span>
-                    </div>
-                  </td>
-                  <td className="py-2 px-4 text-right">
-                    <button className="p-1 text-on-surface-variant hover:text-primary transition-colors"><Icon name="visibility" className="text-[18px]" /></button>
-                    <button className="p-1 text-on-surface-variant hover:text-primary transition-colors"><Icon name="more_vert" className="text-[18px]" /></button>
-                  </td>
-                </tr>
-                {/* Row 5 */}
-                <tr className="hover:bg-surface-container-lowest transition-colors h-10">
-                  <td className="py-2 px-4">
-                    <input className="rounded border-outline-variant text-primary focus:ring-primary" type="checkbox" />
-                  </td>
-                  <td className="py-2 px-4 font-data-mono text-data-mono text-on-surface">RFQ-2023-112</td>
-                  <td className="py-2 px-4">
-                    <div className="font-body-sm text-body-sm font-medium text-on-surface truncate max-w-[200px]">Aluminum Ingots H2</div>
-                    <div className="text-[11px] text-on-surface-variant">Raw Materials</div>
-                  </td>
-                  <td className="py-2 px-4">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-[#F3F4F6] text-[#374151]">
-                      Sent
-                    </span>
-                  </td>
-                  <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant flex items-center gap-1 text-error">
-                    <Icon name="warning" className="text-[14px]" /> Tomorrow
-                  </td>
-                  <td className="py-2 px-4 font-data-mono text-data-mono text-on-surface text-right">1/4</td>
-                  <td className="py-2 px-4">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-full bg-surface-variant flex items-center justify-center text-[10px] font-bold text-on-surface">MC</div>
-                      <span className="font-body-sm text-body-sm text-on-surface">Mike C.</span>
-                    </div>
-                  </td>
-                  <td className="py-2 px-4 text-right">
-                    <button className="p-1 text-on-surface-variant hover:text-primary transition-colors"><Icon name="visibility" className="text-[18px]" /></button>
-                    <button className="p-1 text-on-surface-variant hover:text-primary transition-colors"><Icon name="more_vert" className="text-[18px]" /></button>
-                  </td>
-                </tr>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={8} className="text-center py-8 text-on-surface-variant">
+                      Loading Requests for Quotation...
+                    </td>
+                  </tr>
+                ) : liveRfqs.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="text-center py-8 text-on-surface-variant">
+                      No quotation requests found.
+                    </td>
+                  </tr>
+                ) : (
+                  liveRfqs.map((rfq) => (
+                    <tr key={rfq.id} className="hover:bg-surface-container-lowest transition-colors h-10">
+                      <td className="py-2 px-4">
+                        <input className="rounded border-outline-variant text-primary focus:ring-primary" type="checkbox" />
+                      </td>
+                      <td className="py-2 px-4 font-data-mono text-data-mono text-on-surface">{rfq.rfqId}</td>
+                      <td className="py-2 px-4">
+                        <div className="font-body-sm text-body-sm font-medium text-on-surface truncate max-w-[200px]">{rfq.title}</div>
+                        <div className="text-[11px] text-on-surface-variant">{rfq.department}</div>
+                      </td>
+                      <td className="py-2 px-4">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium ${
+                          rfq.status === "Open"
+                            ? "bg-[#EFF6FF] text-[#1D4ED8]"
+                            : rfq.status === "Closed"
+                              ? "bg-[#FEF2F2] text-[#DC2626]"
+                              : "bg-[#F3F4F6] text-[#374151]"
+                        }`}>
+                          {rfq.status}
+                        </span>
+                      </td>
+                      <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant">{rfq.deadline}</td>
+                      <td className="py-2 px-4 font-data-mono text-data-mono text-on-surface text-right">{rfq.vendorCount}</td>
+                      <td className="py-2 px-4">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-surface-variant flex items-center justify-center text-[10px] font-bold text-on-surface">JD</div>
+                          <span className="font-body-sm text-body-sm text-on-surface">John Doe</span>
+                        </div>
+                      </td>
+                      <td className="py-2 px-4 text-right">
+                        <button className="p-1 text-on-surface-variant hover:text-primary transition-colors"><Icon name="visibility" className="text-[18px]" /></button>
+                        <button className="p-1 text-on-surface-variant hover:text-primary transition-colors"><Icon name="more_vert" className="text-[18px]" /></button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
           {/* Pagination */}
           <div className="px-4 py-3 border-t border-outline-variant bg-surface-container-lowest flex items-center justify-between">
             <div className="font-body-sm text-body-sm text-on-surface-variant">
-              Showing <span className="font-medium text-on-surface">1</span> to <span className="font-medium text-on-surface">5</span> of <span className="font-medium text-on-surface">24</span> results
+              Showing 1 to {liveRfqs.length} of {liveRfqs.length} results
             </div>
             <div className="flex gap-1">
               <button className="px-2 py-1 text-on-surface-variant hover:bg-surface-container rounded disabled:opacity-50" disabled>
                 <Icon name="chevron_left" className="text-[18px]" />
               </button>
               <button className="px-3 py-1 bg-primary-container text-on-primary rounded font-body-sm text-body-sm">1</button>
-              <button className="px-3 py-1 text-on-surface-variant hover:bg-surface-container rounded font-body-sm text-body-sm">2</button>
-              <button className="px-3 py-1 text-on-surface-variant hover:bg-surface-container rounded font-body-sm text-body-sm">3</button>
-              <span className="px-2 py-1 text-on-surface-variant">...</span>
-              <button className="px-2 py-1 text-on-surface-variant hover:bg-surface-container rounded">
+              <button className="px-2 py-1 text-on-surface-variant hover:bg-surface-container rounded disabled:opacity-50" disabled>
                 <Icon name="chevron_right" className="text-[18px]" />
               </button>
             </div>
