@@ -12,7 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BudgetRouteImport } from './routes/budget'
 import { Route as ContractsRouteImport } from './routes/contracts'
+import { Route as RequisitionsRouteImport } from './routes/requisitions'
 import { Route as GoodsReceiptsIndexRouteImport } from './routes/goods-receipts/index'
+import { Route as GoodsReceiptsDetailRouteImport } from './routes/goods-receipts/detail'
 import { Route as InvoicesDetailRouteImport } from './routes/invoices/detail'
 import { Route as OrdersIndexRouteImport } from './routes/orders/index'
 import { Route as OrdersNewRouteImport } from './routes/orders/new'
@@ -37,9 +39,19 @@ const ContractsRoute = ContractsRouteImport.update({
   path: '/contracts',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RequisitionsRoute = RequisitionsRouteImport.update({
+  id: '/requisitions',
+  path: '/requisitions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GoodsReceiptsIndexRoute = GoodsReceiptsIndexRouteImport.update({
   id: '/goods-receipts/',
   path: '/goods-receipts/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GoodsReceiptsDetailRoute = GoodsReceiptsDetailRouteImport.update({
+  id: '/goods-receipts/detail',
+  path: '/goods-receipts/detail',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InvoicesDetailRoute = InvoicesDetailRouteImport.update({
@@ -87,6 +99,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/budget': typeof BudgetRoute
   '/contracts': typeof ContractsRoute
+  '/requisitions': typeof RequisitionsRoute
+  '/goods-receipts/detail': typeof GoodsReceiptsDetailRoute
   '/invoices/detail': typeof InvoicesDetailRoute
   '/orders/new': typeof OrdersNewRoute
   '/payments/detail': typeof PaymentsDetailRoute
@@ -101,6 +115,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/budget': typeof BudgetRoute
   '/contracts': typeof ContractsRoute
+  '/requisitions': typeof RequisitionsRoute
+  '/goods-receipts/detail': typeof GoodsReceiptsDetailRoute
   '/invoices/detail': typeof InvoicesDetailRoute
   '/orders/new': typeof OrdersNewRoute
   '/payments/detail': typeof PaymentsDetailRoute
@@ -116,6 +132,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/budget': typeof BudgetRoute
   '/contracts': typeof ContractsRoute
+  '/requisitions': typeof RequisitionsRoute
+  '/goods-receipts/detail': typeof GoodsReceiptsDetailRoute
   '/invoices/detail': typeof InvoicesDetailRoute
   '/orders/new': typeof OrdersNewRoute
   '/payments/detail': typeof PaymentsDetailRoute
@@ -132,6 +150,8 @@ export interface FileRouteTypes {
     | '/'
     | '/budget'
     | '/contracts'
+    | '/requisitions'
+    | '/goods-receipts/detail'
     | '/invoices/detail'
     | '/orders/new'
     | '/payments/detail'
@@ -146,6 +166,8 @@ export interface FileRouteTypes {
     | '/'
     | '/budget'
     | '/contracts'
+    | '/requisitions'
+    | '/goods-receipts/detail'
     | '/invoices/detail'
     | '/orders/new'
     | '/payments/detail'
@@ -160,6 +182,8 @@ export interface FileRouteTypes {
     | '/'
     | '/budget'
     | '/contracts'
+    | '/requisitions'
+    | '/goods-receipts/detail'
     | '/invoices/detail'
     | '/orders/new'
     | '/payments/detail'
@@ -175,6 +199,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BudgetRoute: typeof BudgetRoute
   ContractsRoute: typeof ContractsRoute
+  RequisitionsRoute: typeof RequisitionsRoute
+  GoodsReceiptsDetailRoute: typeof GoodsReceiptsDetailRoute
   InvoicesDetailRoute: typeof InvoicesDetailRoute
   OrdersNewRoute: typeof OrdersNewRoute
   PaymentsDetailRoute: typeof PaymentsDetailRoute
@@ -209,11 +235,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContractsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/requisitions': {
+      id: '/requisitions'
+      path: '/requisitions'
+      fullPath: '/requisitions'
+      preLoaderRoute: typeof RequisitionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/goods-receipts/': {
       id: '/goods-receipts/'
       path: '/goods-receipts'
       fullPath: '/goods-receipts/'
       preLoaderRoute: typeof GoodsReceiptsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/goods-receipts/detail': {
+      id: '/goods-receipts/detail'
+      path: '/goods-receipts/detail'
+      fullPath: '/goods-receipts/detail'
+      preLoaderRoute: typeof GoodsReceiptsDetailRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/invoices/detail': {
@@ -279,6 +319,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BudgetRoute: BudgetRoute,
   ContractsRoute: ContractsRoute,
+  RequisitionsRoute: RequisitionsRoute,
+  GoodsReceiptsDetailRoute: GoodsReceiptsDetailRoute,
   InvoicesDetailRoute: InvoicesDetailRoute,
   OrdersNewRoute: OrdersNewRoute,
   PaymentsDetailRoute: PaymentsDetailRoute,
