@@ -15,6 +15,7 @@ import { Route as ContractsRouteImport } from './routes/contracts'
 import { Route as RequisitionsRouteImport } from './routes/requisitions'
 import { Route as GoodsReceiptsIndexRouteImport } from './routes/goods-receipts/index'
 import { Route as GoodsReceiptsDetailRouteImport } from './routes/goods-receipts/detail'
+import { Route as InvoicesIndexRouteImport } from './routes/invoices/index'
 import { Route as InvoicesDetailRouteImport } from './routes/invoices/detail'
 import { Route as OrdersIndexRouteImport } from './routes/orders/index'
 import { Route as OrdersNewRouteImport } from './routes/orders/new'
@@ -52,6 +53,11 @@ const GoodsReceiptsIndexRoute = GoodsReceiptsIndexRouteImport.update({
 const GoodsReceiptsDetailRoute = GoodsReceiptsDetailRouteImport.update({
   id: '/goods-receipts/detail',
   path: '/goods-receipts/detail',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvoicesIndexRoute = InvoicesIndexRouteImport.update({
+  id: '/invoices/',
+  path: '/invoices/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InvoicesDetailRoute = InvoicesDetailRouteImport.update({
@@ -107,6 +113,7 @@ export interface FileRoutesByFullPath {
   '/rfqs/new': typeof RfqsNewRoute
   '/suppliers/performance': typeof SuppliersPerformanceRoute
   '/goods-receipts/': typeof GoodsReceiptsIndexRoute
+  '/invoices/': typeof InvoicesIndexRoute
   '/orders/': typeof OrdersIndexRoute
   '/payments/': typeof PaymentsIndexRoute
   '/rfqs/': typeof RfqsIndexRoute
@@ -123,6 +130,7 @@ export interface FileRoutesByTo {
   '/rfqs/new': typeof RfqsNewRoute
   '/suppliers/performance': typeof SuppliersPerformanceRoute
   '/goods-receipts': typeof GoodsReceiptsIndexRoute
+  '/invoices': typeof InvoicesIndexRoute
   '/orders': typeof OrdersIndexRoute
   '/payments': typeof PaymentsIndexRoute
   '/rfqs': typeof RfqsIndexRoute
@@ -140,6 +148,7 @@ export interface FileRoutesById {
   '/rfqs/new': typeof RfqsNewRoute
   '/suppliers/performance': typeof SuppliersPerformanceRoute
   '/goods-receipts/': typeof GoodsReceiptsIndexRoute
+  '/invoices/': typeof InvoicesIndexRoute
   '/orders/': typeof OrdersIndexRoute
   '/payments/': typeof PaymentsIndexRoute
   '/rfqs/': typeof RfqsIndexRoute
@@ -158,6 +167,7 @@ export interface FileRouteTypes {
     | '/rfqs/new'
     | '/suppliers/performance'
     | '/goods-receipts/'
+    | '/invoices/'
     | '/orders/'
     | '/payments/'
     | '/rfqs/'
@@ -174,6 +184,7 @@ export interface FileRouteTypes {
     | '/rfqs/new'
     | '/suppliers/performance'
     | '/goods-receipts'
+    | '/invoices'
     | '/orders'
     | '/payments'
     | '/rfqs'
@@ -190,6 +201,7 @@ export interface FileRouteTypes {
     | '/rfqs/new'
     | '/suppliers/performance'
     | '/goods-receipts/'
+    | '/invoices/'
     | '/orders/'
     | '/payments/'
     | '/rfqs/'
@@ -207,6 +219,7 @@ export interface RootRouteChildren {
   RfqsNewRoute: typeof RfqsNewRoute
   SuppliersPerformanceRoute: typeof SuppliersPerformanceRoute
   GoodsReceiptsIndexRoute: typeof GoodsReceiptsIndexRoute
+  InvoicesIndexRoute: typeof InvoicesIndexRoute
   OrdersIndexRoute: typeof OrdersIndexRoute
   PaymentsIndexRoute: typeof PaymentsIndexRoute
   RfqsIndexRoute: typeof RfqsIndexRoute
@@ -254,6 +267,13 @@ declare module '@tanstack/react-router' {
       path: '/goods-receipts/detail'
       fullPath: '/goods-receipts/detail'
       preLoaderRoute: typeof GoodsReceiptsDetailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invoices/': {
+      id: '/invoices/'
+      path: '/invoices'
+      fullPath: '/invoices/'
+      preLoaderRoute: typeof InvoicesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/invoices/detail': {
@@ -327,6 +347,7 @@ const rootRouteChildren: RootRouteChildren = {
   RfqsNewRoute: RfqsNewRoute,
   SuppliersPerformanceRoute: SuppliersPerformanceRoute,
   GoodsReceiptsIndexRoute: GoodsReceiptsIndexRoute,
+  InvoicesIndexRoute: InvoicesIndexRoute,
   OrdersIndexRoute: OrdersIndexRoute,
   PaymentsIndexRoute: PaymentsIndexRoute,
   RfqsIndexRoute: RfqsIndexRoute,
