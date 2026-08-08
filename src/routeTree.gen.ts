@@ -10,33 +10,219 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BudgetRouteImport } from './routes/budget'
+import { Route as ContractsRouteImport } from './routes/contracts'
+import { Route as RequisitionsRouteImport } from './routes/requisitions'
+import { Route as GoodsReceiptsIndexRouteImport } from './routes/goods-receipts/index'
+import { Route as GoodsReceiptsDetailRouteImport } from './routes/goods-receipts/detail'
+import { Route as InvoicesIndexRouteImport } from './routes/invoices/index'
+import { Route as InvoicesDetailRouteImport } from './routes/invoices/detail'
+import { Route as OrdersIndexRouteImport } from './routes/orders/index'
+import { Route as OrdersNewRouteImport } from './routes/orders/new'
+import { Route as PaymentsIndexRouteImport } from './routes/payments/index'
+import { Route as PaymentsDetailRouteImport } from './routes/payments/detail'
+import { Route as RfqsIndexRouteImport } from './routes/rfqs/index'
+import { Route as RfqsNewRouteImport } from './routes/rfqs/new'
+import { Route as SuppliersPerformanceRouteImport } from './routes/suppliers/performance'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BudgetRoute = BudgetRouteImport.update({
+  id: '/budget',
+  path: '/budget',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContractsRoute = ContractsRouteImport.update({
+  id: '/contracts',
+  path: '/contracts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RequisitionsRoute = RequisitionsRouteImport.update({
+  id: '/requisitions',
+  path: '/requisitions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GoodsReceiptsIndexRoute = GoodsReceiptsIndexRouteImport.update({
+  id: '/goods-receipts/',
+  path: '/goods-receipts/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GoodsReceiptsDetailRoute = GoodsReceiptsDetailRouteImport.update({
+  id: '/goods-receipts/detail',
+  path: '/goods-receipts/detail',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvoicesIndexRoute = InvoicesIndexRouteImport.update({
+  id: '/invoices/',
+  path: '/invoices/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InvoicesDetailRoute = InvoicesDetailRouteImport.update({
+  id: '/invoices/detail',
+  path: '/invoices/detail',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrdersIndexRoute = OrdersIndexRouteImport.update({
+  id: '/orders/',
+  path: '/orders/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OrdersNewRoute = OrdersNewRouteImport.update({
+  id: '/orders/new',
+  path: '/orders/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaymentsIndexRoute = PaymentsIndexRouteImport.update({
+  id: '/payments/',
+  path: '/payments/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaymentsDetailRoute = PaymentsDetailRouteImport.update({
+  id: '/payments/detail',
+  path: '/payments/detail',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RfqsIndexRoute = RfqsIndexRouteImport.update({
+  id: '/rfqs/',
+  path: '/rfqs/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RfqsNewRoute = RfqsNewRouteImport.update({
+  id: '/rfqs/new',
+  path: '/rfqs/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SuppliersPerformanceRoute = SuppliersPerformanceRouteImport.update({
+  id: '/suppliers/performance',
+  path: '/suppliers/performance',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/budget': typeof BudgetRoute
+  '/contracts': typeof ContractsRoute
+  '/requisitions': typeof RequisitionsRoute
+  '/goods-receipts/detail': typeof GoodsReceiptsDetailRoute
+  '/invoices/detail': typeof InvoicesDetailRoute
+  '/orders/new': typeof OrdersNewRoute
+  '/payments/detail': typeof PaymentsDetailRoute
+  '/rfqs/new': typeof RfqsNewRoute
+  '/suppliers/performance': typeof SuppliersPerformanceRoute
+  '/goods-receipts/': typeof GoodsReceiptsIndexRoute
+  '/invoices/': typeof InvoicesIndexRoute
+  '/orders/': typeof OrdersIndexRoute
+  '/payments/': typeof PaymentsIndexRoute
+  '/rfqs/': typeof RfqsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/budget': typeof BudgetRoute
+  '/contracts': typeof ContractsRoute
+  '/requisitions': typeof RequisitionsRoute
+  '/goods-receipts/detail': typeof GoodsReceiptsDetailRoute
+  '/invoices/detail': typeof InvoicesDetailRoute
+  '/orders/new': typeof OrdersNewRoute
+  '/payments/detail': typeof PaymentsDetailRoute
+  '/rfqs/new': typeof RfqsNewRoute
+  '/suppliers/performance': typeof SuppliersPerformanceRoute
+  '/goods-receipts': typeof GoodsReceiptsIndexRoute
+  '/invoices': typeof InvoicesIndexRoute
+  '/orders': typeof OrdersIndexRoute
+  '/payments': typeof PaymentsIndexRoute
+  '/rfqs': typeof RfqsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/budget': typeof BudgetRoute
+  '/contracts': typeof ContractsRoute
+  '/requisitions': typeof RequisitionsRoute
+  '/goods-receipts/detail': typeof GoodsReceiptsDetailRoute
+  '/invoices/detail': typeof InvoicesDetailRoute
+  '/orders/new': typeof OrdersNewRoute
+  '/payments/detail': typeof PaymentsDetailRoute
+  '/rfqs/new': typeof RfqsNewRoute
+  '/suppliers/performance': typeof SuppliersPerformanceRoute
+  '/goods-receipts/': typeof GoodsReceiptsIndexRoute
+  '/invoices/': typeof InvoicesIndexRoute
+  '/orders/': typeof OrdersIndexRoute
+  '/payments/': typeof PaymentsIndexRoute
+  '/rfqs/': typeof RfqsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/budget'
+    | '/contracts'
+    | '/requisitions'
+    | '/goods-receipts/detail'
+    | '/invoices/detail'
+    | '/orders/new'
+    | '/payments/detail'
+    | '/rfqs/new'
+    | '/suppliers/performance'
+    | '/goods-receipts/'
+    | '/invoices/'
+    | '/orders/'
+    | '/payments/'
+    | '/rfqs/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/budget'
+    | '/contracts'
+    | '/requisitions'
+    | '/goods-receipts/detail'
+    | '/invoices/detail'
+    | '/orders/new'
+    | '/payments/detail'
+    | '/rfqs/new'
+    | '/suppliers/performance'
+    | '/goods-receipts'
+    | '/invoices'
+    | '/orders'
+    | '/payments'
+    | '/rfqs'
+  id:
+    | '__root__'
+    | '/'
+    | '/budget'
+    | '/contracts'
+    | '/requisitions'
+    | '/goods-receipts/detail'
+    | '/invoices/detail'
+    | '/orders/new'
+    | '/payments/detail'
+    | '/rfqs/new'
+    | '/suppliers/performance'
+    | '/goods-receipts/'
+    | '/invoices/'
+    | '/orders/'
+    | '/payments/'
+    | '/rfqs/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BudgetRoute: typeof BudgetRoute
+  ContractsRoute: typeof ContractsRoute
+  RequisitionsRoute: typeof RequisitionsRoute
+  GoodsReceiptsDetailRoute: typeof GoodsReceiptsDetailRoute
+  InvoicesDetailRoute: typeof InvoicesDetailRoute
+  OrdersNewRoute: typeof OrdersNewRoute
+  PaymentsDetailRoute: typeof PaymentsDetailRoute
+  RfqsNewRoute: typeof RfqsNewRoute
+  SuppliersPerformanceRoute: typeof SuppliersPerformanceRoute
+  GoodsReceiptsIndexRoute: typeof GoodsReceiptsIndexRoute
+  InvoicesIndexRoute: typeof InvoicesIndexRoute
+  OrdersIndexRoute: typeof OrdersIndexRoute
+  PaymentsIndexRoute: typeof PaymentsIndexRoute
+  RfqsIndexRoute: typeof RfqsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,22 +234,124 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/budget': {
+      id: '/budget'
+      path: '/budget'
+      fullPath: '/budget'
+      preLoaderRoute: typeof BudgetRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contracts': {
+      id: '/contracts'
+      path: '/contracts'
+      fullPath: '/contracts'
+      preLoaderRoute: typeof ContractsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/requisitions': {
+      id: '/requisitions'
+      path: '/requisitions'
+      fullPath: '/requisitions'
+      preLoaderRoute: typeof RequisitionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/goods-receipts/': {
+      id: '/goods-receipts/'
+      path: '/goods-receipts'
+      fullPath: '/goods-receipts/'
+      preLoaderRoute: typeof GoodsReceiptsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/goods-receipts/detail': {
+      id: '/goods-receipts/detail'
+      path: '/goods-receipts/detail'
+      fullPath: '/goods-receipts/detail'
+      preLoaderRoute: typeof GoodsReceiptsDetailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invoices/': {
+      id: '/invoices/'
+      path: '/invoices'
+      fullPath: '/invoices/'
+      preLoaderRoute: typeof InvoicesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/invoices/detail': {
+      id: '/invoices/detail'
+      path: '/invoices/detail'
+      fullPath: '/invoices/detail'
+      preLoaderRoute: typeof InvoicesDetailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/orders/': {
+      id: '/orders/'
+      path: '/orders'
+      fullPath: '/orders/'
+      preLoaderRoute: typeof OrdersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/orders/new': {
+      id: '/orders/new'
+      path: '/orders/new'
+      fullPath: '/orders/new'
+      preLoaderRoute: typeof OrdersNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payments/': {
+      id: '/payments/'
+      path: '/payments'
+      fullPath: '/payments/'
+      preLoaderRoute: typeof PaymentsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payments/detail': {
+      id: '/payments/detail'
+      path: '/payments/detail'
+      fullPath: '/payments/detail'
+      preLoaderRoute: typeof PaymentsDetailRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rfqs/': {
+      id: '/rfqs/'
+      path: '/rfqs'
+      fullPath: '/rfqs/'
+      preLoaderRoute: typeof RfqsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rfqs/new': {
+      id: '/rfqs/new'
+      path: '/rfqs/new'
+      fullPath: '/rfqs/new'
+      preLoaderRoute: typeof RfqsNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/suppliers/performance': {
+      id: '/suppliers/performance'
+      path: '/suppliers/performance'
+      fullPath: '/suppliers/performance'
+      preLoaderRoute: typeof SuppliersPerformanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BudgetRoute: BudgetRoute,
+  ContractsRoute: ContractsRoute,
+  RequisitionsRoute: RequisitionsRoute,
+  GoodsReceiptsDetailRoute: GoodsReceiptsDetailRoute,
+  InvoicesDetailRoute: InvoicesDetailRoute,
+  OrdersNewRoute: OrdersNewRoute,
+  PaymentsDetailRoute: PaymentsDetailRoute,
+  RfqsNewRoute: RfqsNewRoute,
+  SuppliersPerformanceRoute: SuppliersPerformanceRoute,
+  GoodsReceiptsIndexRoute: GoodsReceiptsIndexRoute,
+  InvoicesIndexRoute: InvoicesIndexRoute,
+  OrdersIndexRoute: OrdersIndexRoute,
+  PaymentsIndexRoute: PaymentsIndexRoute,
+  RfqsIndexRoute: RfqsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
