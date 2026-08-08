@@ -10,33 +10,63 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ContractsRouteImport } from './routes/contracts'
+import { Route as RfqsIndexRouteImport } from './routes/rfqs/index'
+import { Route as SuppliersPerformanceRouteImport } from './routes/suppliers/performance'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContractsRoute = ContractsRouteImport.update({
+  id: '/contracts',
+  path: '/contracts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RfqsIndexRoute = RfqsIndexRouteImport.update({
+  id: '/rfqs/',
+  path: '/rfqs/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SuppliersPerformanceRoute = SuppliersPerformanceRouteImport.update({
+  id: '/suppliers/performance',
+  path: '/suppliers/performance',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/contracts': typeof ContractsRoute
+  '/suppliers/performance': typeof SuppliersPerformanceRoute
+  '/rfqs/': typeof RfqsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/contracts': typeof ContractsRoute
+  '/suppliers/performance': typeof SuppliersPerformanceRoute
+  '/rfqs': typeof RfqsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/contracts': typeof ContractsRoute
+  '/suppliers/performance': typeof SuppliersPerformanceRoute
+  '/rfqs/': typeof RfqsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/contracts' | '/suppliers/performance' | '/rfqs/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/contracts' | '/suppliers/performance' | '/rfqs'
+  id: '__root__' | '/' | '/contracts' | '/suppliers/performance' | '/rfqs/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ContractsRoute: typeof ContractsRoute
+  SuppliersPerformanceRoute: typeof SuppliersPerformanceRoute
+  RfqsIndexRoute: typeof RfqsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +78,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/contracts': {
+      id: '/contracts'
+      path: '/contracts'
+      fullPath: '/contracts'
+      preLoaderRoute: typeof ContractsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rfqs/': {
+      id: '/rfqs/'
+      path: '/rfqs'
+      fullPath: '/rfqs/'
+      preLoaderRoute: typeof RfqsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/suppliers/performance': {
+      id: '/suppliers/performance'
+      path: '/suppliers/performance'
+      fullPath: '/suppliers/performance'
+      preLoaderRoute: typeof SuppliersPerformanceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ContractsRoute: ContractsRoute,
+  SuppliersPerformanceRoute: SuppliersPerformanceRoute,
+  RfqsIndexRoute: RfqsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
