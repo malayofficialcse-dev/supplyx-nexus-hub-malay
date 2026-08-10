@@ -1,87 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
 model Requisition {
-  id          String   @id @default(uuid())
-  reqId       String   @unique // e.g. REQ-2041
-  department  String
-  item        String
-  amount      Float
-  status      String   // e.g. "Pending Approval", "Approved", "Rejected"
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(uuid())
+  reqId      String   @unique
+  department String
+  item       String
+  amount     Float
+  status     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model Contract {
   id        String   @id @default(uuid())
-  conId     String   @unique // e.g. CON-8842-A
+  conId     String   @unique
   initials  String
   supplier  String
   start     String
   end       String
-  status    String   // e.g. "Active", "Expiring", "Terminated"
+  status    String
   createdAt DateTime @default(now())
 }
 
 model Order {
   id           String   @id @default(uuid())
-  orderId      String   @unique // e.g. PO-1092
+  orderId      String   @unique
   supplier     String
   amount       Float
   deliveryDate String
-  status       String   // e.g. "Draft", "Submitted", "Approved"
+  status       String
   description  String?
-  items        Json     // List of items in the order
+  items        Json
   createdAt    DateTime @default(now())
 }
 
 model GoodsReceipt {
   id           String   @id @default(uuid())
-  receiptId    String   @unique // e.g. GRN-5521
+  receiptId    String   @unique
   orderId      String
   supplier     String
   deliveryDate String
-  status       String   // e.g. "Fully Received", "Partially Received"
+  status       String
   items        Json
   createdAt    DateTime @default(now())
 }
 
 model Invoice {
-  id          String   @id @default(uuid())
-  invoiceId   String   @unique // e.g. INV-3041
-  supplier    String
-  date        String
-  amount      Float
-  status      String   // e.g. "Paid", "Pending", "Overdue"
-  items       Json
-  createdAt   DateTime @default(now())
+  id        String   @id @default(uuid())
+  invoiceId String   @unique
+  supplier  String
+  date      String
+  amount    Float
+  status    String
+  items     Json
+  createdAt DateTime @default(now())
 }
 
 model Payment {
-  id          String   @id @default(uuid())
-  paymentId   String   @unique // e.g. PAY-9088
-  invoiceId   String
-  supplier    String
-  amount      Float
-  status      String   // e.g. "Processed", "Pending", "Failed"
-  method      String
-  auditTrail  Json
-  createdAt   DateTime @default(now())
+  id         String   @id @default(uuid())
+  paymentId  String   @unique
+  invoiceId  String
+  supplier   String
+  amount     Float
+  status     String
+  method     String
+  auditTrail Json
+  createdAt  DateTime @default(now())
 }
 
 model RFQ {
   id          String   @id @default(uuid())
-  rfqId       String   @unique // e.g. RFQ-2026-001
+  rfqId       String   @unique
   title       String
   department  String
   deadline    String
-  status      String   // e.g. "Draft", "Open", "Closed"
+  status      String
   vendorCount Int      @default(0)
   items       Json
   createdAt   DateTime @default(now())
@@ -98,32 +98,32 @@ model BudgetCategory {
 
 model Warehouse {
   id        String   @id @default(uuid())
-  whId      String   @unique // e.g. WH-01
+  whId      String   @unique
   name      String
   location  String
-  capacity  Float    // in metric tons or sq ft
-  fillLevel Float    // percentage filled (e.g. 75.0)
-  status    String   // e.g. "Active", "Maintenance", "Full"
+  capacity  Float
+  fillLevel Float
+  status    String
   createdAt DateTime @default(now())
 }
 
 model Shipment {
   id             String   @id @default(uuid())
-  trackingNumber String   @unique // e.g. SH-7392-A
+  trackingNumber String   @unique
   origin         String
   destination    String
   carrier        String
-  status         String   // e.g. "In Transit", "Delivered", "Delayed"
+  status         String
   estDelivery    String
   createdAt      DateTime @default(now())
 }
 
 model LogisticsRoute {
   id             String   @id @default(uuid())
-  routeName      String   @unique // e.g. Chicago-NY Express
+  routeName      String   @unique
   costPerMile    Float
-  avgTransitTime Float    // in hours
-  volume         Float    // in tons/month
+  avgTransitTime Float
+  volume         Float
   createdAt      DateTime @default(now())
 }
 
@@ -132,7 +132,7 @@ model Customer {
   companyName String   @unique
   contact     String
   email       String
-  status      String   // e.g. "Active", "Inactive"
+  status      String
   salesYTD    Float
   createdAt   DateTime @default(now())
 }
@@ -140,10 +140,9 @@ model Customer {
 model Carrier {
   id             String   @id @default(uuid())
   name           String   @unique
-  type           String   // e.g. "Air Freight", "Truckload", "Sea Freight"
-  rating         Float    // 0.0 to 5.0
+  type           String
+  rating         Float
   activeVehicles Int
   contact        String
   createdAt      DateTime @default(now())
 }
-
