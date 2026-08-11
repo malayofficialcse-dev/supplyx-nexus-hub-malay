@@ -30,4 +30,28 @@ export class RFQController {
       return res.status(500).json({ error: error.message });
     }
   }
+
+  async addSupplierQuote(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const quote = req.body;
+      if (!id || !quote) return res.status(400).json({ error: "Missing rfq id or quote payload" });
+      const updated = await rfqService.addSupplierQuote(id, quote);
+      return res.json(updated);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  async awardRFQ(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { supplierQuote } = req.body;
+      if (!id || !supplierQuote) return res.status(400).json({ error: "Missing rfq id or supplierQuote" });
+      const order = await rfqService.awardRFQ(id, supplierQuote);
+      return res.status(201).json(order);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
 }

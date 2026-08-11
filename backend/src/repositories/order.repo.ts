@@ -30,6 +30,10 @@ export class OrderRepository {
     return orders.reduce((sum, o) => sum + o.amount, 0);
   }
 
+  async getById(id: string): Promise<Order | null> {
+    return prisma.order.findUnique({ where: { id } });
+  }
+
   async countSubmitted(): Promise<number> {
     return prisma.order.count({
       where: { status: "Submitted" },

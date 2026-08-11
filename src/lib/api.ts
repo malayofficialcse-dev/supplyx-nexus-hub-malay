@@ -184,6 +184,11 @@ export interface GoodsReceipt {
 }
 export const getGoodsReceipts = () => apiFetch<GoodsReceipt[]>("/goods-receipts");
 export const getGoodsReceiptById = (id: string) => apiFetch<GoodsReceipt>(`/goods-receipts/${id}`);
+export const createGoodsReceipt = (data: Omit<GoodsReceipt, "id" | "receiptId">) =>
+  apiFetch<GoodsReceipt>("/goods-receipts", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 
 // Invoices
 export interface InvoiceLineItem {
@@ -198,6 +203,7 @@ export interface Invoice {
   amount: number;
   status: string;
   items: InvoiceLineItem[];
+  createdAt: string;
 }
 export const getInvoices = () => apiFetch<Invoice[]>("/invoices");
 export const getInvoiceById = (id: string) => apiFetch<Invoice>(`/invoices/${id}`);
@@ -217,6 +223,7 @@ export interface Payment {
   status: string;
   method: string;
   auditTrail: AuditEntry[];
+  createdAt: string;
 }
 export const getPayments = () => apiFetch<Payment[]>("/payments");
 export const getPaymentById = (id: string) => apiFetch<Payment>(`/payments/${id}`);

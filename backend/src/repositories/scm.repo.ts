@@ -20,6 +20,10 @@ export class WarehouseRepository {
       orderBy: { whId: "asc" },
     });
   }
+
+  async updateFillLevel(id: string, fillLevel: number): Promise<Warehouse> {
+    return prisma.warehouse.update({ where: { id }, data: { fillLevel } });
+  }
 }
 
 export class ShipmentRepository {
@@ -27,6 +31,10 @@ export class ShipmentRepository {
     return prisma.shipment.findMany({
       orderBy: { estDelivery: "asc" },
     });
+  }
+
+  async create(data: { trackingNumber: string; origin: string; destination: string; carrier: string; status: string; estDelivery: string; }): Promise<Shipment> {
+    return prisma.shipment.create({ data });
   }
 }
 
@@ -74,6 +82,17 @@ export class InvoiceRepository {
       where: { id },
     });
   }
+
+  async create(data: {
+    invoiceId: string;
+    supplier: string;
+    date: string;
+    amount: number;
+    status: string;
+    items: any;
+  }): Promise<Invoice> {
+    return prisma.invoice.create({ data });
+  }
 }
 
 export class PaymentRepository {
@@ -88,6 +107,10 @@ export class PaymentRepository {
       where: { id },
     });
   }
+
+  async create(data: { paymentId: string; invoiceId: string; supplier: string; amount: number; status: string; method: string; auditTrail: any; }): Promise<Payment> {
+    return prisma.payment.create({ data });
+  }
 }
 
 export class GoodsReceiptRepository {
@@ -100,6 +123,19 @@ export class GoodsReceiptRepository {
   async getById(id: string): Promise<GoodsReceipt | null> {
     return prisma.goodsReceipt.findUnique({
       where: { id },
+    });
+  }
+
+  async create(data: {
+    receiptId: string;
+    orderId: string;
+    supplier: string;
+    deliveryDate: string;
+    status: string;
+    items: any;
+  }): Promise<GoodsReceipt> {
+    return prisma.goodsReceipt.create({
+      data,
     });
   }
 }

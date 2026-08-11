@@ -5,5 +5,6 @@ const router = Router();
 const controller = new ShipmentController();
 
 router.get("/", controller.getShipments.bind(controller));
+router.post("/", controller.createShipment.bind(controller));
 
 export default router;

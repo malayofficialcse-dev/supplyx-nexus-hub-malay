@@ -41,6 +41,17 @@ export class ShipmentController {
       return res.status(500).json({ error: error.message });
     }
   }
+
+  async createShipment(req: Request, res: Response) {
+    try {
+      const { trackingNumber, origin, destination, carrier, status, estDelivery } = req.body;
+      if (!trackingNumber || !origin || !destination) return res.status(400).json({ error: "Missing required fields" });
+      const created = await shipmentService.createShipment({ trackingNumber, origin, destination, carrier, status: status || "Created", estDelivery: estDelivery || new Date().toDateString() });
+      return res.status(201).json(created);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
 }
 
 export class LogisticsController {
@@ -106,6 +117,17 @@ export class InvoiceController {
       return res.status(500).json({ error: error.message });
     }
   }
+
+  async createInvoice(req: Request, res: Response) {
+    try {
+      const { supplier, date, amount, items } = req.body;
+      if (!supplier || !date || !amount) return res.status(400).json({ error: "Missing required fields (supplier, date, amount)" });
+      const created = await invoiceService.createInvoice({ supplier, date, amount: parseFloat(amount), items: items || [] });
+      return res.status(201).json(created);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
 }
 
 export class PaymentController {
@@ -127,6 +149,17 @@ export class PaymentController {
       return res.status(500).json({ error: error.message });
     }
   }
+
+  async createPayment(req: Request, res: Response) {
+    try {
+      const { invoiceId, supplier, amount, method } = req.body;
+      if (!invoiceId || !supplier || !amount || !method) return res.status(400).json({ error: "Missing required fields (invoiceId, supplier, amount, method)" });
+      const created = await paymentService.createPayment({ invoiceId, supplier, amount: parseFloat(amount), method, auditTrail: [] });
+      return res.status(201).json(created);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
 }
 
 export class GoodsReceiptController {
@@ -144,6 +177,25 @@ export class GoodsReceiptController {
       const detail = await goodsReceiptService.getGoodsReceiptById(req.params.id);
       if (!detail) return res.status(404).json({ error: "Goods Receipt not found" });
       return res.json(detail);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  async createGoodsReceipt(req: Request, res: Response) {
+    try {
+      const { orderId, supplier, deliveryDate, status, items } = req.body;
+      if (!orderId || !supplier) {
+        return res.status(400).json({ error: "Missing required fields (orderId, supplier)" });
+      }
+      const newGR = await goodsReceiptService.createGoodsReceipt({
+        orderId,
+        supplier,
+        deliveryDate,
+        status,
+        items: items || [],
+      });
+      return res.status(201).json(newGR);
     } catch (error: any) {
       return res.status(500).json({ error: error.message });
     }

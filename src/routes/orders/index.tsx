@@ -16,17 +16,34 @@ export const Route = createFileRoute("/orders/")({
   }),
 });
 
+import { useState } from "react";
+
 function Page() {
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All Statuses");
+
   const { data: orders, isLoading } = useQuery({
     queryKey: ["orders"],
     queryFn: getOrders,
   });
 
-  const liveOrders = orders || [];
+  const allOrders = orders || [];
+
+  const liveOrders = allOrders.filter((order) => {
+    const matchesSearch =
+      order.orderId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.supplier.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (order.description && order.description.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const matchesStatus =
+      statusFilter === "All Statuses" || order.status.toLowerCase() === statusFilter.toLowerCase();
+
+    return matchesSearch && matchesStatus;
+  });
 
   // Calculate sum and statistics
-  const totalSpend = liveOrders.reduce((sum, o) => sum + o.amount, 0);
+  const totalSpend = allOrders.reduce((sum, o) => sum + o.amount, 0);
 
   return (
     <AppShell>
@@ -61,7 +78,7 @@ function Page() {
         <div className="grid grid-cols-4 gap-gutter mb-stack-lg">
           <div className="bg-surface-container-lowest border border-[#E2E8F0] rounded-[4px] p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)] relative">
             <h3 className="text-[#64748B] text-[13px] font-medium mb-1">Total POs (YTD)</h3>
-            <div className="text-[20px] font-semibold text-on-surface">{isLoading ? "..." : liveOrders.length}</div>
+            <div className="text-[20px] font-semibold text-on-surface">{isLoading ? "..." : allOrders.length}</div>
             <div className="absolute bottom-4 right-4 flex items-center text-[#16A34A] text-xs font-medium">
               <Icon name="trending_up" className="text-[14px] mr-0.5" />
               +12%
@@ -80,7 +97,7 @@ function Page() {
           <div className="bg-surface-container-lowest border border-[#E2E8F0] rounded-[4px] p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)] relative">
             <h3 className="text-[#64748B] text-[13px] font-medium mb-1">Pending Delivery</h3>
             <div className="text-[20px] font-semibold text-on-surface">
-              {isLoading ? "..." : liveOrders.filter((o) => o.status === "Submitted").length}
+              {isLoading ? "..." : allOrders.filter((o) => o.status === "Submitted" || o.status === "Draft").length}
             </div>
             <div className="absolute bottom-4 right-4 flex items-center text-[#64748B] text-xs font-medium">
               <span>Active</span>
@@ -102,13 +119,23 @@ function Page() {
             <div className="flex gap-2">
               <div className="relative">
                 <Icon name="search" className="absolute left-3 top-1.5 text-outline-variant text-[16px]" />
-                <input className="pl-8 pr-3 py-1.5 border border-[#E2E8F0] rounded-[4px] text-[13px] focus:outline-none focus:border-[#2563EB] w-64" placeholder="Search this view..." type="text" />
+                <input
+                  className="pl-8 pr-3 py-1.5 border border-[#E2E8F0] rounded-[4px] text-[13px] focus:outline-none focus:border-[#2563EB] w-64"
+                  placeholder="Search this view..."
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
-              <select className="border border-[#E2E8F0] rounded-[4px] text-[13px] py-1.5 pl-3 pr-8 focus:outline-none focus:border-[#2563EB] text-on-surface-variant bg-white appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23737686%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:10px_10px] bg-no-repeat bg-[position:right_10px_center]" defaultValue="All Statuses">
-                <option>All Statuses</option>
-                <option>Sent</option>
-                <option>Received</option>
-                <option>Cancelled</option>
+              <select
+                className="border border-[#E2E8F0] rounded-[4px] text-[13px] py-1.5 pl-3 pr-8 focus:outline-none focus:border-[#2563EB] text-on-surface-variant bg-white appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23737686%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-[length:10px_10px] bg-no-repeat bg-[position:right_10px_center]"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="All Statuses">All Statuses</option>
+                <option value="Approved">Approved</option>
+                <option value="Submitted">Submitted</option>
+                <option value="Draft">Draft</option>
               </select>
             </div>
             <div className="flex gap-2">

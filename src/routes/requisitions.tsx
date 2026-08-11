@@ -40,9 +40,21 @@ function Page() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [department, setDepartment] = useState("Operations");
+  const [costCenter, setCostCenter] = useState("cc1");
   const [lineItems, setLineItems] = useState<LineItem[]>([
     { description: "", sku: "", qty: 1, price: 0 },
   ]);
+
+  // Derive requester label from department (production: would use auth context)
+  const deptManagerMap: Record<string, string> = {
+    "Operations": "Operations Dept.",
+    "IT Infrastructure": "IT Dept.",
+    "Facilities": "Facilities Dept.",
+    "Marketing": "Marketing Dept.",
+    "Finance": "Finance Dept.",
+    "Logistics": "Logistics Dept.",
+  };
+  const requesterLabel = deptManagerMap[department] || `${department} Dept.`;
 
   const subtotal = lineItems.reduce((acc, item) => acc + item.qty * item.price, 0);
   const tax = subtotal * 0.08;
@@ -115,7 +127,7 @@ function Page() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
               <div>
                 <label className={formLabel} htmlFor="requester">Requester</label>
-                <input className={`${formInput} bg-surface-container-low text-on-surface-variant cursor-not-allowed`} id="requester" readOnly type="text" defaultValue="John Doe (Operations)" />
+                <input className={`${formInput} bg-surface-container-low text-on-surface-variant cursor-not-allowed`} id="requester" readOnly type="text" value={requesterLabel} />
               </div>
               <div>
                 <label className={formLabel} htmlFor="department">Department</label>
@@ -133,7 +145,7 @@ function Page() {
               </div>
               <div>
                 <label className={formLabel} htmlFor="costCenter">Cost Center</label>
-                <select className={formSelect} id="costCenter" defaultValue="cc1">
+                <select className={formSelect} id="costCenter" value={costCenter} onChange={(e) => setCostCenter(e.target.value)}>
                   <option value="cc1">CC-1001 (Main HQ)</option>
                   <option value="cc2">CC-1002 (Warehouse A)</option>
                   <option value="cc3">CC-1003 (Logistics Hub)</option>

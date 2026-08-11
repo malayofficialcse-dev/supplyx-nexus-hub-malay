@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/AppShell";
 import { Icon } from "@/components/Icon";
+import { getContracts } from "@/lib/api";
 
 export const Route = createFileRoute("/contracts")({
   component: ContractsPage,
@@ -22,65 +24,20 @@ export const Route = createFileRoute("/contracts")({
   }),
 });
 
-type Row = {
-  id: string;
-  initials: string;
-  supplier: string;
-  start: string;
-  end: string;
-  status: "Active" | "Expiring" | "Terminated";
-};
-
-const rows: Row[] = [
-  {
-    id: "CON-8842-A",
-    initials: "GT",
-    supplier: "Global Tech Mfg",
-    start: "Jan 01, 2023",
-    end: "Dec 31, 2025",
-    status: "Active",
-  },
-  {
-    id: "CON-7921-X",
-    initials: "NS",
-    supplier: "Nordic Steel Co.",
-    start: "Mar 15, 2021",
-    end: "Nov 15, 2023",
-    status: "Expiring",
-  },
-  {
-    id: "CON-9011-B",
-    initials: "AP",
-    supplier: "Apex Packaging",
-    start: "Jun 01, 2022",
-    end: "May 31, 2026",
-    status: "Active",
-  },
-  {
-    id: "CON-4432-F",
-    initials: "PL",
-    supplier: "Pacific Logistics",
-    start: "Jan 01, 2018",
-    end: "Dec 31, 2020",
-    status: "Terminated",
-  },
-  {
-    id: "CON-9923-C",
-    initials: "EM",
-    supplier: "Eastern Micro",
-    start: "Sep 15, 2023",
-    end: "Sep 14, 2028",
-    status: "Active",
-  },
-];
-
-const badge: Record<Row["status"], string> = {
+const badge: Record<string, string> = {
   Active: "bg-success-bg text-success border-success-border",
   Expiring: "bg-danger-bg text-danger border-danger-border",
   Terminated: "bg-neutral-bg text-neutral border-neutral-border",
 };
 
 function ContractsPage() {
+  const { data: contracts, isLoading, error } = useQuery({
+    queryKey: ["contracts"],
+    queryFn: getContracts,
+  });
+
+  const rows = contracts ?? [];
+
   return (
     <AppShell>
       <div className="max-w-7xl mx-auto space-y-6">
@@ -159,71 +116,93 @@ function ContractsPage() {
                 </tr>
               </thead>
               <tbody className="text-body-sm font-body-sm text-on-surface divide-y divide-outline-variant">
-                {rows.map((row) => {
-                  const terminated = row.status === "Terminated";
-                  const expiring = row.status === "Expiring";
-                  return (
-                    <tr
-                      key={row.id}
-                      className={`hover:bg-surface-container-low transition-colors h-10 ${
-                        terminated ? "opacity-75" : ""
-                      } ${expiring ? "bg-error-container/10" : ""}`}
-                    >
-                      <td className="px-4 py-2">
-                        <input
-                          type="checkbox"
-                          disabled={terminated}
-                          className="rounded-[2px] border-outline-variant accent-primary h-3.5 w-3.5"
-                        />
-                      </td>
-                      <td
-                        className={`px-4 py-2 font-data-mono text-data-mono font-medium ${
-                          terminated ? "text-secondary" : "text-primary"
-                        }`}
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={7} className="text-center py-8 text-on-surface-variant">
+                      Loading contracts...
+                    </td>
+                  </tr>
+                ) : error ? (
+                  <tr>
+                    <td colSpan={7} className="text-center py-8 text-error">
+                      Failed to load contracts.
+                    </td>
+                  </tr>
+                ) : rows.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="text-center py-8 text-on-surface-variant">
+                      No contracts found.
+                    </td>
+                  </tr>
+                ) : (
+                  rows.map((row) => {
+                    const terminated = row.status === "Terminated";
+                    const expiring = row.status === "Expiring";
+                    return (
+                      <tr
+                        key={row.id}
+                        className={`hover:bg-surface-container-low transition-colors h-10 ${
+                          terminated ? "opacity-75" : ""
+                        } ${expiring ? "bg-error-container/10" : ""}`}
                       >
-                        {row.id}
-                      </td>
-                      <td className="px-4 py-2">
-                        <div className="flex items-center gap-2">
-                          <div
-                            className={`w-5 h-5 rounded flex items-center justify-center text-[10px] font-bold ${
-                              terminated
-                                ? "bg-surface-variant text-on-surface-variant"
-                                : "bg-secondary-container text-on-secondary-container"
+                        <td className="px-4 py-2">
+                          <input
+                            type="checkbox"
+                            disabled={terminated}
+                            className="rounded-[2px] border-outline-variant accent-primary h-3.5 w-3.5"
+                          />
+                        </td>
+                        <td
+                          className={`px-4 py-2 font-data-mono text-data-mono font-medium ${
+                            terminated ? "text-secondary" : "text-primary"
+                          }`}
+                        >
+                          {row.conId}
+                        </td>
+                        <td className="px-4 py-2">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`w-5 h-5 rounded flex items-center justify-center text-[10px] font-bold ${
+                                terminated
+                                  ? "bg-surface-variant text-on-surface-variant"
+                                  : "bg-secondary-container text-on-secondary-container"
+                              }`}
+                            >
+                              {row.initials}
+                            </div>
+                            {row.supplier}
+                          </div>
+                        </td>
+                        <td className="px-4 py-2 text-on-surface-variant">
+                          {row.start}
+                        </td>
+                        <td
+                          className={`px-4 py-2 ${
+                            expiring
+                              ? "text-error font-medium"
+                              : "text-on-surface-variant"
+                          }`}
+                        >
+                          {row.end}
+                        </td>
+                        <td className="px-4 py-2">
+                          <span
+                            className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border ${
+                              badge[row.status] ?? "bg-surface-container text-on-surface"
                             }`}
                           >
-                            {row.initials}
-                          </div>
-                          {row.supplier}
-                        </div>
-                      </td>
-                      <td className="px-4 py-2 text-on-surface-variant">
-                        {row.start}
-                      </td>
-                      <td
-                        className={`px-4 py-2 ${
-                          expiring
-                            ? "text-error font-medium"
-                            : "text-on-surface-variant"
-                        }`}
-                      >
-                        {row.end}
-                      </td>
-                      <td className="px-4 py-2">
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border ${badge[row.status]}`}
-                        >
-                          {row.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2 text-right">
-                        <button className="text-outline hover:text-primary transition-colors">
-                          <Icon name="more_vert" className="text-[18px]" />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
+                            {row.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2 text-right">
+                          <button className="text-outline hover:text-primary transition-colors">
+                            <Icon name="more_vert" className="text-[18px]" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>

@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { Icon } from "@/components/Icon";
 import { useQuery } from "@tanstack/react-query";
-import { getCustomers } from "@/lib/api";
+import { getCustomers, Customer } from "@/lib/api";
 
 export const Route = createFileRoute("/customers")({
   component: CustomersPage,
@@ -15,10 +15,22 @@ export const Route = createFileRoute("/customers")({
 });
 
 function CustomersPage() {
-  const { data: customers, isLoading } = useQuery({
+  const navigate = useNavigate();
+
+  const { data: customers, isLoading } = useQuery<Customer[]>({
     queryKey: ["customers"],
     queryFn: getCustomers,
   });
+
+  const initials = (name?: string) => {
+    if (!name) return "--";
+    return name
+      .split(" ")
+      .map((s) => s[0])
+      .slice(0, 2)
+      .join("")
+      .toUpperCase();
+  };
 
   return (
     <AppShell>
@@ -57,9 +69,18 @@ function CustomersPage() {
                   </tr>
                 ) : (
                   customers.map((cust) => (
-                    <tr key={cust.id} className="hover:bg-surface-container-low/50 transition-colors h-12">
+                    <tr
+                      key={cust.id}
+                      onClick={() => {
+                        const path = ["/customers", "detail"].join("/");
+                        window.location.href = path + "?id=" + cust.id;
+                      }}
+                      className="hover:bg-surface-container-low/50 transition-colors h-12 cursor-pointer"
+                    >
                       <td className="px-4 font-medium flex items-center gap-2 h-12">
-                        <Icon name="groups" className="text-[#475569] text-[18px]" />
+                        <div className="w-8 h-8 rounded flex items-center justify-center bg-secondary-container text-on-secondary-container font-bold text-sm">
+                          {initials(cust.companyName)}
+                        </div>
                         {cust.companyName}
                       </td>
                       <td className="px-4 font-medium">{cust.contact}</td>

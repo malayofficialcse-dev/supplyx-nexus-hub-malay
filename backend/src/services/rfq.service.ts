@@ -1,12 +1,18 @@
 import { RFQ } from "@prisma/client";
 import { RFQRepository } from "../repositories/rfq.repo.js";
 import { deleteCache } from "../lib/redis.js";
+import { OrderService } from "./order.service.js";
 
 const rfqRepo = new RFQRepository();
+const orderService = new OrderService();
 
 export class RFQService {
   async getRFQs(): Promise<RFQ[]> {
     return rfqRepo.getAll();
+  }
+
+  async getById(id: string): Promise<RFQ | null> {
+    return rfqRepo.getById(id);
   }
 
   async createRFQ(data: {
@@ -32,5 +38,23 @@ export class RFQService {
     await deleteCache("scm:dashboard:analytics");
 
     return newRfq;
+  }
+
+  async addSupplierQuote(rfqId: string, quote: any): Promise<RFQ> {
+    const updated = await rfqRepo.addSupplierQuote(rfqId, quote);
+    await deleteCache("scm:dashboard:analytics");
+    return updated;
+  }
+
+  async awardRFQ(rfqId: string, supplierQuote: any): Promise<any> {
+    // create order based on supplierQuote
+    const newOrder = await orderService.createOrder({
+      supplier: supplierQuote.supplier,
+      amount: supplierQuote.amount,
+      deliveryDate: supplierQuote.deliveryDate || new Date().toDateString(),
+      description: `Awarded from RFQ ${rfqId}`,
+      items: supplierQuote.items || [],
+    });
+    return newOrder;
   }
 }

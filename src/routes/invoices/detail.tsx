@@ -1,50 +1,94 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { Icon } from "@/components/Icon";
+import { useQuery } from "@tanstack/react-query";
+import { getInvoiceById, getInvoices, Invoice } from "@/lib/api";
 
 export const Route = createFileRoute("/invoices/detail")({
   component: Page,
   head: () => ({
     meta: [
-      { title: "Invoice #INV-2023-4920 - SupplyX" },
-      {
-        name: "description",
-        content:
-          "Review extracted invoice data, line items, related documents and approve or reject Invoice #INV-2023-4920 for payment.",
-      },
-      { property: "og:title", content: "Invoice #INV-2023-4920 - SupplyX" },
-      {
-        property: "og:description",
-        content:
-          "Review extracted invoice data, line items, related documents and approve or reject Invoice #INV-2023-4920 for payment.",
-      },
+      { title: "Invoice Details - SupplyX" },
+      { name: "description", content: "Review extracted invoice data, line items, and approve or reject for payment." },
+      { property: "og:title", content: "Invoice Details - SupplyX" },
+      { property: "og:description", content: "Review extracted invoice data, line items, and approve or reject for payment." },
     ],
   }),
 });
 
 function Page() {
+  const navigate = useNavigate();
+  const invoiceId = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("id") : null;
+
+  const invoiceQuery = useQuery<Invoice>({
+    queryKey: ["invoice", invoiceId],
+    queryFn: () => getInvoiceById(invoiceId ?? ""),
+    enabled: Boolean(invoiceId),
+  });
+
+  if (!invoiceId) {
+    return (
+      <AppShell>
+        <div className="max-w-7xl mx-auto py-16 text-center">
+          <p className="font-page-title text-page-title text-error">No invoice selected.</p>
+          <p className="mt-3 text-body-md text-on-surface-variant">Please return to the invoice list and choose an invoice to view details.</p>
+        </div>
+      </AppShell>
+    );
+  }
+
+  if (invoiceQuery.isLoading) {
+    return (
+      <AppShell>
+        <div className="max-w-7xl mx-auto py-16 text-center text-on-surface-variant">Loading invoice details...</div>
+      </AppShell>
+    );
+  }
+
+  if (invoiceQuery.isError || !invoiceQuery.data) {
+    return (
+      <AppShell>
+        <div className="max-w-7xl mx-auto py-16 text-center">
+          <p className="font-page-title text-page-title text-error">Unable to load invoice details.</p>
+          <p className="mt-3 text-body-md text-on-surface-variant">Please go back to the invoice list and try again.</p>
+        </div>
+      </AppShell>
+    );
+  }
+
+  const invoice = invoiceQuery.data;
+
   return (
     <AppShell>
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Page Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-stack-lg">
           <div className="flex items-center gap-4">
-            <button className="w-10 h-10 rounded-lg flex items-center justify-center border border-outline-variant hover:bg-surface-container-low transition-colors text-on-surface-variant bg-surface">
+            <button
+              onClick={() => navigate({ to: "/invoices" })}
+              className="w-10 h-10 rounded-lg flex items-center justify-center border border-outline-variant hover:bg-surface-container-low transition-colors text-on-surface-variant bg-surface"
+            >
               <Icon name="arrow_back" />
             </button>
             <div>
               <div className="flex items-center gap-3">
                 <h2 className="font-page-title text-page-title text-on-surface">
-                  Invoice #INV-2023-4920
+                  Invoice #{isLoading ? "..." : invoice.invoiceId}
                 </h2>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-sm font-label-caps text-[11px] uppercase tracking-wider bg-surface-variant text-on-surface-variant border border-outline-variant border-opacity-50">
-                  Pending Verification
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-sm font-label-caps text-[11px] uppercase tracking-wider border ${
+                  invoice.status === "Paid"
+                    ? "bg-[#DCFCE7] text-[#16A34A] border-[#bbf7d0]"
+                    : invoice.status === "Overdue"
+                      ? "bg-[#FEE2E2] text-[#DC2626] border-[#fecaca]"
+                      : "bg-surface-variant text-on-surface-variant border-outline-variant"
+                }`}>
+                  {invoice.status}
                 </span>
               </div>
               <p className="font-body-sm text-body-sm text-on-surface-variant mt-1 flex items-center gap-2">
-                Received: <span className="font-data-mono text-data-mono text-on-surface">Oct 24, 2023, 09:14 AM</span>
+                Supplier: <span className="font-medium text-on-surface">{invoice.supplier}</span>
                 <span className="w-1 h-1 rounded-full bg-outline-variant"></span>
-                Confidence Score: <span className="text-tertiary-container font-medium">98%</span>
+                Date: <span className="font-data-mono text-data-mono text-on-surface">{invoice.date}</span>
               </p>
             </div>
           </div>
@@ -183,7 +227,7 @@ function Page() {
                         Due Date
                       </span>
                       <span className="block font-data-mono text-data-mono text-error font-medium mt-0.5">
-                        2023-11-21
+                        {invoice.date}
                       </span>
                     </div>
                     <div>
@@ -201,96 +245,63 @@ function Page() {
                   <h4 className="font-label-caps text-label-caps text-on-surface-variant uppercase mb-3">
                     Totals
                   </h4>
-                  <div className="flex flex-col gap-2 w-full">
-                    <div className="flex justify-between items-center w-full">
-                      <span className="font-body-sm text-[12px] text-on-surface-variant">Subtotal</span>
-                      <span className="font-data-mono text-data-mono text-on-surface">$54,200.00</span>
-                    </div>
-                    <div className="flex justify-between items-center w-full">
-                      <span className="font-body-sm text-[12px] text-on-surface-variant">Tax (8.5%)</span>
-                      <span className="font-data-mono text-data-mono text-on-surface">$4,607.00</span>
-                    </div>
-                    <div className="flex justify-between items-center w-full">
-                      <span className="font-body-sm text-[12px] text-on-surface-variant">Shipping</span>
-                      <span className="font-data-mono text-data-mono text-on-surface">$450.00</span>
-                    </div>
-                    <div className="border-t border-outline-variant pt-2 mt-1 flex justify-between items-end w-full">
-                      <span className="font-body-md text-on-surface font-semibold">Total</span>
-                      <span className="font-data-mono text-[18px] font-bold text-on-surface">
-                        $59,257.00
-                      </span>
-                    </div>
-                  </div>
+                  {(() => {
+                    const subtotal = invoice.items.reduce((s: number, it: {description: string; amount: number}) => s + it.amount, 0);
+                    const tax = Math.round(subtotal * 0.085);
+                    const shipping = 450;
+                    const total = subtotal + tax + shipping;
+                    return (
+                      <div className="flex flex-col gap-2 w-full">
+                        <div className="flex justify-between items-center w-full">
+                          <span className="font-body-sm text-[12px] text-on-surface-variant">Subtotal</span>
+                          <span className="font-data-mono text-data-mono text-on-surface">${subtotal.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+                        </div>
+                        <div className="flex justify-between items-center w-full">
+                          <span className="font-body-sm text-[12px] text-on-surface-variant">Tax (8.5%)</span>
+                          <span className="font-data-mono text-data-mono text-on-surface">${tax.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+                        </div>
+                        <div className="flex justify-between items-center w-full">
+                          <span className="font-body-sm text-[12px] text-on-surface-variant">Shipping</span>
+                          <span className="font-data-mono text-data-mono text-on-surface">$450.00</span>
+                        </div>
+                        <div className="border-t border-outline-variant pt-2 mt-1 flex justify-between items-end w-full">
+                          <span className="font-body-md text-on-surface font-semibold">Total</span>
+                          <span className="font-data-mono text-[18px] font-bold text-on-surface">
+                            ${total.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
               {/* Line Items Table */}
               <div className="bg-surface border border-outline-variant rounded-xl shadow-[0_1px_3px_rgba(15,23,42,0.04)] overflow-hidden flex flex-col">
                 <div className="px-4 py-3 border-b border-outline-variant flex justify-between items-center bg-surface-bright">
                   <h4 className="font-subsection-heading text-[15px] text-on-surface">
-                    Extracted Line Items
+                    Invoice Line Items
                   </h4>
                   <span className="bg-surface-container-high text-primary px-2 py-0.5 rounded text-[11px] font-bold">
-                    4 Items
+                    {invoice.items.length} {invoice.items.length === 1 ? "Item" : "Items"}
                   </span>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-surface-container-low border-b border-outline-variant">
-                        <th className="py-2 px-4 font-label-caps text-[11px] text-on-surface-variant font-medium uppercase tracking-wider w-[10%]">
-                          SKU
-                        </th>
-                        <th className="py-2 px-4 font-label-caps text-[11px] text-on-surface-variant font-medium uppercase tracking-wider w-[40%]">
-                          Description
-                        </th>
-                        <th className="py-2 px-4 font-label-caps text-[11px] text-on-surface-variant font-medium uppercase tracking-wider text-right w-[15%]">
-                          Qty
-                        </th>
-                        <th className="py-2 px-4 font-label-caps text-[11px] text-on-surface-variant font-medium uppercase tracking-wider text-right w-[15%]">
-                          Unit
-                        </th>
-                        <th className="py-2 px-4 font-label-caps text-[11px] text-on-surface-variant font-medium uppercase tracking-wider text-right w-[20%]">
-                          Ext
-                        </th>
+                        <th className="py-2 px-4 font-label-caps text-[11px] text-on-surface-variant font-medium uppercase tracking-wider w-[5%]">#</th>
+                        <th className="py-2 px-4 font-label-caps text-[11px] text-on-surface-variant font-medium uppercase tracking-wider w-[60%]">Description</th>
+                        <th className="py-2 px-4 font-label-caps text-[11px] text-on-surface-variant font-medium uppercase tracking-wider text-right w-[35%]">Amount</th>
                       </tr>
                     </thead>
                     <tbody className="font-data-mono text-[12px] text-on-surface">
-                      <tr className="border-b border-outline-variant hover:bg-surface-container-lowest transition-colors cursor-pointer group">
-                        <td className="py-2.5 px-4 text-on-surface-variant">IC-902</td>
-                        <td
-                          className="py-2.5 px-4 font-body-sm truncate max-w-[150px]"
-                          title="Industrial Controller V2"
-                        >
-                          Industrial Controller V2
-                        </td>
-                        <td className="py-2.5 px-4 text-right">50</td>
-                        <td className="py-2.5 px-4 text-right">$800.00</td>
-                        <td className="py-2.5 px-4 text-right font-medium">$40,000.00</td>
-                      </tr>
-                      <tr className="border-b border-outline-variant hover:bg-surface-container-lowest transition-colors cursor-pointer group">
-                        <td className="py-2.5 px-4 text-on-surface-variant">SN-441</td>
-                        <td
-                          className="py-2.5 px-4 font-body-sm truncate max-w-[150px]"
-                          title="Proximity Sensor Array"
-                        >
-                          Proximity Sensor Array
-                        </td>
-                        <td className="py-2.5 px-4 text-right">100</td>
-                        <td className="py-2.5 px-4 text-right">$120.00</td>
-                        <td className="py-2.5 px-4 text-right font-medium">$12,000.00</td>
-                      </tr>
-                      <tr className="border-b border-outline-variant hover:bg-surface-container-lowest transition-colors cursor-pointer group">
-                        <td className="py-2.5 px-4 text-on-surface-variant">CBL-8</td>
-                        <td
-                          className="py-2.5 px-4 font-body-sm truncate max-w-[150px]"
-                          title="Shielded CAT8 10m"
-                        >
-                          Shielded CAT8 10m
-                        </td>
-                        <td className="py-2.5 px-4 text-right">200</td>
-                        <td className="py-2.5 px-4 text-right">$11.00</td>
-                        <td className="py-2.5 px-4 text-right font-medium">$2,200.00</td>
-                      </tr>
+                      {invoice.items.map((item: {description: string; amount: number}, idx: number) => (
+                        <tr key={idx} className="border-b border-outline-variant hover:bg-surface-container-lowest transition-colors">
+                          <td className="py-2.5 px-4 text-on-surface-variant">{idx + 1}</td>
+                          <td className="py-2.5 px-4 font-body-sm">{item.description}</td>
+                          <td className="py-2.5 px-4 text-right font-medium">${item.amount.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
@@ -312,22 +323,22 @@ function Page() {
                       </div>
                       <div>
                         <p className="font-subsection-heading text-[14px] text-on-surface">
-                          Purchase Order <span className="font-data-mono font-normal">#PO-9921</span>
+                          Invoice <span className="font-data-mono font-normal">#{invoice.invoiceId}</span>
                         </p>
                         <p className="font-body-sm text-[12px] text-on-surface-variant mt-0.5 flex items-center gap-2">
                           Status:{" "}
                           <span className="text-tertiary-container flex items-center gap-1">
-                            <Icon name="check_circle" className="text-[14px]" /> Approved
+                            <Icon name="check_circle" className="text-[14px]" /> {invoice.status}
                           </span>
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
                       <span className="block font-data-mono text-[13px] text-on-surface">
-                        $59,257.00
+                        ${invoice.amount.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}
                       </span>
                       <span className="block font-body-sm text-[11px] text-tertiary-container font-medium mt-0.5">
-                        100% Matched
+                        3-Way Match Pending
                       </span>
                     </div>
                   </a>

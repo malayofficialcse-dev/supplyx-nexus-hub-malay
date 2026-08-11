@@ -1,6 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/AppShell";
 import { Icon } from "@/components/Icon";
+import { getPayments, Payment } from "@/lib/api";
 
 export const Route = createFileRoute("/payments/")({
   component: Page,
@@ -15,6 +17,12 @@ export const Route = createFileRoute("/payments/")({
 });
 
 function Page() {
+  const navigate = useNavigate();
+  const { data: payments, isLoading, error } = useQuery<Payment[]>({
+    queryKey: ["payments"],
+    queryFn: getPayments,
+  });
+
   return (
     <AppShell>
       <div className="max-w-7xl mx-auto space-y-stack-lg">
@@ -40,11 +48,16 @@ function Page() {
           {/* KPI 1 */}
           <div className="bg-surface border border-outline-variant rounded-lg p-container-padding table-shadow flex flex-col justify-between h-32">
             <div className="flex justify-between items-start">
-              <span className="font-body-sm text-body-sm text-on-surface-variant">Total Paid (Jan)</span>
+              <span className="font-body-sm text-body-sm text-on-surface-variant">Total Paid</span>
               <Icon name="account_balance_wallet" className="text-outline text-[20px]" />
             </div>
             <div className="flex items-end justify-between">
-              <span className="font-section-heading text-section-heading font-semibold text-on-surface">$1.24M</span>
+              <span className="font-section-heading text-section-heading font-semibold text-on-surface">
+                {isLoading ? "—" : payments?.reduce((sum, payment) => sum + payment.amount, 0).toLocaleString(undefined, {
+                  style: "currency",
+                  currency: "USD",
+                })}
+              </span>
               <span className="font-body-sm text-body-sm text-[#16A34A] flex items-center bg-[#DCFCE7] px-1.5 py-0.5 rounded-[4px]">
                 <Icon name="trending_up" className="text-[14px]" /> +4.2%
               </span>
@@ -57,8 +70,10 @@ function Page() {
               <Icon name="pending" className="text-outline text-[20px]" />
             </div>
             <div className="flex items-end justify-between">
-              <span className="font-section-heading text-section-heading font-semibold text-on-surface">42</span>
-              <span className="font-body-sm text-body-sm text-on-surface-variant">$284.5k Vol.</span>
+              <span className="font-section-heading text-section-heading font-semibold text-on-surface">
+                {isLoading ? "—" : payments?.filter((item) => item.status.toLowerCase() === "processing").length ?? 0}
+              </span>
+              <span className="font-body-sm text-body-sm text-on-surface-variant">{isLoading ? "—" : `$${payments?.filter((item) => item.status.toLowerCase() === "processing").reduce((sum, item) => sum + item.amount, 0).toLocaleString() ?? "0"}`} Vol.</span>
             </div>
           </div>
           {/* KPI 3 */}
@@ -68,7 +83,9 @@ function Page() {
               <Icon name="error" className="text-outline text-[20px]" />
             </div>
             <div className="flex items-end justify-between">
-              <span className="font-section-heading text-section-heading font-semibold text-on-surface">3</span>
+              <span className="font-section-heading text-section-heading font-semibold text-on-surface">
+                {isLoading ? "—" : payments?.filter((item) => item.status.toLowerCase() === "failed").length ?? 0}
+              </span>
               <span className="font-body-sm text-body-sm text-[#ba1a1a] flex items-center bg-[#ffdad6] px-1.5 py-0.5 rounded-[4px]">
                 Action Required
               </span>
@@ -129,94 +146,75 @@ function Page() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/50 bg-surface">
-                <tr className="h-10 hover:bg-surface-container-low transition-colors group">
-                  <td className="py-2 px-4 font-data-mono text-data-mono text-on-surface">PAY-8923</td>
-                  <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface font-medium">Acme Manufacturing Corp.</td>
-                  <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant hidden sm:table-cell">INV-2024-001</td>
-                  <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant hidden md:table-cell">ACH</td>
-                  <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant whitespace-nowrap">Jan 28, 2024</td>
-                  <td className="py-2 px-4 font-data-mono text-data-mono text-on-surface text-right">$45,200.00</td>
-                  <td className="py-2 px-4 text-center">
-                    <span className="inline-block px-2 py-0.5 rounded-[4px] bg-[#DCFCE7] text-[#16A34A] font-body-sm text-[11px] font-medium leading-tight">Completed</span>
-                  </td>
-                  <td className="py-2 px-4 text-right">
-                    <button className="text-outline hover:text-primary transition-colors opacity-0 group-hover:opacity-100">
-                      <Icon name="more_vert" className="text-[18px]" />
-                    </button>
-                  </td>
-                </tr>
-                <tr className="h-10 hover:bg-surface-container-low transition-colors group">
-                  <td className="py-2 px-4 font-data-mono text-data-mono text-on-surface">PAY-8924</td>
-                  <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface font-medium">Global Logistics LLC</td>
-                  <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant hidden sm:table-cell">FRGHT-992</td>
-                  <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant hidden md:table-cell">Wire</td>
-                  <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant whitespace-nowrap">Jan 29, 2024</td>
-                  <td className="py-2 px-4 font-data-mono text-data-mono text-on-surface text-right">$128,500.00</td>
-                  <td className="py-2 px-4 text-center">
-                    <span className="inline-block px-2 py-0.5 rounded-[4px] bg-[#FEF9C3] text-[#CA8A04] font-body-sm text-[11px] font-medium leading-tight">Processing</span>
-                  </td>
-                  <td className="py-2 px-4 text-right">
-                    <button className="text-outline hover:text-primary transition-colors opacity-0 group-hover:opacity-100">
-                      <Icon name="more_vert" className="text-[18px]" />
-                    </button>
-                  </td>
-                </tr>
-                <tr className="h-10 hover:bg-surface-container-low transition-colors group bg-error-container/10">
-                  <td className="py-2 px-4 font-data-mono text-data-mono text-on-surface">PAY-8925</td>
-                  <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface font-medium">TechComponents Inc.</td>
-                  <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant hidden sm:table-cell">INV-TC-44</td>
-                  <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant hidden md:table-cell">ACH</td>
-                  <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant whitespace-nowrap">Jan 29, 2024</td>
-                  <td className="py-2 px-4 font-data-mono text-data-mono text-on-surface text-right">$12,450.00</td>
-                  <td className="py-2 px-4 text-center">
-                    <span className="inline-block px-2 py-0.5 rounded-[4px] bg-[#FEE2E2] text-[#DC2626] font-body-sm text-[11px] font-medium leading-tight">Failed</span>
-                  </td>
-                  <td className="py-2 px-4 text-right">
-                    <button className="text-outline hover:text-primary transition-colors opacity-0 group-hover:opacity-100">
-                      <Icon name="more_vert" className="text-[18px]" />
-                    </button>
-                  </td>
-                </tr>
-                <tr className="h-10 hover:bg-surface-container-low transition-colors group">
-                  <td className="py-2 px-4 font-data-mono text-data-mono text-on-surface">PAY-8926</td>
-                  <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface font-medium">Oceanic Shipping Co.</td>
-                  <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant hidden sm:table-cell">OS-2024-11</td>
-                  <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant hidden md:table-cell">Wire</td>
-                  <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant whitespace-nowrap">Jan 30, 2024</td>
-                  <td className="py-2 px-4 font-data-mono text-data-mono text-on-surface text-right">$85,000.00</td>
-                  <td className="py-2 px-4 text-center">
-                    <span className="inline-block px-2 py-0.5 rounded-[4px] bg-[#DCFCE7] text-[#16A34A] font-body-sm text-[11px] font-medium leading-tight">Completed</span>
-                  </td>
-                  <td className="py-2 px-4 text-right">
-                    <button className="text-outline hover:text-primary transition-colors opacity-0 group-hover:opacity-100">
-                      <Icon name="more_vert" className="text-[18px]" />
-                    </button>
-                  </td>
-                </tr>
-                <tr className="h-10 hover:bg-surface-container-low transition-colors group">
-                  <td className="py-2 px-4 font-data-mono text-data-mono text-on-surface">PAY-8927</td>
-                  <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface font-medium">SteelWorks Ltd.</td>
-                  <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant hidden sm:table-cell">ST-9981</td>
-                  <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant hidden md:table-cell">ACH</td>
-                  <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant whitespace-nowrap">Jan 31, 2024</td>
-                  <td className="py-2 px-4 font-data-mono text-data-mono text-on-surface text-right">$22,100.50</td>
-                  <td className="py-2 px-4 text-center">
-                    <span className="inline-block px-2 py-0.5 rounded-[4px] bg-[#FEF9C3] text-[#CA8A04] font-body-sm text-[11px] font-medium leading-tight">Processing</span>
-                  </td>
-                  <td className="py-2 px-4 text-right">
-                    <button className="text-outline hover:text-primary transition-colors opacity-0 group-hover:opacity-100">
-                      <Icon name="more_vert" className="text-[18px]" />
-                    </button>
-                  </td>
-                </tr>
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={8} className="py-8 text-center text-on-surface-variant">
+                      Loading payments...
+                    </td>
+                  </tr>
+                ) : error ? (
+                  <tr>
+                    <td colSpan={8} className="py-8 text-center text-error">
+                      Failed to load payments.
+                    </td>
+                  </tr>
+                ) : !payments || payments.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="py-8 text-center text-on-surface-variant">
+                      No payments found.
+                    </td>
+                  </tr>
+                ) : (
+                  payments.map((payment) => {
+                    const status = payment.status.toLowerCase();
+                    const statusStyles =
+                      status === "completed"
+                        ? "bg-[#DCFCE7] text-[#16A34A]"
+                        : status === "processing"
+                        ? "bg-[#FEF9C3] text-[#CA8A04]"
+                        : status === "failed"
+                        ? "bg-[#FEE2E2] text-[#DC2626]"
+                        : "bg-surface-container text-on-surface-variant";
+
+                    return (
+                      <tr key={payment.id} className="h-10 hover:bg-surface-container-low transition-colors group">
+                        <td className="py-2 px-4 font-data-mono text-data-mono text-on-surface">{payment.paymentId}</td>
+                        <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface font-medium">{payment.supplier}</td>
+                        <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant hidden sm:table-cell">{payment.invoiceId}</td>
+                        <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant hidden md:table-cell">{payment.method}</td>
+                        <td className="py-2 px-4 font-body-sm text-body-sm text-on-surface-variant whitespace-nowrap">{new Date(payment.createdAt).toLocaleDateString()}</td>
+                        <td className="py-2 px-4 font-data-mono text-data-mono text-on-surface text-right">
+                          {payment.amount.toLocaleString(undefined, {
+                            style: "currency",
+                            currency: "USD",
+                          })}
+                        </td>
+                        <td className="py-2 px-4 text-center">
+                          <span className={`inline-block px-2 py-0.5 rounded-[4px] font-body-sm text-[11px] font-medium leading-tight ${statusStyles}`}>
+                            {payment.status}
+                          </span>
+                        </td>
+                        <td className="py-2 px-4 text-right">
+                          <button onClick={() => navigate({ to: "/payments/detail", search: { id: payment.id } })} className="text-outline hover:text-primary transition-colors opacity-0 group-hover:opacity-100">
+                            <Icon name="more_vert" className="text-[18px]" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
           {/* Pagination */}
-          <div className="p-4 border-t border-outline-variant flex justify-between items-center bg-surface rounded-b-lg">
-            <span className="font-body-sm text-body-sm text-on-surface-variant">Showing 1 to 5 of 142 entries</span>
+          <div className="p-4 border-t border-outline-variant flex flex-col sm:flex-row justify-between items-center bg-surface rounded-b-lg gap-3">
+            <span className="font-body-sm text-body-sm text-on-surface-variant">
+              Showing {payments?.length ?? 0} payment{payments && payments.length === 1 ? "" : "s"}
+            </span>
             <div className="flex gap-1">
-              <button className="px-3 py-1 border border-outline-variant rounded-[4px] bg-surface-container-low text-on-surface-variant font-body-sm hover:bg-surface-container transition-colors disabled:opacity-50" disabled>Prev</button>
+              <button className="px-3 py-1 border border-outline-variant rounded-[4px] bg-surface-container-low text-on-surface-variant font-body-sm hover:bg-surface-container transition-colors disabled:opacity-50" disabled>
+                Prev
+              </button>
               <button className="px-3 py-1 border border-primary rounded-[4px] bg-[#EFF6FF] text-[#2563EB] font-body-sm font-medium">1</button>
               <button className="px-3 py-1 border border-outline-variant rounded-[4px] bg-surface text-on-surface hover:bg-surface-container-low transition-colors font-body-sm">2</button>
               <button className="px-3 py-1 border border-outline-variant rounded-[4px] bg-surface text-on-surface hover:bg-surface-container-low transition-colors font-body-sm">3</button>

@@ -25,4 +25,26 @@ export class RequisitionController {
       return res.status(500).json({ error: error.message });
     }
   }
+
+  async approveRequisition(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      if (!id) return res.status(400).json({ error: "Missing requisition id" });
+      const updated = await requisitionService.approveRequisition(id);
+      return res.json(updated);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  async createRFQFromRequisition(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      if (!id) return res.status(400).json({ error: "Missing requisition id" });
+      const newRfq = await requisitionService.createRFQFromRequisition(id);
+      return res.status(201).json(newRfq);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
 }
