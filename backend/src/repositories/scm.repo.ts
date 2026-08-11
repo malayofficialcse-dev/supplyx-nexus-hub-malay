@@ -10,9 +10,11 @@ import {
   Payment,
   GoodsReceipt,
   BudgetCategory,
+  Inventory,
+  InventoryMovement,
 } from "@prisma/client";
 
-const prisma = new PrismaClient();
+export const prisma = new PrismaClient();
 
 interface ListResult<T> {
   data: T[];
@@ -379,6 +381,7 @@ export class GoodsReceiptRepository {
     receiptId: string;
     orderId: string;
     supplier: string;
+    warehouseId?: string;
     deliveryDate: string;
     status: string;
     items: any;
@@ -386,6 +389,70 @@ export class GoodsReceiptRepository {
     return prisma.goodsReceipt.create({
       data,
     });
+  }
+}
+
+export class InventoryRepository {
+  async getAll(): Promise<Inventory[]> {
+    return prisma.inventory.findMany({
+      orderBy: { updatedAt: "desc" },
+    });
+  }
+
+  async getById(id: string): Promise<Inventory | null> {
+    return prisma.inventory.findUnique({
+      where: { id },
+    });
+  }
+
+  async getByWarehouseId(warehouseId: string): Promise<Inventory[]> {
+    return prisma.inventory.findMany({
+      where: { warehouseId },
+      orderBy: { item: "asc" },
+    });
+  }
+
+  async upsertByWarehouseItem(data: {
+    warehouseId: string;
+    item: string;
+    sku?: string;
+    unit: string;
+    delta: number;
+    metadata?: any;
+  }): Promise<Inventory> {
+    const skuValue = data.sku ?? "";
+    return prisma.inventory.upsert({
+      where: { warehouseId_item_sku: { warehouseId: data.warehouseId, item: data.item, sku: skuValue } },
+      create: {
+        warehouseId: data.warehouseId,
+        item: data.item,
+        sku: data.sku,
+        unit: data.unit,
+        quantity: data.delta,
+        metadata: data.metadata || {},
+      },
+      update: {
+        quantity: {
+          increment: data.delta,
+        },
+        metadata: data.metadata || {},
+      },
+    });
+  }
+}
+
+export class InventoryMovementRepository {
+  async create(data: {
+    inventoryId: string;
+    goodsReceiptId: string;
+    orderId: string;
+    warehouseId: string;
+    type: string;
+    quantity: number;
+    balanceAfter: number;
+    notes?: string;
+  }): Promise<InventoryMovement> {
+    return prisma.inventoryMovement.create({ data });
   }
 }
 
