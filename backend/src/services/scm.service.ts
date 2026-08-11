@@ -31,9 +31,39 @@ const invoiceRepo = new InvoiceRepository();
 const paymentRepo = new PaymentRepository();
 const goodsReceiptRepo = new GoodsReceiptRepository();
 
+export interface ListResult<T> {
+  data: T[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export class WarehouseService {
-  async getWarehouses(): Promise<Warehouse[]> {
-    return warehouseRepo.getAll();
+  async getWarehouses(params: Record<string, any> = {}): Promise<ListResult<Warehouse>> {
+    return warehouseRepo.findMany(params);
+  }
+
+  async getWarehouseById(id: string): Promise<Warehouse | null> {
+    return warehouseRepo.getById(id);
+  }
+
+  async createWarehouse(data: {
+    whId: string;
+    name: string;
+    location: string;
+    capacity: number;
+    fillLevel: number;
+    status: string;
+  }): Promise<Warehouse> {
+    return warehouseRepo.create(data);
+  }
+
+  async updateWarehouse(id: string, data: Partial<Omit<Warehouse, "id" | "createdAt">>): Promise<Warehouse> {
+    return warehouseRepo.update(id, data);
+  }
+
+  async deleteWarehouse(id: string): Promise<Warehouse> {
+    return warehouseRepo.delete(id);
   }
 }
 
@@ -60,20 +90,87 @@ export class LogisticsService {
 }
 
 export class CustomerService {
-  async getCustomers(): Promise<Customer[]> {
-    return customerRepo.getAll();
+  async getCustomers(params: Record<string, any> = {}): Promise<ListResult<Customer>> {
+    return customerRepo.findMany(params);
+  }
+
+  async getCustomerById(id: string): Promise<Customer | null> {
+    return customerRepo.getById(id);
+  }
+
+  async createCustomer(data: {
+    companyName: string;
+    contact: string;
+    email: string;
+    status: string;
+    salesYTD: number;
+  }): Promise<Customer> {
+    return customerRepo.create(data);
+  }
+
+  async updateCustomer(id: string, data: Partial<Omit<Customer, "id" | "createdAt">>): Promise<Customer> {
+    return customerRepo.update(id, data);
+  }
+
+  async deleteCustomer(id: string): Promise<Customer> {
+    return customerRepo.delete(id);
   }
 }
 
 export class CarrierService {
-  async getCarriers(): Promise<Carrier[]> {
-    return carrierRepo.getAll();
+  async getCarriers(params: Record<string, any> = {}): Promise<ListResult<Carrier>> {
+    return carrierRepo.findMany(params);
+  }
+
+  async getCarrierById(id: string): Promise<Carrier | null> {
+    return carrierRepo.getById(id);
+  }
+
+  async createCarrier(data: {
+    name: string;
+    type: string;
+    rating: number;
+    activeVehicles: number;
+    contact: string;
+  }): Promise<Carrier> {
+    return carrierRepo.create(data);
+  }
+
+  async updateCarrier(id: string, data: Partial<Omit<Carrier, "id" | "createdAt">>): Promise<Carrier> {
+    return carrierRepo.update(id, data);
+  }
+
+  async deleteCarrier(id: string): Promise<Carrier> {
+    return carrierRepo.delete(id);
   }
 }
 
 export class ContractService {
-  async getContracts(): Promise<Contract[]> {
-    return contractRepo.getAll();
+  async getContracts(params: Record<string, any> = {}): Promise<ListResult<Contract>> {
+    return contractRepo.findMany(params);
+  }
+
+  async getContractById(id: string): Promise<Contract | null> {
+    return contractRepo.getById(id);
+  }
+
+  async createContract(data: {
+    conId: string;
+    initials: string;
+    supplier: string;
+    start: string;
+    end: string;
+    status: string;
+  }): Promise<Contract> {
+    return contractRepo.create(data);
+  }
+
+  async updateContract(id: string, data: Partial<Omit<Contract, "id" | "createdAt">>): Promise<Contract> {
+    return contractRepo.update(id, data);
+  }
+
+  async deleteContract(id: string): Promise<Contract> {
+    return contractRepo.delete(id);
   }
 }
 
