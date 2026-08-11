@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { AppShell } from "@/components/AppShell";
 import { Icon } from "@/components/Icon";
@@ -31,6 +31,7 @@ const badge: Record<string, string> = {
 };
 
 function ContractsPage() {
+  const navigate = useNavigate();
   const { data: contracts, isLoading, error } = useQuery({
     queryKey: ["contracts"],
     queryFn: getContracts,
@@ -41,7 +42,7 @@ function ContractsPage() {
   return (
     <AppShell>
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <div>
             <h2 className="font-page-title text-page-title text-on-surface">
               Contract List
@@ -50,12 +51,19 @@ function ContractsPage() {
               Manage and track supplier agreements.
             </p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => navigate({ to: "/contracts/new" })}
+              className="px-4 py-2 bg-primary-container text-on-primary rounded-lg text-body-sm font-body-sm flex items-center gap-2 font-medium hover:opacity-90 transition-opacity shadow-sm"
+            >
+              <Icon name="add" className="text-[18px]" />
+              New Contract
+            </button>
             <button className="px-4 py-2 border border-outline-variant rounded-lg bg-surface hover:bg-surface-container transition-colors text-body-sm font-body-sm flex items-center gap-2 text-on-surface font-medium shadow-sm">
               <Icon name="filter_list" className="text-[18px]" />
               Filter
             </button>
-            <button className="px-4 py-2 bg-primary-container text-on-primary rounded-lg text-body-sm font-body-sm flex items-center gap-2 font-medium hover:opacity-90 transition-opacity shadow-sm">
+            <button className="px-4 py-2 bg-surface text-on-surface rounded-lg text-body-sm font-body-sm flex items-center gap-2 font-medium hover:bg-surface-container transition-colors shadow-sm">
               <Icon name="download" className="text-[18px]" />
               Export
             </button>
@@ -231,6 +239,7 @@ function ContractsPage() {
             </button>
           </div>
         </div>
+        <Outlet />
       </div>
     </AppShell>
   );

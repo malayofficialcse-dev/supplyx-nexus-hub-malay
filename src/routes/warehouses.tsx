@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { Icon } from "@/components/Icon";
 import { useQuery } from "@tanstack/react-query";
@@ -15,6 +15,7 @@ export const Route = createFileRoute("/warehouses")({
 });
 
 function WarehousesPage() {
+  const navigate = useNavigate();
   const { data: warehouses, isLoading } = useQuery({
     queryKey: ["warehouses"],
     queryFn: getWarehouses,
@@ -23,11 +24,20 @@ function WarehousesPage() {
   return (
     <AppShell>
       <div className="max-w-7xl mx-auto space-y-6">
-        <div>
-          <h2 className="font-page-title text-page-title text-on-surface">Warehouses</h2>
-          <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
-            Monitor and manage enterprise storage locations and inventory capacities.
-          </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="font-page-title text-page-title text-on-surface">Warehouses</h2>
+            <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+              Monitor and manage enterprise storage locations and inventory capacities.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate({ to: "/warehouses/new" })}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-body-sm font-medium text-on-primary hover:opacity-90 transition-opacity"
+          >
+            <Icon name="add" className="text-[18px]" />
+            New Warehouse
+          </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
@@ -89,6 +99,7 @@ function WarehousesPage() {
             ))
           )}
         </div>
+        <Outlet />
       </div>
     </AppShell>
   );

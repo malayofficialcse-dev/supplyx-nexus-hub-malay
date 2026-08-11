@@ -11,10 +11,14 @@ export class RequisitionRepository {
 
   async create(data: {
     reqId: string;
+    requester: string;
     department: string;
+    costCenter: string;
     item: string;
-    amount: number;
+    items: any;
+    total: number;
     status: string;
+    justification?: string | null;
   }): Promise<Requisition> {
     return prisma.requisition.create({
       data,

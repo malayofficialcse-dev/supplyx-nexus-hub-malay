@@ -1,4 +1,4 @@
-import { PrismaClient, Order } from "@prisma/client";
+import { Prisma, PrismaClient, Order } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -32,6 +32,17 @@ export class OrderRepository {
 
   async getById(id: string): Promise<Order | null> {
     return prisma.order.findUnique({ where: { id } });
+  }
+
+  async getByOrderId(orderId: string): Promise<Order | null> {
+    return prisma.order.findUnique({ where: { orderId } });
+  }
+
+  async update(
+    id: string,
+    data: Prisma.OrderUpdateInput | Prisma.OrderUncheckedUpdateInput,
+  ): Promise<Order> {
+    return prisma.order.update({ where: { id }, data });
   }
 
   async countSubmitted(): Promise<number> {

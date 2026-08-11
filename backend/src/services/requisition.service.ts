@@ -14,17 +14,21 @@ export class RequisitionService {
   async createRequisition(data: {
     department: string;
     item: string;
-    amount: number;
+    total: number;
   }): Promise<Requisition> {
     const count = await requisitionRepo.getAll();
     const reqId = `REQ-${2042 + count.length}`;
 
     const newReq = await requisitionRepo.create({
       reqId,
+      requester: "System",
       department: data.department,
+      costCenter: "Unassigned",
       item: data.item,
-      amount: data.amount,
+      items: { requestedItem: data.item, total: data.total },
+      total: data.total,
       status: "Pending Approval",
+      justification: null,
     });
 
     // Invalidate dashboard analytics cache
@@ -52,7 +56,7 @@ export class RequisitionService {
       deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toDateString(),
       status: "Open",
       vendorCount: 0,
-      items: { requestedItem: req.item, amount: req.amount },
+      items: { requestedItem: req.item, total: req.total },
     });
     return newRfq;
   }

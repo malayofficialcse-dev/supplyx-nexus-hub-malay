@@ -99,7 +99,7 @@ function Page() {
     mutation.mutate({
       department,
       item: lineItems[0].description + (lineItems.length > 1 ? ` (+${lineItems.length - 1} other items)` : ""),
-      amount: total,
+      total,
     });
   };
 

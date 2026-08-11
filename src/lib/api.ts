@@ -23,14 +23,14 @@ export interface Requisition {
   reqId: string;
   department: string;
   item: string;
-  amount: number;
+  total: number;
   status: string;
   createdAt: string;
 }
 
 export const getRequisitions = () => apiFetch<Requisition[]>("/requisitions");
 
-export const createRequisition = (data: { department: string; item: string; amount: number }) =>
+export const createRequisition = (data: { department: string; item: string; total: number }) =>
   apiFetch<Requisition>("/requisitions", {
     method: "POST",
     body: JSON.stringify(data),
@@ -99,18 +99,6 @@ export interface DashboardAnalytics {
 
 export const getDashboardAnalytics = () => apiFetch<DashboardAnalytics>("/analytics/dashboard");
 
-// Warehouses
-export interface Warehouse {
-  id: string;
-  whId: string;
-  name: string;
-  location: string;
-  capacity: number;
-  fillLevel: number;
-  status: string;
-}
-export const getWarehouses = () => apiFetch<Warehouse[]>("/warehouses");
-
 // Shipments
 export interface Shipment {
   id: string;
@@ -133,28 +121,6 @@ export interface LogisticsRoute {
 }
 export const getLogistics = () => apiFetch<LogisticsRoute[]>("/logistics");
 
-// Customers
-export interface Customer {
-  id: string;
-  companyName: string;
-  contact: string;
-  email: string;
-  status: string;
-  salesYTD: number;
-}
-export const getCustomers = () => apiFetch<Customer[]>("/customers");
-
-// Carriers
-export interface Carrier {
-  id: string;
-  name: string;
-  type: string;
-  rating: number;
-  activeVehicles: number;
-  contact: string;
-}
-export const getCarriers = () => apiFetch<Carrier[]>("/carriers");
-
 // Contracts
 export interface Contract {
   id: string;
@@ -166,18 +132,116 @@ export interface Contract {
   status: string;
 }
 export const getContracts = () => apiFetch<Contract[]>("/contracts");
+export const getContractById = (id: string) => apiFetch<Contract>(`/contracts/${id}`);
+export const createContract = (data: Omit<Contract, "id" | "createdAt">) =>
+  apiFetch<Contract>("/contracts", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+export const updateContract = (id: string, data: Partial<Omit<Contract, "id" | "createdAt">>) =>
+  apiFetch<Contract>(`/contracts/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+export const deleteContract = (id: string) =>
+  apiFetch<Contract>(`/contracts/${id}`, {
+    method: "DELETE",
+  });
+
+// Warehouses
+export interface Warehouse {
+  id: string;
+  whId: string;
+  name: string;
+  location: string;
+  capacity: number;
+  fillLevel: number;
+  status: string;
+  createdAt: string;
+}
+export const getWarehouses = () => apiFetch<Warehouse[]>('/warehouses');
+export const getWarehouseById = (id: string) => apiFetch<Warehouse>(`/warehouses/${id}`);
+export const createWarehouse = (data: Omit<Warehouse, 'id' | 'createdAt'>) =>
+  apiFetch<Warehouse>('/warehouses', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+export const updateWarehouse = (id: string, data: Partial<Omit<Warehouse, 'id' | 'createdAt'>>) =>
+  apiFetch<Warehouse>(`/warehouses/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+export const deleteWarehouse = (id: string) =>
+  apiFetch<Warehouse>(`/warehouses/${id}`, {
+    method: 'DELETE',
+  });
+
+// Customers
+export interface Customer {
+  id: string;
+  companyName: string;
+  contact: string;
+  email: string;
+  status: string;
+  salesYTD: number;
+}
+export const getCustomers = () => apiFetch<Customer[]>('/customers');
+export const getCustomerById = (id: string) => apiFetch<Customer>(`/customers/${id}`);
+export const createCustomer = (data: Omit<Customer, 'id' | 'createdAt'>) =>
+  apiFetch<Customer>('/customers', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+export const updateCustomer = (id: string, data: Partial<Omit<Customer, 'id' | 'createdAt'>>) =>
+  apiFetch<Customer>(`/customers/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+export const deleteCustomer = (id: string) =>
+  apiFetch<Customer>(`/customers/${id}`, {
+    method: 'DELETE',
+  });
+
+// Carriers
+export interface Carrier {
+  id: string;
+  name: string;
+  type: string;
+  rating: number;
+  activeVehicles: number;
+  contact: string;
+}
+export const getCarriers = () => apiFetch<Carrier[]>('/carriers');
+export const getCarrierById = (id: string) => apiFetch<Carrier>(`/carriers/${id}`);
+export const createCarrier = (data: Omit<Carrier, 'id' | 'createdAt'>) =>
+  apiFetch<Carrier>('/carriers', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+export const updateCarrier = (id: string, data: Partial<Omit<Carrier, 'id' | 'createdAt'>>) =>
+  apiFetch<Carrier>(`/carriers/${id}`, {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+export const deleteCarrier = (id: string) =>
+  apiFetch<Carrier>(`/carriers/${id}`, {
+    method: 'DELETE',
+  });
 
 // Goods Receipts
 export interface GoodsReceiptItem {
   name: string;
   receivedQty: number;
   expectedQty: number;
+  sku?: string;
+  unit?: string;
 }
 export interface GoodsReceipt {
   id: string;
   receiptId: string;
   orderId: string;
   supplier: string;
+  warehouseId?: string;
   deliveryDate: string;
   status: string;
   items: GoodsReceiptItem[];
@@ -189,6 +253,21 @@ export const createGoodsReceipt = (data: Omit<GoodsReceipt, "id" | "receiptId">)
     method: "POST",
     body: JSON.stringify(data),
   });
+
+// Inventory
+export interface InventoryItem {
+  id: string;
+  warehouseId: string;
+  item: string;
+  sku?: string;
+  unit: string;
+  quantity: number;
+  metadata?: any;
+  createdAt: string;
+  updatedAt: string;
+}
+export const getInventories = () => apiFetch<InventoryItem[]>("/inventories");
+export const getInventoriesByWarehouse = (warehouseId: string) => apiFetch<InventoryItem[]>(`/inventories/warehouse/${warehouseId}`);
 
 // Invoices
 export interface InvoiceLineItem {

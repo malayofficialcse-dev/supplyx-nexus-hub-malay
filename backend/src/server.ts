@@ -19,6 +19,7 @@ import contractRouter from "./routes/contracts.js";
 import invoiceRouter from "./routes/invoices.js";
 import paymentRouter from "./routes/payments.js";
 import goodsReceiptsRouter from "./routes/goodsReceipts.js";
+import inventoryRouter from "./routes/inventories.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -45,6 +46,7 @@ app.use("/api/contracts", contractRouter);
 app.use("/api/invoices", invoiceRouter);
 app.use("/api/payments", paymentRouter);
 app.use("/api/goods-receipts", goodsReceiptsRouter);
+app.use("/api/inventories", inventoryRouter);
 
 // Health check
 app.get("/health", (req, res) => {

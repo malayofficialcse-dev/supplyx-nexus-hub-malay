@@ -8,7 +8,10 @@ import {
   Invoice,
   Payment,
   GoodsReceipt,
+  Inventory,
+  InventoryMovement,
 } from "@prisma/client";
+import { OrderRepository } from "../repositories/order.repo.js";
 import {
   WarehouseRepository,
   ShipmentRepository,
@@ -19,6 +22,9 @@ import {
   InvoiceRepository,
   PaymentRepository,
   GoodsReceiptRepository,
+  InventoryRepository,
+  InventoryMovementRepository,
+  prisma,
 } from "../repositories/scm.repo.js";
 
 const warehouseRepo = new WarehouseRepository();
@@ -30,6 +36,9 @@ const contractRepo = new ContractRepository();
 const invoiceRepo = new InvoiceRepository();
 const paymentRepo = new PaymentRepository();
 const goodsReceiptRepo = new GoodsReceiptRepository();
+const orderRepo = new OrderRepository();
+const inventoryRepo = new InventoryRepository();
+const inventoryMovementRepo = new InventoryMovementRepository();
 
 export interface ListResult<T> {
   data: T[];
@@ -206,6 +215,16 @@ export class PaymentService {
   }
 }
 
+export class InventoryService {
+  async getInventories(): Promise<Inventory[]> {
+    return inventoryRepo.getAll();
+  }
+
+  async getInventoriesByWarehouse(warehouseId: string): Promise<Inventory[]> {
+    return inventoryRepo.getByWarehouseId(warehouseId);
+  }
+}
+
 export class GoodsReceiptService {
   async getGoodsReceipts(): Promise<GoodsReceipt[]> {
     return goodsReceiptRepo.getAll();
@@ -218,36 +237,118 @@ export class GoodsReceiptService {
   async createGoodsReceipt(data: {
     orderId: string;
     supplier: string;
+    warehouseId?: string;
     deliveryDate: string;
     status?: string;
     items: any[];
   }): Promise<GoodsReceipt> {
-    const count = await goodsReceiptRepo.getAll();
-    const receiptId = `GRN-${5522 + count.length}`;
-    const created = await goodsReceiptRepo.create({
-      receiptId,
-      orderId: data.orderId,
-      supplier: data.supplier,
-      deliveryDate: data.deliveryDate || new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
-      status: data.status || "Fully Received",
-      items: data.items,
-    });
-
-    // Attempt to update warehouse fill level based on received quantities
-    try {
-      const warehouses = await warehouseRepo.getAll();
-      if (warehouses && warehouses.length > 0) {
-        const first = warehouses[0];
-        const extraQty = (data.items || []).reduce((sum: number, it: any) => sum + (it.receivedQty || it.qty || 0), 0);
-        // Adjust fillLevel conservatively: each 10 units -> +1%
-        const delta = Math.round(extraQty / 10);
-        const newFill = Math.min(100, (first.fillLevel || 0) + delta);
-        await warehouseRepo.updateFillLevel(first.id, newFill);
-      }
-    } catch (e) {
-      // ignore warehouse update failures
+    const order = await orderRepo.getByOrderId(data.orderId);
+    if (!order) {
+      throw new Error(`Purchase order ${data.orderId} not found`);
     }
 
-    return created;
+    const normalizedItems = Array.isArray(data.items) ? data.items : [];
+    if (normalizedItems.length === 0) {
+      throw new Error("Goods receipt must include at least one item");
+    }
+
+    const orderItems = Array.isArray(order.items) ? (order.items as any[]) : [];
+    const totalOrdered = orderItems.reduce((sum: number, item: any) => sum + (Number(item?.quantity) || 0), 0);
+    const receiptQuantity = normalizedItems.reduce((sum: number, item: any) => sum + (Number(item?.receivedQty) || 0), 0);
+
+    if (receiptQuantity <= 0) {
+      throw new Error("Received quantity must be greater than zero");
+    }
+
+    const projectedReceived = order.receivedQuantity + receiptQuantity;
+    if (projectedReceived > totalOrdered) {
+      throw new Error("Received quantity exceeds ordered quantity for this purchase order");
+    }
+
+    const warehouses = await warehouseRepo.getAll();
+    const warehouseId = data.warehouseId || warehouses?.[0]?.id;
+    if (!warehouseId) {
+      throw new Error("Warehouse is required to record inventory receipt");
+    }
+
+    const receiptId = `GRN-${5522 + (await goodsReceiptRepo.getAll()).length}`;
+    const deliveryDate = data.deliveryDate || new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
+    const status = data.status || (projectedReceived === totalOrdered ? "Fully Received" : "Partially Received");
+
+    const createdReceipt = await prisma.$transaction(async (tx) => {
+      const gr = await tx.goodsReceipt.create({
+        data: {
+          receiptId,
+          orderId: data.orderId,
+          supplier: data.supplier,
+          warehouseId,
+          deliveryDate,
+          status,
+          items: normalizedItems,
+        },
+      });
+
+      await tx.order.update({
+        where: { id: order.id },
+        data: {
+          receivedQuantity: projectedReceived,
+          status,
+        },
+      });
+
+      for (const item of normalizedItems) {
+        const itemName = String(item.name || "Unknown Item");
+        const receivedQty = Number(item.receivedQty || 0);
+        if (receivedQty <= 0) continue;
+
+        const matchedOrderItem = orderItems.find((oi: any) => oi.name === itemName);
+        const unit = item.unit || matchedOrderItem?.unit || "pcs";
+        const skuValue = item.sku ?? "";
+
+        const inventory = await tx.inventory.upsert({
+          where: { warehouseId_item_sku: { warehouseId, item: itemName, sku: skuValue } },
+          create: {
+            warehouseId,
+            item: itemName,
+            sku: item.sku,
+            unit,
+            quantity: receivedQty,
+            metadata: item.metadata || {},
+          },
+          update: {
+            quantity: {
+              increment: receivedQty,
+            },
+            metadata: item.metadata || {},
+          },
+        });
+
+        await tx.inventoryMovement.create({
+          data: {
+            inventoryId: inventory.id,
+            goodsReceiptId: gr.id,
+            orderId: order.id,
+            warehouseId,
+            type: "GoodsReceipt",
+            quantity: receivedQty,
+            balanceAfter: inventory.quantity,
+            notes: `Received for ${order.orderId}`,
+          },
+        });
+      }
+
+      const warehouse = await tx.warehouse.findUnique({ where: { id: warehouseId } });
+      if (warehouse) {
+        const delta = Math.round(receiptQuantity / 10);
+        await tx.warehouse.update({
+          where: { id: warehouseId },
+          data: { fillLevel: Math.min(100, Math.max(0, warehouse.fillLevel + delta)) },
+        });
+      }
+
+      return gr;
+    });
+
+    return createdReceipt;
   }
 }

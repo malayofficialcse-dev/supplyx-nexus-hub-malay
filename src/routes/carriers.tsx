@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { Icon } from "@/components/Icon";
 import { useQuery } from "@tanstack/react-query";
@@ -15,6 +15,7 @@ export const Route = createFileRoute("/carriers")({
 });
 
 function CarriersPage() {
+  const navigate = useNavigate();
   const { data: carriers, isLoading } = useQuery({
     queryKey: ["carriers"],
     queryFn: getCarriers,
@@ -23,11 +24,20 @@ function CarriersPage() {
   return (
     <AppShell>
       <div className="max-w-7xl mx-auto space-y-6">
-        <div>
-          <h2 className="font-page-title text-page-title text-on-surface">Carriers</h2>
-          <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
-            Monitor carrier partnerships, transit ratings, fleet capabilities, and key contacts.
-          </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="font-page-title text-page-title text-on-surface">Carriers</h2>
+            <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+              Monitor carrier partnerships, transit ratings, fleet capabilities, and key contacts.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate({ to: "/carriers/new" })}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-body-sm font-medium text-on-primary hover:opacity-90 transition-opacity"
+          >
+            <Icon name="add" className="text-[18px]" />
+            New Carrier
+          </button>
         </div>
 
         <div className="bg-surface border border-outline-variant rounded-xl shadow-sm overflow-hidden">
@@ -80,6 +90,7 @@ function CarriersPage() {
             </table>
           </div>
         </div>
+        <Outlet />
       </div>
     </AppShell>
   );

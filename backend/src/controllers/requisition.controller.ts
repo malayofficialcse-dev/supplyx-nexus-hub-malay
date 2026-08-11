@@ -15,13 +15,23 @@ export class RequisitionController {
 
   async createRequisition(req: Request, res: Response) {
     try {
-      const { department, item, amount } = req.body;
-      if (!department || !item || !amount) {
-        return res.status(400).json({ error: "Missing required fields (department, item, amount)" });
+      const { department, item, total, amount } = req.body;
+      const resolvedTotal = total ?? amount;
+      console.log("[requisition.create] body:", req.body);
+
+      if (!department || !item || resolvedTotal === undefined) {
+        return res.status(400).json({ error: "Missing required fields (department, item, total or amount)" });
       }
-      const newReq = await requisitionService.createRequisition({ department, item, amount: parseFloat(amount) });
+
+      const numericTotal = typeof resolvedTotal === "string" ? parseFloat(resolvedTotal) : Number(resolvedTotal);
+      if (Number.isNaN(numericTotal)) {
+        return res.status(400).json({ error: "Invalid total value" });
+      }
+
+      const newReq = await requisitionService.createRequisition({ department, item, total: numericTotal });
       return res.status(201).json(newReq);
     } catch (error: any) {
+      console.error("[requisition.create] error:", error);
       return res.status(500).json({ error: error.message });
     }
   }

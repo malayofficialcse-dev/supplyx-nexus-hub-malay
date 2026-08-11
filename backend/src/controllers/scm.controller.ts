@@ -9,6 +9,7 @@ import {
   InvoiceService,
   PaymentService,
   GoodsReceiptService,
+  InventoryService,
 } from "../services/scm.service.js";
 
 const warehouseService = new WarehouseService();
@@ -20,6 +21,7 @@ const contractService = new ContractService();
 const invoiceService = new InvoiceService();
 const paymentService = new PaymentService();
 const goodsReceiptService = new GoodsReceiptService();
+const inventoryService = new InventoryService();
 
 const parseNumber = (value: any, fallback: number) => {
   const parsed = Number(value);
@@ -396,6 +398,27 @@ export class PaymentController {
       if (!invoiceId || !supplier || !amount || !method) return res.status(400).json({ error: "Missing required fields (invoiceId, supplier, amount, method)" });
       const created = await paymentService.createPayment({ invoiceId, supplier, amount: parseFloat(amount), method, auditTrail: [] });
       return res.status(201).json(created);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+}
+
+export class InventoryController {
+  async getInventories(req: Request, res: Response) {
+    try {
+      const list = await inventoryService.getInventories();
+      return res.json(list);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  async getInventoryByWarehouse(req: Request, res: Response) {
+    try {
+      const warehouseId = req.params.warehouseId;
+      const list = await inventoryService.getInventoriesByWarehouse(warehouseId);
+      return res.json(list);
     } catch (error: any) {
       return res.status(500).json({ error: error.message });
     }

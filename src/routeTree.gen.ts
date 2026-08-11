@@ -18,6 +18,9 @@ import { Route as LogisticsRouteImport } from './routes/logistics'
 import { Route as RequisitionsRouteImport } from './routes/requisitions'
 import { Route as ShipmentsRouteImport } from './routes/shipments'
 import { Route as WarehousesRouteImport } from './routes/warehouses'
+import { Route as CarriersNewRouteImport } from './routes/carriers/new'
+import { Route as ContractsNewRouteImport } from './routes/contracts/new'
+import { Route as CustomersNewRouteImport } from './routes/customers/new'
 import { Route as GoodsReceiptsIndexRouteImport } from './routes/goods-receipts/index'
 import { Route as GoodsReceiptsDetailRouteImport } from './routes/goods-receipts/detail'
 import { Route as InvoicesIndexRouteImport } from './routes/invoices/index'
@@ -29,6 +32,7 @@ import { Route as PaymentsDetailRouteImport } from './routes/payments/detail'
 import { Route as RfqsIndexRouteImport } from './routes/rfqs/index'
 import { Route as RfqsNewRouteImport } from './routes/rfqs/new'
 import { Route as SuppliersPerformanceRouteImport } from './routes/suppliers/performance'
+import { Route as WarehousesNewRouteImport } from './routes/warehouses/new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -74,6 +78,21 @@ const WarehousesRoute = WarehousesRouteImport.update({
   id: '/warehouses',
   path: '/warehouses',
   getParentRoute: () => rootRouteImport,
+} as any)
+const CarriersNewRoute = CarriersNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => CarriersRoute,
+} as any)
+const ContractsNewRoute = ContractsNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => ContractsRoute,
+} as any)
+const CustomersNewRoute = CustomersNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => CustomersRoute,
 } as any)
 const GoodsReceiptsIndexRoute = GoodsReceiptsIndexRouteImport.update({
   id: '/goods-receipts/',
@@ -130,23 +149,32 @@ const SuppliersPerformanceRoute = SuppliersPerformanceRouteImport.update({
   path: '/suppliers/performance',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WarehousesNewRoute = WarehousesNewRouteImport.update({
+  id: '/new',
+  path: '/new',
+  getParentRoute: () => WarehousesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/budget': typeof BudgetRoute
-  '/carriers': typeof CarriersRoute
-  '/contracts': typeof ContractsRoute
-  '/customers': typeof CustomersRoute
+  '/carriers': typeof CarriersRouteWithChildren
+  '/contracts': typeof ContractsRouteWithChildren
+  '/customers': typeof CustomersRouteWithChildren
   '/logistics': typeof LogisticsRoute
   '/requisitions': typeof RequisitionsRoute
   '/shipments': typeof ShipmentsRoute
-  '/warehouses': typeof WarehousesRoute
+  '/warehouses': typeof WarehousesRouteWithChildren
+  '/carriers/new': typeof CarriersNewRoute
+  '/contracts/new': typeof ContractsNewRoute
+  '/customers/new': typeof CustomersNewRoute
   '/goods-receipts/detail': typeof GoodsReceiptsDetailRoute
   '/invoices/detail': typeof InvoicesDetailRoute
   '/orders/new': typeof OrdersNewRoute
   '/payments/detail': typeof PaymentsDetailRoute
   '/rfqs/new': typeof RfqsNewRoute
   '/suppliers/performance': typeof SuppliersPerformanceRoute
+  '/warehouses/new': typeof WarehousesNewRoute
   '/goods-receipts/': typeof GoodsReceiptsIndexRoute
   '/invoices/': typeof InvoicesIndexRoute
   '/orders/': typeof OrdersIndexRoute
@@ -156,19 +184,23 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/budget': typeof BudgetRoute
-  '/carriers': typeof CarriersRoute
-  '/contracts': typeof ContractsRoute
-  '/customers': typeof CustomersRoute
+  '/carriers': typeof CarriersRouteWithChildren
+  '/contracts': typeof ContractsRouteWithChildren
+  '/customers': typeof CustomersRouteWithChildren
   '/logistics': typeof LogisticsRoute
   '/requisitions': typeof RequisitionsRoute
   '/shipments': typeof ShipmentsRoute
-  '/warehouses': typeof WarehousesRoute
+  '/warehouses': typeof WarehousesRouteWithChildren
+  '/carriers/new': typeof CarriersNewRoute
+  '/contracts/new': typeof ContractsNewRoute
+  '/customers/new': typeof CustomersNewRoute
   '/goods-receipts/detail': typeof GoodsReceiptsDetailRoute
   '/invoices/detail': typeof InvoicesDetailRoute
   '/orders/new': typeof OrdersNewRoute
   '/payments/detail': typeof PaymentsDetailRoute
   '/rfqs/new': typeof RfqsNewRoute
   '/suppliers/performance': typeof SuppliersPerformanceRoute
+  '/warehouses/new': typeof WarehousesNewRoute
   '/goods-receipts': typeof GoodsReceiptsIndexRoute
   '/invoices': typeof InvoicesIndexRoute
   '/orders': typeof OrdersIndexRoute
@@ -179,19 +211,23 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/budget': typeof BudgetRoute
-  '/carriers': typeof CarriersRoute
-  '/contracts': typeof ContractsRoute
-  '/customers': typeof CustomersRoute
+  '/carriers': typeof CarriersRouteWithChildren
+  '/contracts': typeof ContractsRouteWithChildren
+  '/customers': typeof CustomersRouteWithChildren
   '/logistics': typeof LogisticsRoute
   '/requisitions': typeof RequisitionsRoute
   '/shipments': typeof ShipmentsRoute
-  '/warehouses': typeof WarehousesRoute
+  '/warehouses': typeof WarehousesRouteWithChildren
+  '/carriers/new': typeof CarriersNewRoute
+  '/contracts/new': typeof ContractsNewRoute
+  '/customers/new': typeof CustomersNewRoute
   '/goods-receipts/detail': typeof GoodsReceiptsDetailRoute
   '/invoices/detail': typeof InvoicesDetailRoute
   '/orders/new': typeof OrdersNewRoute
   '/payments/detail': typeof PaymentsDetailRoute
   '/rfqs/new': typeof RfqsNewRoute
   '/suppliers/performance': typeof SuppliersPerformanceRoute
+  '/warehouses/new': typeof WarehousesNewRoute
   '/goods-receipts/': typeof GoodsReceiptsIndexRoute
   '/invoices/': typeof InvoicesIndexRoute
   '/orders/': typeof OrdersIndexRoute
@@ -210,12 +246,16 @@ export interface FileRouteTypes {
     | '/requisitions'
     | '/shipments'
     | '/warehouses'
+    | '/carriers/new'
+    | '/contracts/new'
+    | '/customers/new'
     | '/goods-receipts/detail'
     | '/invoices/detail'
     | '/orders/new'
     | '/payments/detail'
     | '/rfqs/new'
     | '/suppliers/performance'
+    | '/warehouses/new'
     | '/goods-receipts/'
     | '/invoices/'
     | '/orders/'
@@ -232,12 +272,16 @@ export interface FileRouteTypes {
     | '/requisitions'
     | '/shipments'
     | '/warehouses'
+    | '/carriers/new'
+    | '/contracts/new'
+    | '/customers/new'
     | '/goods-receipts/detail'
     | '/invoices/detail'
     | '/orders/new'
     | '/payments/detail'
     | '/rfqs/new'
     | '/suppliers/performance'
+    | '/warehouses/new'
     | '/goods-receipts'
     | '/invoices'
     | '/orders'
@@ -254,12 +298,16 @@ export interface FileRouteTypes {
     | '/requisitions'
     | '/shipments'
     | '/warehouses'
+    | '/carriers/new'
+    | '/contracts/new'
+    | '/customers/new'
     | '/goods-receipts/detail'
     | '/invoices/detail'
     | '/orders/new'
     | '/payments/detail'
     | '/rfqs/new'
     | '/suppliers/performance'
+    | '/warehouses/new'
     | '/goods-receipts/'
     | '/invoices/'
     | '/orders/'
@@ -270,13 +318,13 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BudgetRoute: typeof BudgetRoute
-  CarriersRoute: typeof CarriersRoute
-  ContractsRoute: typeof ContractsRoute
-  CustomersRoute: typeof CustomersRoute
+  CarriersRoute: typeof CarriersRouteWithChildren
+  ContractsRoute: typeof ContractsRouteWithChildren
+  CustomersRoute: typeof CustomersRouteWithChildren
   LogisticsRoute: typeof LogisticsRoute
   RequisitionsRoute: typeof RequisitionsRoute
   ShipmentsRoute: typeof ShipmentsRoute
-  WarehousesRoute: typeof WarehousesRoute
+  WarehousesRoute: typeof WarehousesRouteWithChildren
   GoodsReceiptsDetailRoute: typeof GoodsReceiptsDetailRoute
   InvoicesDetailRoute: typeof InvoicesDetailRoute
   OrdersNewRoute: typeof OrdersNewRoute
@@ -355,6 +403,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WarehousesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/carriers/new': {
+      id: '/carriers/new'
+      path: '/new'
+      fullPath: '/carriers/new'
+      preLoaderRoute: typeof CarriersNewRouteImport
+      parentRoute: typeof CarriersRoute
+    }
+    '/contracts/new': {
+      id: '/contracts/new'
+      path: '/new'
+      fullPath: '/contracts/new'
+      preLoaderRoute: typeof ContractsNewRouteImport
+      parentRoute: typeof ContractsRoute
+    }
+    '/customers/new': {
+      id: '/customers/new'
+      path: '/new'
+      fullPath: '/customers/new'
+      preLoaderRoute: typeof CustomersNewRouteImport
+      parentRoute: typeof CustomersRoute
+    }
     '/goods-receipts/': {
       id: '/goods-receipts/'
       path: '/goods-receipts'
@@ -432,19 +501,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuppliersPerformanceRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/warehouses/new': {
+      id: '/warehouses/new'
+      path: '/new'
+      fullPath: '/warehouses/new'
+      preLoaderRoute: typeof WarehousesNewRouteImport
+      parentRoute: typeof WarehousesRoute
+    }
   }
 }
+
+interface CarriersRouteChildren {
+  CarriersNewRoute: typeof CarriersNewRoute
+}
+
+const CarriersRouteChildren: CarriersRouteChildren = {
+  CarriersNewRoute: CarriersNewRoute,
+}
+
+const CarriersRouteWithChildren = CarriersRoute._addFileChildren(
+  CarriersRouteChildren,
+)
+
+interface ContractsRouteChildren {
+  ContractsNewRoute: typeof ContractsNewRoute
+}
+
+const ContractsRouteChildren: ContractsRouteChildren = {
+  ContractsNewRoute: ContractsNewRoute,
+}
+
+const ContractsRouteWithChildren = ContractsRoute._addFileChildren(
+  ContractsRouteChildren,
+)
+
+interface CustomersRouteChildren {
+  CustomersNewRoute: typeof CustomersNewRoute
+}
+
+const CustomersRouteChildren: CustomersRouteChildren = {
+  CustomersNewRoute: CustomersNewRoute,
+}
+
+const CustomersRouteWithChildren = CustomersRoute._addFileChildren(
+  CustomersRouteChildren,
+)
+
+interface WarehousesRouteChildren {
+  WarehousesNewRoute: typeof WarehousesNewRoute
+}
+
+const WarehousesRouteChildren: WarehousesRouteChildren = {
+  WarehousesNewRoute: WarehousesNewRoute,
+}
+
+const WarehousesRouteWithChildren = WarehousesRoute._addFileChildren(
+  WarehousesRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BudgetRoute: BudgetRoute,
-  CarriersRoute: CarriersRoute,
-  ContractsRoute: ContractsRoute,
-  CustomersRoute: CustomersRoute,
+  CarriersRoute: CarriersRouteWithChildren,
+  ContractsRoute: ContractsRouteWithChildren,
+  CustomersRoute: CustomersRouteWithChildren,
   LogisticsRoute: LogisticsRoute,
   RequisitionsRoute: RequisitionsRoute,
   ShipmentsRoute: ShipmentsRoute,
-  WarehousesRoute: WarehousesRoute,
+  WarehousesRoute: WarehousesRouteWithChildren,
   GoodsReceiptsDetailRoute: GoodsReceiptsDetailRoute,
   InvoicesDetailRoute: InvoicesDetailRoute,
   OrdersNewRoute: OrdersNewRoute,

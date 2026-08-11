@@ -1,8 +1,8 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { Icon } from "@/components/Icon";
-import { useQuery } from "@tanstack/react-query";
-import { getCustomers, Customer } from "@/lib/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { deleteCustomer, getCustomers, updateCustomer, Customer } from "@/lib/api";
 
 export const Route = createFileRoute("/customers")({
   component: CustomersPage,
@@ -16,6 +16,19 @@ export const Route = createFileRoute("/customers")({
 
 function CustomersPage() {
   const navigate = useNavigate();
+
+  const queryClient = useQueryClient();
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteCustomer,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["customers"] }),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, update }: { id: string; update: Partial<Omit<Customer, "id" | "createdAt">> }) =>
+      updateCustomer(id, update),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["customers"] }),
+  });
 
   const { data: customers, isLoading } = useQuery<Customer[]>({
     queryKey: ["customers"],
@@ -32,14 +45,34 @@ function CustomersPage() {
       .toUpperCase();
   };
 
+  const handleDelete = (id: string) => {
+    if (!window.confirm("Delete this customer?")) return;
+    deleteMutation.mutate(id);
+  };
+
+  const handleEdit = (customer: Customer) => {
+    const email = window.prompt("Update contact email:", customer.email);
+    if (!email) return;
+    updateMutation.mutate({ id: customer.id, update: { email } });
+  };
+
   return (
     <AppShell>
       <div className="max-w-7xl mx-auto space-y-6">
-        <div>
-          <h2 className="font-page-title text-page-title text-on-surface">Customers</h2>
-          <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
-            Browse and manage customer accounts, order history, and annual business volumes.
-          </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="font-page-title text-page-title text-on-surface">Customers</h2>
+            <p className="font-body-sm text-body-sm text-on-surface-variant mt-1">
+              Browse and manage customer accounts, order history, and annual business volumes.
+            </p>
+          </div>
+          <button
+            onClick={() => navigate({ to: "/customers/new" })}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary-container px-4 py-2 text-body-sm font-medium text-on-primary hover:opacity-90 transition-opacity"
+          >
+            <Icon name="add" className="text-[18px]" />
+            New Customer
+          </button>
         </div>
 
         <div className="bg-surface border border-outline-variant rounded-xl shadow-sm overflow-hidden">
@@ -52,6 +85,7 @@ function CustomersPage() {
                   <th className="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase">Email</th>
                   <th className="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase text-right">Sales (YTD)</th>
                   <th className="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase">Status</th>
+                  <th className="py-3 px-4 font-label-caps text-label-caps text-on-surface-variant uppercase">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant text-[13px] text-on-surface">
@@ -97,6 +131,22 @@ function CustomersPage() {
                           {cust.status}
                         </span>
                       </td>
+                      <td className="px-4 text-right space-x-2">
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(cust)}
+                          className="text-primary hover:text-on-primary-fixed-variant"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(cust.id)}
+                          className="text-error hover:text-on-error"
+                        >
+                          Delete
+                        </button>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -104,6 +154,7 @@ function CustomersPage() {
             </table>
           </div>
         </div>
+        <Outlet />
       </div>
     </AppShell>
   );

@@ -8,14 +8,21 @@ datasource db {
 }
 
 model Requisition {
-  id         String   @id @default(uuid())
-  reqId      String   @unique
-  department String
-  item       String
-  amount     Float
-  status     String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id              String   @id @default(uuid())
+  reqId           String   @unique
+  requester       String
+  department      String
+  costCenter      String
+  justification   String?
+  item            String
+  items           Json
+  total           Float
+  status          String
+  approvalNotes   String?
+  rejectedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model Contract {
@@ -30,15 +37,16 @@ model Contract {
 }
 
 model Order {
-  id           String   @id @default(uuid())
-  orderId      String   @unique
-  supplier     String
-  amount       Float
-  deliveryDate String
-  status       String
-  description  String?
-  items        Json
-  createdAt    DateTime @default(now())
+  id               String   @id @default(uuid())
+  orderId          String   @unique
+  supplier         String
+  amount           Float
+  deliveryDate     String
+  status           String
+  description      String?
+  items            Json
+  receivedQuantity Float    @default(0)
+  createdAt        DateTime @default(now())
 }
 
 model GoodsReceipt {
@@ -46,10 +54,38 @@ model GoodsReceipt {
   receiptId    String   @unique
   orderId      String
   supplier     String
+  warehouseId  String?
   deliveryDate String
   status       String
   items        Json
   createdAt    DateTime @default(now())
+}
+
+model Inventory {
+  id          String   @id @default(uuid())
+  warehouseId String
+  item        String
+  sku         String?
+  unit        String
+  quantity    Float    @default(0)
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([warehouseId, item, sku])
+}
+
+model InventoryMovement {
+  id            String   @id @default(uuid())
+  inventoryId   String
+  goodsReceiptId String
+  orderId       String
+  warehouseId   String
+  type          String
+  quantity      Float
+  balanceAfter  Float
+  notes         String?
+  createdAt     DateTime @default(now())
 }
 
 model Invoice {
