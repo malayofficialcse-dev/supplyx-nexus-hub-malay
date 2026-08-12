@@ -27,6 +27,14 @@ export class RFQRepository {
     return prisma.rFQ.findUnique({ where: { id } });
   }
 
+  async update(id: string, data: Partial<Omit<RFQ, "id" | "rfqId">>): Promise<RFQ> {
+    return prisma.rFQ.update({ where: { id }, data });
+  }
+
+  async delete(id: string): Promise<RFQ> {
+    return prisma.rFQ.delete({ where: { id } });
+  }
+
   async addSupplierQuote(id: string, quote: any): Promise<RFQ> {
     const existing = await prisma.rFQ.findUnique({ where: { id } });
     const rawItems = (existing?.items as any) || {};

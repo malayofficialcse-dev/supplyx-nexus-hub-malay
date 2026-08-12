@@ -1,9 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { Icon } from "@/components/Icon";
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { getRFQs } from "@/lib/api";
+import { Dialog, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
+import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { type RFQ, deleteRFQ, getRFQs, updateRFQ } from "@/lib/api";
 
 export const Route = createFileRoute("/rfqs/")({
   component: Page,
@@ -29,14 +30,78 @@ function deptInitials(dept: string): string {
 
 function Page() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Statuses");
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
+  const [selectedRFQ, setSelectedRFQ] = useState<RFQ | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingTitle, setEditingTitle] = useState("");
+  const [editingDepartment, setEditingDepartment] = useState("");
+  const [editingDeadline, setEditingDeadline] = useState("");
+  const [editingStatus, setEditingStatus] = useState("");
 
   const { data: rfqs, isLoading } = useQuery({
     queryKey: ["rfqs"],
     queryFn: getRFQs,
   });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, update }: { id: string; update: Partial<Omit<RFQ, "id" | "rfqId" | "vendorCount">> }) =>
+      updateRFQ(id, update),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["rfqs"] });
+      setIsDialogOpen(false);
+      setSelectedRFQ(null);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteRFQ,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["rfqs"] });
+      setIsDialogOpen(false);
+      setSelectedRFQ(null);
+    },
+  });
+
+  useEffect(() => {
+    if (selectedRFQ) {
+      setEditingTitle(selectedRFQ.title);
+      setEditingDepartment(selectedRFQ.department);
+      setEditingDeadline(selectedRFQ.deadline);
+      setEditingStatus(selectedRFQ.status);
+    }
+  }, [selectedRFQ]);
+
+  const openDialog = (rfq: RFQ) => {
+    setSelectedRFQ(rfq);
+    setIsDialogOpen(true);
+  };
+
+  const closeDialog = () => {
+    setIsDialogOpen(false);
+    setSelectedRFQ(null);
+  };
+
+  const handleSave = () => {
+    if (!selectedRFQ) return;
+    updateMutation.mutate({
+      id: selectedRFQ.id,
+      update: {
+        title: editingTitle,
+        department: editingDepartment,
+        deadline: editingDeadline,
+        status: editingStatus,
+      },
+    });
+  };
+
+  const handleDelete = () => {
+    if (!selectedRFQ) return;
+    if (!window.confirm("Delete this RFQ?")) return;
+    deleteMutation.mutate(selectedRFQ.id);
+  };
 
   const liveRfqs = (rfqs || []).filter((rfq) => {
     const matchSearch =
@@ -193,11 +258,12 @@ function Page() {
                           </div>
                         </td>
                         <td className="py-2 px-4 text-right">
-                          <button className="p-1 text-on-surface-variant hover:text-primary transition-colors">
+                          <button
+                            type="button"
+                            onClick={() => openDialog(rfq)}
+                            className="p-1 text-on-surface-variant hover:text-primary transition-colors"
+                          >
                             <Icon name="visibility" className="text-[18px]" />
-                          </button>
-                          <button className="p-1 text-on-surface-variant hover:text-primary transition-colors">
-                            <Icon name="more_vert" className="text-[18px]" />
                           </button>
                         </td>
                       </tr>
@@ -224,6 +290,89 @@ function Page() {
           </div>
         </div>
       </div>
+      <Dialog open={isDialogOpen} onOpenChange={(open) => { if (!open) closeDialog(); setIsDialogOpen(open); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>RFQ Details</DialogTitle>
+            <DialogDescription>View or edit the selected RFQ, or delete it entirely.</DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label className="block text-sm font-medium text-on-surface-variant mb-2">RFQ ID</label>
+                <div className="rounded-lg border border-outline-variant bg-surface p-3 text-body-sm text-on-surface">{selectedRFQ?.rfqId ?? "—"}</div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-on-surface-variant mb-2">Status</label>
+                <select
+                  className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-body-sm focus:border-primary outline-none"
+                  value={editingStatus}
+                  onChange={(e) => setEditingStatus(e.target.value)}
+                >
+                  <option>Draft</option>
+                  <option>Open</option>
+                  <option>Evaluation</option>
+                  <option>Awarded</option>
+                  <option>Closed</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-on-surface-variant mb-2">Title</label>
+                <input
+                  className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-body-sm outline-none focus:border-primary"
+                  value={editingTitle}
+                  onChange={(e) => setEditingTitle(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-on-surface-variant mb-2">Department</label>
+                <input
+                  className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-body-sm outline-none focus:border-primary"
+                  value={editingDepartment}
+                  onChange={(e) => setEditingDepartment(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-on-surface-variant mb-2">Deadline</label>
+                <input
+                  className="w-full rounded-lg border border-outline-variant bg-surface px-3 py-2 text-body-sm outline-none focus:border-primary"
+                  value={editingDeadline}
+                  onChange={(e) => setEditingDeadline(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <button
+              type="button"
+              onClick={handleDelete}
+              className="rounded-lg border border-error px-4 py-2 text-error hover:bg-error/10 transition-colors"
+            >
+              Delete
+            </button>
+            <div className="flex gap-2">
+              <DialogClose asChild>
+                <button
+                  type="button"
+                  className="rounded-lg border border-outline-variant bg-surface px-4 py-2 text-on-surface hover:bg-surface-container transition-colors"
+                >
+                  Cancel
+                </button>
+              </DialogClose>
+              <button
+                type="button"
+                onClick={handleSave}
+                className="rounded-lg bg-primary px-4 py-2 text-on-primary hover:bg-primary/90 transition-colors"
+              >
+                Save Changes
+              </button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }

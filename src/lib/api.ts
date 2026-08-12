@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE ?? "/api";
+const API_BASE = import.meta.env["VITE_API_BASE"] ?? "/api";
 
 export async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${endpoint}`, {
@@ -70,10 +70,26 @@ export interface RFQ {
 
 export const getRFQs = () => apiFetch<RFQ[]>("/rfqs");
 
+export const getRFQ = (id: string) => apiFetch<RFQ>(`/rfqs/${id}`);
+
 export const createRFQ = (data: Omit<RFQ, "id" | "rfqId" | "status" | "vendorCount">) =>
   apiFetch<RFQ>("/rfqs", {
     method: "POST",
     body: JSON.stringify(data),
+  });
+
+export const updateRFQ = (
+  id: string,
+  data: Partial<Omit<RFQ, "id" | "rfqId" | "vendorCount">>,
+) =>
+  apiFetch<RFQ>(`/rfqs/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+
+export const deleteRFQ = (id: string) =>
+  apiFetch<RFQ>(`/rfqs/${id}`, {
+    method: "DELETE",
   });
 
 // Analytics

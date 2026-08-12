@@ -43,6 +43,40 @@ export class RFQController {
     }
   }
 
+  async getRFQById(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const rfq = await rfqService.getById(id);
+      if (!rfq) return res.status(404).json({ error: "RFQ not found" });
+      return res.json(rfq);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  async updateRFQ(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { title, department, deadline, status, items } = req.body;
+      if (!id) return res.status(400).json({ error: "Missing rfq id" });
+      const updated = await rfqService.updateRFQ(id, { title, department, deadline, status, items });
+      return res.json(updated);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  async deleteRFQ(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      if (!id) return res.status(400).json({ error: "Missing rfq id" });
+      const deleted = await rfqService.deleteRFQ(id);
+      return res.json(deleted);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
   async awardRFQ(req: Request, res: Response) {
     try {
       const { id } = req.params;

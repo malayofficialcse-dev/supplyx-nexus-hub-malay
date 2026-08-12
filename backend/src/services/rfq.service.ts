@@ -46,6 +46,18 @@ export class RFQService {
     return updated;
   }
 
+  async updateRFQ(id: string, data: Partial<Omit<RFQ, "id" | "rfqId">>): Promise<RFQ> {
+    const updated = await rfqRepo.update(id, data);
+    await deleteCache("scm:dashboard:analytics");
+    return updated;
+  }
+
+  async deleteRFQ(id: string): Promise<RFQ> {
+    const deleted = await rfqRepo.delete(id);
+    await deleteCache("scm:dashboard:analytics");
+    return deleted;
+  }
+
   async awardRFQ(rfqId: string, supplierQuote: any): Promise<any> {
     // create order based on supplierQuote
     const newOrder = await orderService.createOrder({
