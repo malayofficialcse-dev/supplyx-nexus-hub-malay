@@ -1,10 +1,12 @@
 import { Requisition } from "@prisma/client";
 import { RequisitionRepository } from "../repositories/requisition.repo.js";
 import { RFQRepository } from "../repositories/rfq.repo.js";
+import { OrderRepository } from "../repositories/order.repo.js";
 import { deleteCache } from "../lib/redis.js";
 
 const requisitionRepo = new RequisitionRepository();
 const rfqRepo = new RFQRepository();
+const orderRepo = new OrderRepository();
 
 export class RequisitionService {
   async getRequisitions(): Promise<Requisition[]> {
@@ -40,7 +42,13 @@ export class RequisitionService {
   async approveRequisition(id: string): Promise<Requisition> {
     const existing = await requisitionRepo.getById(id);
     if (!existing) throw new Error("Requisition not found");
-    const updated = await requisitionRepo.updateStatus(id, "Approved");
+    
+    let targetStatus = "Approved";
+    if (existing.total > 10000 && existing.status === "Pending Approval") {
+      targetStatus = "Approved L1 (Needs Finance L2)";
+    }
+    
+    const updated = await requisitionRepo.updateStatus(id, targetStatus);
     await deleteCache("scm:dashboard:analytics");
     return updated;
   }
@@ -58,6 +66,32 @@ export class RequisitionService {
       vendorCount: 0,
       items: { requestedItem: req.item, total: req.total },
     });
+
+    await requisitionRepo.updateStatus(id, "Converted");
+    await deleteCache("scm:dashboard:analytics");
     return newRfq;
+  }
+
+  async createOrderFromRequisition(id: string, supplier: string, deliveryDate?: string): Promise<any> {
+    const req = await requisitionRepo.getById(id);
+    if (!req) throw new Error("Requisition not found");
+    const count = await orderRepo.getAll();
+    const orderId = `PO-${1094 + count.length}`;
+    const date = deliveryDate || new Date().toISOString().split("T")[0];
+    const items = Array.isArray(req.items) ? req.items : [{ item: req.item, quantity: 1, amount: req.total }];
+
+    const newOrder = await orderRepo.create({
+      orderId,
+      supplier,
+      amount: req.total,
+      deliveryDate: date,
+      status: "Ordered",
+      description: `Created from Requisition ${req.reqId}`,
+      items,
+    });
+
+    await requisitionRepo.updateStatus(id, "Converted");
+    await deleteCache("scm:dashboard:analytics");
+    return newOrder;
   }
 }

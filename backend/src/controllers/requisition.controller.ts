@@ -57,4 +57,16 @@ export class RequisitionController {
       return res.status(500).json({ error: error.message });
     }
   }
+
+  async createOrderFromRequisition(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { supplier, deliveryDate } = req.body || {};
+      if (!id || !supplier) return res.status(400).json({ error: "Missing required fields (id, supplier)" });
+      const newOrder = await requisitionService.createOrderFromRequisition(id, supplier, deliveryDate);
+      return res.status(201).json(newOrder);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
 }

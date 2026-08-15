@@ -5,5 +5,6 @@ const router = Router();
 const controller = new AnalyticsController();
 
 router.get("/dashboard", controller.getDashboardAnalytics.bind(controller));
+router.get("/advanced", controller.getAdvancedAnalytics.bind(controller));
 
 export default router;

@@ -8,5 +8,6 @@ router.get("/", controller.getRequisitions.bind(controller));
 router.post("/", controller.createRequisition.bind(controller));
 router.post("/:id/approve", controller.approveRequisition.bind(controller));
 router.post("/:id/rfq", controller.createRFQFromRequisition.bind(controller));
+router.post("/:id/order", controller.createOrderFromRequisition.bind(controller));
 
 export default router;

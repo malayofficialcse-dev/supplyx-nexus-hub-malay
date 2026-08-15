@@ -28,7 +28,11 @@ export class RFQRepository {
   }
 
   async update(id: string, data: Partial<Omit<RFQ, "id" | "rfqId">>): Promise<RFQ> {
-    return prisma.rFQ.update({ where: { id }, data });
+    const { items, ...rest } = data;
+    return prisma.rFQ.update({
+      where: { id },
+      data: { ...rest, ...(items !== undefined ? { items: items as any } : {}) },
+    });
   }
 
   async delete(id: string): Promise<RFQ> {

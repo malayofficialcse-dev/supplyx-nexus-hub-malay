@@ -1,0 +1,11 @@
+import { Router } from "express";
+import { WarehouseController } from "../controllers/scm.controller.js";
+const router = Router();
+const controller = new WarehouseController();
+router.get("/", controller.getWarehouses.bind(controller));
+router.get("/:id", controller.getWarehouseById.bind(controller));
+router.post("/", controller.createWarehouse.bind(controller));
+router.put("/:id", controller.updateWarehouse.bind(controller));
+router.patch("/:id", controller.updateWarehouse.bind(controller));
+router.delete("/:id", controller.deleteWarehouse.bind(controller));
+export default router;

@@ -338,6 +338,16 @@ export class ContractController {
       return res.status(500).json({ error: error.message });
     }
   }
+
+  async getExpiringContracts(req: Request, res: Response) {
+    try {
+      const days = parseInt(req.query.days as string) || 90;
+      const list = await contractService.getExpiringContracts(days);
+      return res.json(list);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
 }
 
 export class InvoiceController {
@@ -362,10 +372,37 @@ export class InvoiceController {
 
   async createInvoice(req: Request, res: Response) {
     try {
-      const { supplier, date, amount, items } = req.body;
+      const { supplier, date, amount, items, status } = req.body;
       if (!supplier || !date || !amount) return res.status(400).json({ error: "Missing required fields (supplier, date, amount)" });
-      const created = await invoiceService.createInvoice({ supplier, date, amount: parseFloat(amount), items: items || [] });
+      const created = await invoiceService.createInvoice({ supplier, date, amount: parseFloat(amount), status, items: items || [] });
       return res.status(201).json(created);
+    } catch (error: any) {
+      if (error.code === "DUPLICATE_INVOICE") {
+        return res.status(409).json({
+          error: error.message,
+          code: "DUPLICATE_INVOICE",
+          duplicate: error.duplicate,
+        });
+      }
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  async checkDuplicate(req: Request, res: Response) {
+    try {
+      const { supplier, amount, date } = req.query;
+      if (!supplier || !amount || !date) return res.status(400).json({ error: "supplier, amount, date required" });
+      const dup = await invoiceService.checkDuplicate(String(supplier), parseFloat(String(amount)), String(date));
+      return res.json({ duplicate: !!dup, invoice: dup ?? null });
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  async updateInvoice(req: Request, res: Response) {
+    try {
+      const updated = await invoiceService.updateInvoice(req.params.id, req.body);
+      return res.json(updated);
     } catch (error: any) {
       return res.status(500).json({ error: error.message });
     }
@@ -419,6 +456,15 @@ export class InventoryController {
       const warehouseId = req.params.warehouseId;
       const list = await inventoryService.getInventoriesByWarehouse(warehouseId);
       return res.json(list);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  async getStockAlerts(req: Request, res: Response) {
+    try {
+      const alerts = await inventoryService.getStockAlerts();
+      return res.json(alerts);
     } catch (error: any) {
       return res.status(500).json({ error: error.message });
     }

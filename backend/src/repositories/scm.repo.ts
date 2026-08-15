@@ -313,7 +313,7 @@ export class ContractRepository {
   }
 
   async update(id: string, data: Partial<Omit<Contract, "id" | "createdAt">>): Promise<Contract> {
-    return prisma.contract.update({ where: { id }, data });
+    return prisma.contract.update({ where: { id }, data: data as any });
   }
 
   async delete(id: string): Promise<Contract> {
@@ -343,6 +343,10 @@ export class InvoiceRepository {
     items: any;
   }): Promise<Invoice> {
     return prisma.invoice.create({ data });
+  }
+
+  async update(id: string, data: any): Promise<Invoice> {
+    return prisma.invoice.update({ where: { id }, data });
   }
 }
 

@@ -58,15 +58,26 @@ export class RFQService {
     return deleted;
   }
 
-  async awardRFQ(rfqId: string, supplierQuote: any): Promise<any> {
-    // create order based on supplierQuote
+  async awardRFQ(id: string, vendor: string): Promise<any> {
+    const rfq = await rfqRepo.getById(id);
+    if (!rfq) throw new Error("RFQ not found");
+    const rawItems = (rfq.items as any) || {};
+    const quotes = Array.isArray(rawItems.quotes) ? rawItems.quotes : [];
+    const quote = quotes.find((q: any) => String(q.vendor || q.supplier).toLowerCase() === vendor.toLowerCase());
+    
+    const amount = quote ? Number(quote.amount || 0) : 0;
+    const items = quote && Array.isArray(quote.items) ? quote.items : [{ item: rfq.title, quantity: 1, amount }];
+
     const newOrder = await orderService.createOrder({
-      supplier: supplierQuote.supplier,
-      amount: supplierQuote.amount,
-      deliveryDate: supplierQuote.deliveryDate || new Date().toDateString(),
-      description: `Awarded from RFQ ${rfqId}`,
-      items: supplierQuote.items || [],
+      supplier: quote ? (quote.vendor || quote.supplier) : vendor,
+      amount,
+      deliveryDate: quote ? (quote.deliveryDate || new Date().toDateString()) : new Date().toDateString(),
+      description: `Awarded from RFQ ${rfq.rfqId}`,
+      items,
     });
+
+    await rfqRepo.update(id, { status: "Closed" });
+    await deleteCache("scm:dashboard:analytics");
     return newOrder;
   }
 }

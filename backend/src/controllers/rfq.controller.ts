@@ -80,9 +80,10 @@ export class RFQController {
   async awardRFQ(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { supplierQuote } = req.body;
-      if (!id || !supplierQuote) return res.status(400).json({ error: "Missing rfq id or supplierQuote" });
-      const order = await rfqService.awardRFQ(id, supplierQuote);
+      const { vendor, supplierQuote } = req.body;
+      const targetVendor = vendor || (supplierQuote ? (supplierQuote.vendor || supplierQuote.supplier) : null);
+      if (!id || !targetVendor) return res.status(400).json({ error: "Missing rfq id or vendor name" });
+      const order = await rfqService.awardRFQ(id, targetVendor);
       return res.status(201).json(order);
     } catch (error: any) {
       return res.status(500).json({ error: error.message });

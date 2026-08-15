@@ -20,6 +20,8 @@ import invoiceRouter from "./routes/invoices.js";
 import paymentRouter from "./routes/payments.js";
 import goodsReceiptsRouter from "./routes/goodsReceipts.js";
 import inventoryRouter from "./routes/inventories.js";
+import supplierRouter from "./routes/suppliers.js";
+import quoteRouter from "./routes/quotes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -33,6 +35,8 @@ app.use(cors({ origin: "*" }));
 app.use(express.json());
 
 // Mount all API routers
+app.use("/api/suppliers", supplierRouter);
+app.use("/api/quotes", quoteRouter);
 app.use("/api/requisitions", requisitionRouter);
 app.use("/api/orders", orderRouter);
 app.use("/api/rfqs", rfqRouter);

@@ -12,4 +12,13 @@ export class AnalyticsController {
       return res.status(500).json({ error: error.message });
     }
   }
+
+  async getAdvancedAnalytics(req: Request, res: Response) {
+    try {
+      const analytics = await analyticsService.getAdvancedAnalytics();
+      return res.json(analytics);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
 }

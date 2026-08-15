@@ -21,19 +21,40 @@ model Requisition {
   approvalNotes   String?
   rejectedAt      DateTime?
   rejectionReason String?
+  approvals       Json?    // Tier 2: Array of L1/L2 approval signatures
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
 
+model Supplier {
+  id                  String   @id @default(uuid())
+  supId               String   @unique
+  name                String   @unique
+  contact             String?
+  email               String?
+  phone               String?
+  category            String?
+  status              String   @default("Active")
+  // Scorecard fields
+  onTimeDeliveryRate  Float?   @default(0)
+  defectRate          Float?   @default(0)
+  avgLeadTimeDays     Float?   @default(0)
+  totalOrderValue     Float?   @default(0)
+  lastScoreUpdated    DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @default(now()) @updatedAt
+}
+
 model Contract {
   id        String   @id @default(uuid())
-  conId     String   @unique
-  initials  String
-  supplier  String
-  start     String
-  end       String
-  status    String
-  createdAt DateTime @default(now())
+  conId       String   @unique
+  initials    String
+  supplier    String
+  start       String
+  end         String
+  status      String
+  attachments Json?    // Tier 2: uploaded doc links
+  createdAt   DateTime @default(now())
 }
 
 model Order {
@@ -46,6 +67,7 @@ model Order {
   description      String?
   items            Json
   receivedQuantity Float    @default(0)
+  attachments      Json?    // Tier 2: doc links
   createdAt        DateTime @default(now())
 }
 
@@ -58,19 +80,22 @@ model GoodsReceipt {
   deliveryDate String
   status       String
   items        Json
+  attachments  Json?    // Tier 2: receipt photos/delivery notes
   createdAt    DateTime @default(now())
 }
 
 model Inventory {
-  id          String   @id @default(uuid())
-  warehouseId String
-  item        String
-  sku         String?
-  unit        String
-  quantity    Float    @default(0)
-  metadata    Json?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(uuid())
+  warehouseId  String
+  item         String
+  sku          String?
+  unit         String
+  quantity     Float    @default(0)
+  reorderPoint Float?   @default(0)
+  reorderQty   Float?   @default(0)
+  metadata     Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@unique([warehouseId, item, sku])
 }
@@ -93,10 +118,13 @@ model Invoice {
   invoiceId String   @unique
   supplier  String
   date      String
-  amount    Float
-  status    String
-  items     Json
-  createdAt DateTime @default(now())
+  amount       Float
+  status       String
+  items        Json
+  paymentTerms String?   @default("NET_30") // Tier 2: NET_30, NET_60, etc.
+  dueDate      String?                      // Tier 2: calculated date
+  attachments  Json?                        // Tier 2: invoice PDF copy
+  createdAt    DateTime  @default(now())
 }
 
 model Payment {
@@ -121,6 +149,18 @@ model RFQ {
   vendorCount Int      @default(0)
   items       Json
   createdAt   DateTime @default(now())
+}
+
+model Quote {
+  id           String   @id @default(uuid())
+  quoteId      String   @unique
+  rfqId        String
+  supplier     String
+  amount       Float
+  deliveryDate String
+  status       String   @default("Submitted")
+  items        Json
+  createdAt    DateTime @default(now())
 }
 
 model BudgetCategory {

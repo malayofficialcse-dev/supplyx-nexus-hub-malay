@@ -35,8 +35,8 @@ export class OrderController {
   async threeWayMatch(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const { invoiceId, goodsReceiptId } = req.body;
-      if (!id || !invoiceId || !goodsReceiptId) return res.status(400).json({ error: "Missing required identifiers" });
+      const { invoiceId, goodsReceiptId } = req.body || {};
+      if (!id) return res.status(400).json({ error: "Missing order ID" });
       const result = await orderService.threeWayMatch(id, invoiceId, goodsReceiptId);
       return res.json(result);
     } catch (error: any) {
