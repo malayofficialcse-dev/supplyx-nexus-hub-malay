@@ -69,7 +69,7 @@ export function CrudPage({
   transformPayload,
   summary,
 }: CrudPageProps) {
-  const { hasPermission } = useAuth();
+  const { user, hasPermission } = useAuth();
   
   // Resolve module key from endpoint
   const cleanEndpoint = endpoint.replace(/^\/api\//, "").replace(/^\//, "");
@@ -84,6 +84,58 @@ export function CrudPage({
   const list = useResourceList(endpoint);
   const rows = (list.data ?? []) as Row[];
 
+  // Computed columns including automatic user & date-time audit trail
+  const computedColumns = React.useMemo(() => {
+    const hasAudit = columns.some((c) => c.key === "audit" || c.key === "auditTrail");
+    if (hasAudit) return columns;
+
+    const auditCol: Column<Row> = {
+      key: "auditTrail",
+      label: "Audit Trail (Who & When)",
+      sortable: true,
+      render: (row) => {
+        const creator = String(row["createdBy"] || row["requester"] || row["creator"] || "System");
+        const updater = String(row["updatedBy"] || row["modifier"] || creator);
+        const createdDate = row["createdAt"]
+          ? new Date(String(row["createdAt"])).toLocaleString([], {
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : "";
+        const updatedDate = row["updatedAt"] || row["date"] || row["lastScoreUpdated"]
+          ? new Date(String(row["updatedAt"] || row["date"] || row["lastScoreUpdated"])).toLocaleString([], {
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            })
+          : createdDate || "Recently";
+
+        return (
+          <div className="flex flex-col text-[11px] leading-snug">
+            <div className="flex items-center gap-1.5 font-medium text-foreground">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary uppercase">
+                {updater.charAt(0)}
+              </span>
+              <span className="font-semibold text-[11px] text-foreground">{updater}</span>
+            </div>
+            <div className="text-[10px] text-muted-foreground ml-5 flex items-center gap-1">
+              <span>{updatedDate}</span>
+              {creator && creator !== updater && (
+                <span className="text-[9px] text-muted-foreground/80">(by {creator})</span>
+              )}
+            </div>
+          </div>
+        );
+      },
+      exportValue: (row) => `${row["updatedBy"] || row["createdBy"] || "System"} (${row["updatedAt"] || row["createdAt"] || ""})`,
+    };
+
+    return [...columns, auditCol];
+  }, [columns]);
+
   const [formOpen, setFormOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<Row | null>(null);
   const [values, setValues] = React.useState<FormValues>(() => initialValues(fields));
@@ -94,13 +146,25 @@ export function CrudPage({
 
   const save = useMutation({
     mutationFn: async (payload: Record<string, unknown>) => {
+      const enrichedPayload = {
+        ...payload,
+        updatedBy: user?.name || "System",
+        updatedAt: new Date().toISOString(),
+        ...(editing
+          ? {}
+          : {
+              createdBy: user?.name || "System",
+              createdAt: new Date().toISOString(),
+            }),
+      };
+
       if (editing) {
         const id = String(editing[idKey]);
         return updateMethod === "patch"
-          ? api.patch(`${endpoint}/${id}`, payload)
-          : api.put(`${endpoint}/${id}`, payload);
+          ? api.patch(`${endpoint}/${id}`, enrichedPayload)
+          : api.put(`${endpoint}/${id}`, enrichedPayload);
       }
-      return api.post(endpoint, payload);
+      return api.post(endpoint, enrichedPayload);
     },
     onSuccess: () => {
       toast.success(editing ? `${title} record updated` : `${title} record created`);
@@ -167,7 +231,7 @@ export function CrudPage({
       {summary ? <div className="mb-4">{summary(rows)}</div> : null}
 
       <DataTable
-        columns={columns}
+        columns={computedColumns}
         rows={rows}
         loading={list.isFetching}
         error={errorMessage}

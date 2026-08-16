@@ -242,19 +242,20 @@ function UserManagementPage() {
                 <th className="px-4 py-3">Email</th>
                 <th className="px-4 py-3">Role</th>
                 <th className="px-4 py-3">Status / Access</th>
+                <th className="px-4 py-3">Registered / Activity</th>
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border text-[13px] text-foreground">
               {isFetching && users.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                  <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
                     Loading users list...
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                  <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
                     No users configured in this workspace.
                   </td>
                 </tr>
@@ -288,6 +289,16 @@ function UserManagementPage() {
                           {Object.keys(u.permissions || {}).filter((k) => u.permissions[k]?.view).length} / {MODULES.length} modules visible
                         </span>
                       )}
+                    </td>
+                    <td className="px-4 py-3 text-[12px] text-muted-foreground tabular-nums">
+                      {u.createdAt
+                        ? new Date(u.createdAt).toLocaleString([], {
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
+                        : "—"}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex justify-end gap-1.5">

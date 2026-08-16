@@ -17,13 +17,14 @@ export class RequisitionService {
     department: string;
     item: string;
     total: number;
+    requester: string;
   }): Promise<Requisition> {
     const count = await requisitionRepo.getAll();
     const reqId = `REQ-${2042 + count.length}`;
 
     const newReq = await requisitionRepo.create({
       reqId,
-      requester: "System",
+      requester: data.requester,
       department: data.department,
       costCenter: "Unassigned",
       item: data.item,
@@ -39,13 +40,13 @@ export class RequisitionService {
     return newReq;
   }
 
-  async approveRequisition(id: string): Promise<Requisition> {
+  async approveRequisition(id: string, approverName: string): Promise<Requisition> {
     const existing = await requisitionRepo.getById(id);
     if (!existing) throw new Error("Requisition not found");
     
-    let targetStatus = "Approved";
+    let targetStatus = `Approved by ${approverName}`;
     if (existing.total > 10000 && existing.status === "Pending Approval") {
-      targetStatus = "Approved L1 (Needs Finance L2)";
+      targetStatus = `Approved L1 by ${approverName} (Needs Finance L2)`;
     }
     
     const updated = await requisitionRepo.updateStatus(id, targetStatus);
@@ -53,7 +54,7 @@ export class RequisitionService {
     return updated;
   }
 
-  async createRFQFromRequisition(id: string): Promise<any> {
+  async createRFQFromRequisition(id: string, userName: string): Promise<any> {
     const req = await requisitionRepo.getById(id);
     if (!req) throw new Error("Requisition not found");
     const rfqId = `RFQ-REF-${req.reqId}`;
@@ -67,12 +68,12 @@ export class RequisitionService {
       items: { requestedItem: req.item, total: req.total },
     });
 
-    await requisitionRepo.updateStatus(id, "Converted");
+    await requisitionRepo.updateStatus(id, `Converted by ${userName}`);
     await deleteCache("scm:dashboard:analytics");
     return newRfq;
   }
 
-  async createOrderFromRequisition(id: string, supplier: string, deliveryDate?: string): Promise<any> {
+  async createOrderFromRequisition(id: string, supplier: string, deliveryDate?: string, userName?: string): Promise<any> {
     const req = await requisitionRepo.getById(id);
     if (!req) throw new Error("Requisition not found");
     const count = await orderRepo.getAll();
@@ -90,7 +91,7 @@ export class RequisitionService {
       items,
     });
 
-    await requisitionRepo.updateStatus(id, "Converted");
+    await requisitionRepo.updateStatus(id, `Converted by ${userName || "System"}`);
     await deleteCache("scm:dashboard:analytics");
     return newOrder;
   }

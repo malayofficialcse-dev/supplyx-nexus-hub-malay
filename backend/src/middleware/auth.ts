@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { prisma } from "../repositories/scm.repo.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "supplyx_fallback_secret_key_change_me";
 
@@ -20,7 +21,7 @@ export interface CustomRequest extends Request {
   user?: AuthenticatedUser;
 }
 
-export function authenticateToken(req: CustomRequest, res: Response, next: NextFunction) {
+export async function authenticateToken(req: CustomRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers["authorization"];
   const token = authHeader && authHeader.split(" ")[1];
 
@@ -30,7 +31,26 @@ export function authenticateToken(req: CustomRequest, res: Response, next: NextF
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as AuthenticatedUser;
-    req.user = decoded;
+    
+    // Fetch live user from database to ensure up-to-date permissions
+    const dbUser = await prisma.user.findUnique({
+      where: { id: decoded.id },
+    });
+
+    if (!dbUser) {
+      return res.status(401).json({ message: "User account not found or has been revoked" });
+    }
+
+    req.user = {
+      id: dbUser.id,
+      email: dbUser.email,
+      name: dbUser.name,
+      role: dbUser.role,
+      permissions: (typeof dbUser.permissions === "string" 
+        ? JSON.parse(dbUser.permissions) 
+        : dbUser.permissions) as any || {},
+    };
+
     next();
   } catch (error) {
     return res.status(403).json({ message: "Token is invalid or expired" });
@@ -48,10 +68,16 @@ export function requirePermission(moduleName: string, action: "view" | "create" 
       return next();
     }
 
-    const userPermissions = req.user.permissions;
-    const modulePerms = userPermissions?.[moduleName];
+    let userPermissions = req.user.permissions;
+    if (typeof userPermissions === "string") {
+      try {
+        userPermissions = JSON.parse(userPermissions);
+      } catch (e) {}
+    }
 
-    if (modulePerms && modulePerms[action] === true) {
+    const modulePerms = (userPermissions as any)?.[moduleName];
+
+    if (modulePerms && Boolean(modulePerms[action]) === true) {
       return next();
     }
 
@@ -73,7 +99,7 @@ export function autoAuthorize() {
     }
 
     // Determine the module based on path
-    const path = req.baseUrl || req.path;
+    const path = (req.originalUrl || req.baseUrl || req.path || "").toLowerCase();
     let moduleName = "";
 
     if (path.includes("/api/suppliers/budget") || path.includes("/api/budget")) {
@@ -114,7 +140,7 @@ export function autoAuthorize() {
       return next();
     }
 
-    // Determine action based on method
+    // Determine action based on HTTP method
     let action: "view" | "create" | "edit" | "delete" = "view";
     if (req.method === "POST") {
       action = "create";
@@ -124,10 +150,16 @@ export function autoAuthorize() {
       action = "delete";
     }
 
-    const userPermissions = req.user.permissions;
-    const modulePerms = userPermissions?.[moduleName];
+    let userPermissions = req.user.permissions;
+    if (typeof userPermissions === "string") {
+      try {
+        userPermissions = JSON.parse(userPermissions);
+      } catch (e) {}
+    }
 
-    if (modulePerms && modulePerms[action] === true) {
+    const modulePerms = (userPermissions as any)?.[moduleName];
+
+    if (modulePerms && Boolean(modulePerms[action]) === true) {
       return next();
     }
 

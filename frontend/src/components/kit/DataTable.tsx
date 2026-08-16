@@ -369,6 +369,17 @@ export function DataTable<T extends Row>({
 
 function renderPlain(v: unknown): React.ReactNode {
   if (v === null || v === undefined || v === "") return <span className="text-muted-foreground">—</span>;
-  if (typeof v === "object") return <span className="text-muted-foreground">{JSON.stringify(v).slice(0, 40)}</span>;
+  if (Array.isArray(v)) {
+    return <span className="text-muted-foreground">{v.length} item{v.length === 1 ? "" : "s"}</span>;
+  }
+  if (typeof v === "object") {
+    const obj = v as Record<string, unknown>;
+    if (obj['name']) return String(obj['name']);
+    if (obj['title']) return String(obj['title']);
+    if (obj['label']) return String(obj['label']);
+    if (obj['item']) return String(obj['item']);
+    const vals = Object.values(obj).filter((x) => typeof x !== "object");
+    return <span className="text-muted-foreground">{vals.join(", ") || "—"}</span>;
+  }
   return String(v);
 }

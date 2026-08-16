@@ -22,7 +22,13 @@ export class RequisitionController {
             if (Number.isNaN(numericTotal)) {
                 return res.status(400).json({ error: "Invalid total value" });
             }
-            const newReq = await requisitionService.createRequisition({ department, item, total: numericTotal });
+            const requester = req.user?.name || "System";
+            const newReq = await requisitionService.createRequisition({
+                department,
+                item,
+                total: numericTotal,
+                requester,
+            });
             return res.status(201).json(newReq);
         }
         catch (error) {
@@ -35,7 +41,8 @@ export class RequisitionController {
             const { id } = req.params;
             if (!id)
                 return res.status(400).json({ error: "Missing requisition id" });
-            const updated = await requisitionService.approveRequisition(id);
+            const approverName = req.user?.name || "System";
+            const updated = await requisitionService.approveRequisition(id, approverName);
             return res.json(updated);
         }
         catch (error) {
@@ -47,7 +54,8 @@ export class RequisitionController {
             const { id } = req.params;
             if (!id)
                 return res.status(400).json({ error: "Missing requisition id" });
-            const newRfq = await requisitionService.createRFQFromRequisition(id);
+            const userName = req.user?.name || "System";
+            const newRfq = await requisitionService.createRFQFromRequisition(id, userName);
             return res.status(201).json(newRfq);
         }
         catch (error) {
@@ -60,7 +68,8 @@ export class RequisitionController {
             const { supplier, deliveryDate } = req.body || {};
             if (!id || !supplier)
                 return res.status(400).json({ error: "Missing required fields (id, supplier)" });
-            const newOrder = await requisitionService.createOrderFromRequisition(id, supplier, deliveryDate);
+            const userName = req.user?.name || "System";
+            const newOrder = await requisitionService.createOrderFromRequisition(id, supplier, deliveryDate, userName);
             return res.status(201).json(newOrder);
         }
         catch (error) {

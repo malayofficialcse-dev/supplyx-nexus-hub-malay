@@ -75,7 +75,22 @@ function InventoryPage() {
         columns={[
           col.text("item", "Item"),
           col.text("sku", "SKU"),
-          col.text("warehouseId", "Warehouse"),
+          {
+            key: "warehouseId",
+            label: "Warehouse",
+            render: (r) => {
+              const wid = String(r["warehouseId"] ?? "");
+              const wh = ((warehouses.data ?? []) as Row[]).find(
+                (w) => w["id"] === wid || w["whId"] === wid
+              );
+              if (!wh) return <span>{wid || "—"}</span>;
+              return (
+                <span className="font-medium text-foreground">
+                  {String(wh["whId"] || "")} — {String(wh["name"] || "")}
+                </span>
+              );
+            },
+          },
           col.text("unit", "Unit"),
           {
             key: "quantity",

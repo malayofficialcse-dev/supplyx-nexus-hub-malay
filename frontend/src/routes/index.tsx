@@ -234,6 +234,7 @@ function Dashboard() {
               col.text("supplier", "Supplier"),
               col.money("amount", "Amount"),
               col.status(),
+              col.audit("Activity / Updated By"),
             ]}
             rows={orderRows.slice(0, 20)}
             loading={orders.isFetching}
@@ -254,6 +255,7 @@ function Dashboard() {
               col.num("capacity", "Capacity"),
               col.num("fillLevel", "Fill %"),
               col.status(),
+              col.audit("Activity / Updated By"),
             ]}
             rows={warehouseRows}
             loading={warehouses.isFetching}

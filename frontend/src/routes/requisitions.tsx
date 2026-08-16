@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, FileSpreadsheet, ShoppingCart } from "lucide-react";
+import { CheckCircle2, FileSpreadsheet, ShoppingCart, User } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
 import { CrudPage } from "@/components/CrudPage";
@@ -9,8 +9,9 @@ import type { Row } from "@/components/kit/DataTable";
 import { Field, Input, Select, Textarea } from "@/components/kit/Input";
 import { Modal } from "@/components/kit/Modal";
 import { itemsSum } from "@/components/kit/ResourceForm";
-import { api } from "@/lib/api";
-import { DEPARTMENTS, col, STATUS } from "@/lib/scm";
+import { api } from "@/lib/api.js";
+import { DEPARTMENTS, col, STATUS } from "@/lib/scm.js";
+import { useAuth } from "@/lib/auth.js";
 
 export const Route = createFileRoute("/requisitions")({
   head: () => ({
@@ -25,6 +26,7 @@ export const Route = createFileRoute("/requisitions")({
 });
 
 function RequisitionsPage() {
+  const { user } = useAuth();
   const qc = useQueryClient();
   const [approving, setApproving] = React.useState<Row | null>(null);
   const [decision, setDecision] = React.useState("approve");
@@ -104,7 +106,21 @@ function RequisitionsPage() {
         searchKeys={["reqId", "requester", "department", "costCenter", "item", "status"]}
         columns={[
           col.code("reqId", "Requisition"),
-          col.text("requester", "Requester"),
+          {
+            key: "requester",
+            label: "Created By",
+            render: (r) => {
+              const req = String(r["requester"] ?? "System");
+              return (
+                <div className="flex items-center gap-1.5 font-medium">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary uppercase">
+                    {req.charAt(0)}
+                  </span>
+                  <span>{req}</span>
+                </div>
+              );
+            },
+          },
           col.text("department", "Department"),
           col.text("costCenter", "Cost centre"),
           col.text("item", "Primary item"),
@@ -140,7 +156,7 @@ function RequisitionsPage() {
         ]}
         fields={[
           { name: "reqId", label: "Requisition ID", required: true, placeholder: "REQ-1001" },
-          { name: "requester", label: "Requester", required: true },
+          { name: "requester", label: "Created By / Requester", required: true, defaultValue: user?.name || "System" },
           { name: "department", label: "Department", type: "select", options: DEPARTMENTS, required: true },
           { name: "costCenter", label: "Cost centre", required: true, placeholder: "CC-4400" },
           { name: "item", label: "Primary item", required: true },
@@ -148,7 +164,11 @@ function RequisitionsPage() {
           { name: "justification", label: "Business justification", type: "textarea" },
           { name: "items", label: "Requested lines", type: "items", required: true },
         ]}
-        transformPayload={(payload, values) => ({ ...payload, total: itemsSum(values) })}
+        transformPayload={(payload, values) => ({
+          ...payload,
+          requester: payload['requester'] || user?.name || "System",
+          total: itemsSum(values),
+        })}
         rowActionsExtra={(row) => (
           <>
             <Button

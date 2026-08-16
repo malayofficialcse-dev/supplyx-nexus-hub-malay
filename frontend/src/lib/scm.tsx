@@ -65,6 +65,64 @@ export const col = {
     label,
     render: (r) => <StatusBadge status={r[key]} />,
   }),
+  actor: (key: string, label: string): Column<Row> => ({
+    key,
+    label,
+    render: (r) => {
+      const name = String(r[key] ?? "System");
+      return (
+        <div className="flex items-center gap-1.5 font-medium">
+          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary uppercase">
+            {name.charAt(0)}
+          </span>
+          <span className="truncate max-w-[120px]">{name}</span>
+        </div>
+      );
+    },
+  }),
+  audit: (label = "Audit Trail (Who & When)"): Column<Row> => ({
+    key: "auditTrail",
+    label,
+    sortable: true,
+    render: (r) => {
+      const creator = String(r["createdBy"] || r["requester"] || r["creator"] || "System");
+      const updater = String(r["updatedBy"] || r["modifier"] || creator);
+      const createdDate = r["createdAt"]
+        ? new Date(String(r["createdAt"])).toLocaleString([], {
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "";
+      const updatedDate = r["updatedAt"] || r["date"] || r["lastScoreUpdated"]
+        ? new Date(String(r["updatedAt"] || r["date"] || r["lastScoreUpdated"])).toLocaleString([], {
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : createdDate || "Recently";
+
+      return (
+        <div className="flex flex-col text-[11px] leading-snug">
+          <div className="flex items-center gap-1.5 font-medium text-foreground">
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary uppercase">
+              {updater.charAt(0)}
+            </span>
+            <span className="font-semibold text-[11px]">{updater}</span>
+          </div>
+          <div className="text-[10px] text-muted-foreground ml-5 flex items-center gap-1">
+            <span>{updatedDate}</span>
+            {creator !== updater && (
+              <span className="text-[9px] text-muted-foreground/80">(created: {creator})</span>
+            )}
+          </div>
+        </div>
+      );
+    },
+    exportValue: (r) => `${r["updatedBy"] || r["createdBy"] || "System"} (${r["updatedAt"] || r["createdAt"] || ""})`,
+  }),
   items: (key = "items", label = "Lines"): Column<Row> => ({
     key,
     label,
