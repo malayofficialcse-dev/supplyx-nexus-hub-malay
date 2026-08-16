@@ -1,0 +1,115 @@
+services:
+
+  # =================================
+  # PostgreSQL
+  # =================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: supplyx-postgres
+
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: supplyx
+      POSTGRES_PASSWORD: supplyx_password
+      POSTGRES_DB: supplyx
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U supplyx -d supplyx"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+  # =================================
+  # Redis
+  # =================================
+  redis:
+    image: redis:7-alpine
+    container_name: supplyx-redis
+
+    restart: unless-stopped
+
+    ports:
+      - "6379:6379"
+
+    volumes:
+      - redis_data:/data
+
+    command: redis-server --appendonly yes
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+
+  # =================================
+  # Backend
+  # =================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    container_name: supplyx-backend
+
+    restart: unless-stopped
+
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+
+      DATABASE_URL: postgresql://supplyx:supplyx_password@postgres:5432/supplyx
+
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+
+    ports:
+      - "5000:5000"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+      redis:
+        condition: service_healthy
+
+
+  # =================================
+  # Frontend
+  # =================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+
+    container_name: supplyx-frontend
+
+    restart: unless-stopped
+
+    environment:
+      NODE_ENV: production
+
+    ports:
+      - "3000:3000"
+
+    depends_on:
+      - backend
+
+
+# =================================
+# Persistent Volumes
+# =================================
+volumes:
+
+  postgres_data:
+
+  redis_data:

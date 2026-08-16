@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -13,6 +14,7 @@ import { Toaster } from "sonner";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppShell } from "../components/AppShell";
+import { AuthProvider, useAuth } from "../lib/auth.js";
 
 function NotFoundComponent() {
   return (
@@ -119,15 +121,63 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+function AuthGuard({ children }: { children: ReactNode }) {
+  const { user, loading } = useAuth();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#0d0e12] text-white">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <p className="text-[12px] text-muted-foreground font-medium tracking-wide">Initializing workspace security...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const isLoginPage = pathname === "/login";
+
+  if (!user && !isLoginPage) {
+    return <RedirectToLogin />;
+  }
+
+  if (user && isLoginPage) {
+    return <RedirectToHome />;
+  }
+
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
+
+  return <AppShell>{children}</AppShell>;
+}
+
+function RedirectToLogin() {
+  useEffect(() => {
+    window.location.replace("/login");
+  }, []);
+  return null;
+}
+
+function RedirectToHome() {
+  useEffect(() => {
+    window.location.replace("/");
+  }, []);
+  return null;
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AppShell>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-      </AppShell>
+      <AuthProvider>
+        <AuthGuard>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+        </AuthGuard>
+      </AuthProvider>
       <Toaster position="bottom-right" toastOptions={{ style: { borderRadius: "3px" } }} />
     </QueryClientProvider>
   );

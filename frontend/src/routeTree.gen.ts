@@ -18,6 +18,7 @@ import { Route as CustomersRouteImport } from './routes/customers'
 import { Route as GoodsReceiptsRouteImport } from './routes/goods-receipts'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as InvoicesRouteImport } from './routes/invoices'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as LogisticsRouteImport } from './routes/logistics'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as PaymentsRouteImport } from './routes/payments'
@@ -25,6 +26,7 @@ import { Route as RequisitionsRouteImport } from './routes/requisitions'
 import { Route as RfqsRouteImport } from './routes/rfqs'
 import { Route as ShipmentsRouteImport } from './routes/shipments'
 import { Route as SuppliersRouteImport } from './routes/suppliers'
+import { Route as UsersRouteImport } from './routes/users'
 import { Route as WarehousesRouteImport } from './routes/warehouses'
 
 const IndexRoute = IndexRouteImport.update({
@@ -72,6 +74,11 @@ const InvoicesRoute = InvoicesRouteImport.update({
   path: '/invoices',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LogisticsRoute = LogisticsRouteImport.update({
   id: '/logistics',
   path: '/logistics',
@@ -107,6 +114,11 @@ const SuppliersRoute = SuppliersRouteImport.update({
   path: '/suppliers',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UsersRoute = UsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const WarehousesRoute = WarehousesRouteImport.update({
   id: '/warehouses',
   path: '/warehouses',
@@ -123,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/goods-receipts': typeof GoodsReceiptsRoute
   '/inventory': typeof InventoryRoute
   '/invoices': typeof InvoicesRoute
+  '/login': typeof LoginRoute
   '/logistics': typeof LogisticsRoute
   '/orders': typeof OrdersRoute
   '/payments': typeof PaymentsRoute
@@ -130,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/rfqs': typeof RfqsRoute
   '/shipments': typeof ShipmentsRoute
   '/suppliers': typeof SuppliersRoute
+  '/users': typeof UsersRoute
   '/warehouses': typeof WarehousesRoute
 }
 export interface FileRoutesByTo {
@@ -142,6 +156,7 @@ export interface FileRoutesByTo {
   '/goods-receipts': typeof GoodsReceiptsRoute
   '/inventory': typeof InventoryRoute
   '/invoices': typeof InvoicesRoute
+  '/login': typeof LoginRoute
   '/logistics': typeof LogisticsRoute
   '/orders': typeof OrdersRoute
   '/payments': typeof PaymentsRoute
@@ -149,6 +164,7 @@ export interface FileRoutesByTo {
   '/rfqs': typeof RfqsRoute
   '/shipments': typeof ShipmentsRoute
   '/suppliers': typeof SuppliersRoute
+  '/users': typeof UsersRoute
   '/warehouses': typeof WarehousesRoute
 }
 export interface FileRoutesById {
@@ -162,6 +178,7 @@ export interface FileRoutesById {
   '/goods-receipts': typeof GoodsReceiptsRoute
   '/inventory': typeof InventoryRoute
   '/invoices': typeof InvoicesRoute
+  '/login': typeof LoginRoute
   '/logistics': typeof LogisticsRoute
   '/orders': typeof OrdersRoute
   '/payments': typeof PaymentsRoute
@@ -169,6 +186,7 @@ export interface FileRoutesById {
   '/rfqs': typeof RfqsRoute
   '/shipments': typeof ShipmentsRoute
   '/suppliers': typeof SuppliersRoute
+  '/users': typeof UsersRoute
   '/warehouses': typeof WarehousesRoute
 }
 export interface FileRouteTypes {
@@ -183,6 +201,7 @@ export interface FileRouteTypes {
     | '/goods-receipts'
     | '/inventory'
     | '/invoices'
+    | '/login'
     | '/logistics'
     | '/orders'
     | '/payments'
@@ -190,6 +209,7 @@ export interface FileRouteTypes {
     | '/rfqs'
     | '/shipments'
     | '/suppliers'
+    | '/users'
     | '/warehouses'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -202,6 +222,7 @@ export interface FileRouteTypes {
     | '/goods-receipts'
     | '/inventory'
     | '/invoices'
+    | '/login'
     | '/logistics'
     | '/orders'
     | '/payments'
@@ -209,6 +230,7 @@ export interface FileRouteTypes {
     | '/rfqs'
     | '/shipments'
     | '/suppliers'
+    | '/users'
     | '/warehouses'
   id:
     | '__root__'
@@ -221,6 +243,7 @@ export interface FileRouteTypes {
     | '/goods-receipts'
     | '/inventory'
     | '/invoices'
+    | '/login'
     | '/logistics'
     | '/orders'
     | '/payments'
@@ -228,6 +251,7 @@ export interface FileRouteTypes {
     | '/rfqs'
     | '/shipments'
     | '/suppliers'
+    | '/users'
     | '/warehouses'
   fileRoutesById: FileRoutesById
 }
@@ -241,6 +265,7 @@ export interface RootRouteChildren {
   GoodsReceiptsRoute: typeof GoodsReceiptsRoute
   InventoryRoute: typeof InventoryRoute
   InvoicesRoute: typeof InvoicesRoute
+  LoginRoute: typeof LoginRoute
   LogisticsRoute: typeof LogisticsRoute
   OrdersRoute: typeof OrdersRoute
   PaymentsRoute: typeof PaymentsRoute
@@ -248,6 +273,7 @@ export interface RootRouteChildren {
   RfqsRoute: typeof RfqsRoute
   ShipmentsRoute: typeof ShipmentsRoute
   SuppliersRoute: typeof SuppliersRoute
+  UsersRoute: typeof UsersRoute
   WarehousesRoute: typeof WarehousesRoute
 }
 
@@ -316,6 +342,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InvoicesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/logistics': {
       id: '/logistics'
       path: '/logistics'
@@ -365,6 +398,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuppliersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/users': {
+      id: '/users'
+      path: '/users'
+      fullPath: '/users'
+      preLoaderRoute: typeof UsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/warehouses': {
       id: '/warehouses'
       path: '/warehouses'
@@ -385,6 +425,7 @@ const rootRouteChildren: RootRouteChildren = {
   GoodsReceiptsRoute: GoodsReceiptsRoute,
   InventoryRoute: InventoryRoute,
   InvoicesRoute: InvoicesRoute,
+  LoginRoute: LoginRoute,
   LogisticsRoute: LogisticsRoute,
   OrdersRoute: OrdersRoute,
   PaymentsRoute: PaymentsRoute,
@@ -392,6 +433,7 @@ const rootRouteChildren: RootRouteChildren = {
   RfqsRoute: RfqsRoute,
   ShipmentsRoute: ShipmentsRoute,
   SuppliersRoute: SuppliersRoute,
+  UsersRoute: UsersRoute,
   WarehousesRoute: WarehousesRoute,
 }
 export const routeTree = rootRouteImport

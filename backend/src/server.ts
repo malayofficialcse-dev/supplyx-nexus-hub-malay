@@ -22,6 +22,8 @@ import goodsReceiptsRouter from "./routes/goodsReceipts.js";
 import inventoryRouter from "./routes/inventories.js";
 import supplierRouter from "./routes/suppliers.js";
 import quoteRouter from "./routes/quotes.js";
+import userRouter from "./routes/users.js";
+import { authenticateToken, autoAuthorize } from "./middleware/auth.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -35,22 +37,24 @@ app.use(cors({ origin: "*" }));
 app.use(express.json());
 
 // Mount all API routers
-app.use("/api/suppliers", supplierRouter);
-app.use("/api/quotes", quoteRouter);
-app.use("/api/requisitions", requisitionRouter);
-app.use("/api/orders", orderRouter);
-app.use("/api/rfqs", rfqRouter);
-app.use("/api/analytics", analyticsRouter);
-app.use("/api/warehouses", warehouseRouter);
-app.use("/api/shipments", shipmentRouter);
-app.use("/api/logistics", logisticsRouter);
-app.use("/api/customers", customerRouter);
-app.use("/api/carriers", carrierRouter);
-app.use("/api/contracts", contractRouter);
-app.use("/api/invoices", invoiceRouter);
-app.use("/api/payments", paymentRouter);
-app.use("/api/goods-receipts", goodsReceiptsRouter);
-app.use("/api/inventories", inventoryRouter);
+app.use("/api/users", userRouter);
+
+app.use("/api/suppliers", authenticateToken, autoAuthorize(), supplierRouter);
+app.use("/api/quotes", authenticateToken, autoAuthorize(), quoteRouter);
+app.use("/api/requisitions", authenticateToken, autoAuthorize(), requisitionRouter);
+app.use("/api/orders", authenticateToken, autoAuthorize(), orderRouter);
+app.use("/api/rfqs", authenticateToken, autoAuthorize(), rfqRouter);
+app.use("/api/analytics", authenticateToken, autoAuthorize(), analyticsRouter);
+app.use("/api/warehouses", authenticateToken, autoAuthorize(), warehouseRouter);
+app.use("/api/shipments", authenticateToken, autoAuthorize(), shipmentRouter);
+app.use("/api/logistics", authenticateToken, autoAuthorize(), logisticsRouter);
+app.use("/api/customers", authenticateToken, autoAuthorize(), customerRouter);
+app.use("/api/carriers", authenticateToken, autoAuthorize(), carrierRouter);
+app.use("/api/contracts", authenticateToken, autoAuthorize(), contractRouter);
+app.use("/api/invoices", authenticateToken, autoAuthorize(), invoiceRouter);
+app.use("/api/payments", authenticateToken, autoAuthorize(), paymentRouter);
+app.use("/api/goods-receipts", authenticateToken, autoAuthorize(), goodsReceiptsRouter);
+app.use("/api/inventories", authenticateToken, autoAuthorize(), inventoryRouter);
 
 // Health check
 app.get("/health", (req, res) => {

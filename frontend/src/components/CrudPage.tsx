@@ -14,7 +14,8 @@ import {
   type FieldDef,
   type FormValues,
 } from "./kit/ResourceForm";
-import { api, unwrapList } from "@/lib/api";
+import { api, unwrapList } from "@/lib/api.js";
+import { useAuth } from "@/lib/auth.js";
 
 export interface CrudPageProps {
   title: string;
@@ -68,6 +69,17 @@ export function CrudPage({
   transformPayload,
   summary,
 }: CrudPageProps) {
+  const { hasPermission } = useAuth();
+  
+  // Resolve module key from endpoint
+  const cleanEndpoint = endpoint.replace(/^\/api\//, "").replace(/^\//, "");
+  const firstSegment = cleanEndpoint.split("/")[0];
+  const moduleName = firstSegment === "inventories" ? "inventory" : firstSegment;
+
+  const allowedCreate = canCreate && hasPermission(moduleName, "create");
+  const allowedEdit = canEdit && hasPermission(moduleName, "edit");
+  const allowedDelete = canDelete && hasPermission(moduleName, "delete");
+
   const qc = useQueryClient();
   const list = useResourceList(endpoint);
   const rows = (list.data ?? []) as Row[];
@@ -142,7 +154,7 @@ export function CrudPage({
         actions={
           <>
             {headerExtra}
-            {canCreate && fields.length ? (
+            {allowedCreate && fields.length ? (
               <Button variant="primary" onClick={openCreate}>
                 <Plus className="h-3.5 w-3.5" />
                 {createLabel ?? "New record"}
@@ -167,17 +179,17 @@ export function CrudPage({
         exportName={exportName ?? endpoint.replace(/\//g, "")}
         {...(toolbarExtra ? { toolbarExtra } : {})}
         rowActions={
-          canEdit || canDelete || rowActionsExtra
+          allowedEdit || allowedDelete || rowActionsExtra
             ? (row) => (
                 <>
                   {rowActionsExtra?.(row)}
-                  {canEdit && fields.length ? (
+                  {allowedEdit && fields.length ? (
                     <Button variant="subtle" size="sm" onClick={() => openEdit(row)}>
                       <Pencil className="h-3.5 w-3.5" />
                       Edit
                     </Button>
                   ) : null}
-                  {canDelete ? (
+                  {allowedDelete ? (
                     <Button variant="subtle" size="sm" onClick={() => setDeleting(row)}>
                       <Trash2 className="h-3.5 w-3.5 text-destructive" />
                       <span className="text-destructive">Delete</span>

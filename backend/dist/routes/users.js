@@ -1,0 +1,12 @@
+import { Router } from "express";
+import { UserController } from "../controllers/user.controller.js";
+import { authenticateToken } from "../middleware/auth.js";
+const router = Router();
+const controller = new UserController();
+router.post("/login", controller.login.bind(controller));
+router.get("/me", authenticateToken, controller.getMe.bind(controller));
+router.get("/", authenticateToken, controller.getUsers.bind(controller));
+router.post("/", authenticateToken, controller.createUser.bind(controller));
+router.put("/:id", authenticateToken, controller.updateUser.bind(controller));
+router.delete("/:id", authenticateToken, controller.deleteUser.bind(controller));
+export default router;
