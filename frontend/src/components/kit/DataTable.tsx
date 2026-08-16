@@ -156,15 +156,15 @@ export function DataTable<T extends Row>({
   }
 
   return (
-    <div className="rounded-sm border border-border bg-card shadow-flat">
-      <div className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-2.5">
-        <div className="relative min-w-[200px] flex-1 max-w-xs">
-          <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+    <div className="rounded-md border border-border/80 bg-card shadow-xs overflow-hidden">
+      <div className="flex flex-wrap items-center gap-2.5 border-b border-border/70 bg-muted/20 px-3.5 py-3">
+        <div className="relative min-w-[220px] flex-1 max-w-sm">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search…"
-            className="pl-7"
+            placeholder="Search records…"
+            className="pl-8 h-8 text-[12px] bg-surface"
             aria-label="Search records"
           />
         </div>
@@ -177,7 +177,7 @@ export function DataTable<T extends Row>({
             onChange={(e) =>
               setFilterValues((prev) => ({ ...prev, [f.key]: e.target.value }))
             }
-            className="w-auto min-w-[130px]"
+            className="h-8 text-[12px] w-auto min-w-[140px] bg-surface"
           >
             <option value="">All {f.label.toLowerCase()}</option>
             {(filterOptions[f.key] ?? []).map((opt) => (
@@ -196,6 +196,7 @@ export function DataTable<T extends Row>({
               setQuery("");
               setFilterValues({});
             }}
+            className="text-muted-foreground hover:text-foreground"
           >
             <X className="h-3.5 w-3.5" />
             Clear
@@ -205,13 +206,13 @@ export function DataTable<T extends Row>({
         <div className="ml-auto flex items-center gap-2">
           {toolbarExtra}
           {onRefresh ? (
-            <Button variant="secondary" size="md" onClick={onRefresh} title="Refresh">
-              <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} />
+            <Button variant="secondary" size="sm" onClick={onRefresh} title="Refresh records">
+              <RefreshCw className={cn("h-3.5 w-3.5 mr-1", loading && "animate-spin")} />
               Refresh
             </Button>
           ) : null}
-          <Button variant="secondary" size="md" onClick={handleExport} disabled={!processed.length}>
-            <Download className="h-3.5 w-3.5" />
+          <Button variant="secondary" size="sm" onClick={handleExport} disabled={!processed.length}>
+            <Download className="h-3.5 w-3.5 mr-1" />
             Export CSV
           </Button>
         </div>
@@ -227,13 +228,13 @@ export function DataTable<T extends Row>({
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-[13px]">
           <thead>
-            <tr className="border-b border-border bg-muted/70">
+            <tr className="border-b border-border/80 bg-muted/40 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               {columns.map((c) => (
                 <th
                   key={c.key}
                   style={c.width ? { width: c.width } : undefined}
                   className={cn(
-                    "px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground",
+                    "px-3.5 py-2.5 text-left",
                     c.align === "right" && "text-right",
                     c.align === "center" && "text-center",
                   )}
@@ -245,16 +246,16 @@ export function DataTable<T extends Row>({
                       type="button"
                       onClick={() => toggleSort(c.key)}
                       className={cn(
-                        "inline-flex items-center gap-1 rounded-sm uppercase transition-colors hover:text-foreground",
-                        sort?.key === c.key && "text-primary",
+                        "inline-flex items-center gap-1.5 uppercase transition-colors hover:text-foreground cursor-pointer select-none",
+                        sort?.key === c.key && "text-primary font-bold",
                       )}
                     >
                       {c.label}
                       {sort?.key === c.key ? (
                         sort.dir === "asc" ? (
-                          <ArrowUp className="h-3 w-3" />
+                          <ArrowUp className="h-3.5 w-3.5 text-primary" />
                         ) : (
-                          <ArrowDown className="h-3 w-3" />
+                          <ArrowDown className="h-3.5 w-3.5 text-primary" />
                         )
                       ) : null}
                     </button>
@@ -262,19 +263,19 @@ export function DataTable<T extends Row>({
                 </th>
               ))}
               {rowActions ? (
-                <th className="px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <th className="px-3.5 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Actions
                 </th>
               ) : null}
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-border/60">
             {loading && !rows.length ? (
               Array.from({ length: 5 }).map((_, i) => (
-                <tr key={i} className="border-b border-border">
+                <tr key={i} className="hover:bg-muted/10">
                   {columns.map((c) => (
-                    <td key={c.key} className="px-3 py-2.5">
-                      <div className="h-3 w-full max-w-[140px] animate-pulse rounded-sm bg-muted" />
+                    <td key={c.key} className="px-3.5 py-3">
+                      <div className="h-3.5 w-full max-w-[140px] animate-pulse rounded-sm bg-muted" />
                     </td>
                   ))}
                   {rowActions ? <td /> : null}
@@ -286,7 +287,7 @@ export function DataTable<T extends Row>({
                   key={String(row['id'] ?? i)}
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
                   className={cn(
-                    "border-b border-border transition-colors hover:bg-accent/50",
+                    "transition-colors hover:bg-primary/[0.025]",
                     onRowClick && "cursor-pointer",
                   )}
                 >
@@ -294,7 +295,7 @@ export function DataTable<T extends Row>({
                     <td
                       key={c.key}
                       className={cn(
-                        "px-3 py-2 align-middle text-foreground",
+                        "px-3.5 py-2.5 align-middle text-foreground",
                         c.align === "right" && "text-right tabular-nums",
                         c.align === "center" && "text-center",
                       )}
@@ -303,18 +304,23 @@ export function DataTable<T extends Row>({
                     </td>
                   ))}
                   {rowActions ? (
-                    <td className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex justify-end gap-1">{rowActions(row)}</div>
+                    <td className="px-3.5 py-2.5 text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex justify-end gap-1.5">{rowActions(row)}</div>
                     </td>
                   ) : null}
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={columns.length + (rowActions ? 1 : 0)} className="px-3 py-14">
-                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                    <Inbox className="h-7 w-7" />
-                    <p className="text-[13px]">{emptyMessage}</p>
+                <td colSpan={columns.length + (rowActions ? 1 : 0)} className="px-4 py-16">
+                  <div className="flex flex-col items-center justify-center gap-2.5 text-muted-foreground text-center">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted/60 border border-border/80">
+                      <Inbox className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <p className="text-[13px] font-medium text-foreground">{emptyMessage}</p>
+                    <p className="text-[11px] text-muted-foreground max-w-xs">
+                      No matching records found. Try adjusting your search query or filters.
+                    </p>
                   </div>
                 </td>
               </tr>
@@ -323,22 +329,23 @@ export function DataTable<T extends Row>({
         </table>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-3 py-2 text-[12px] text-muted-foreground">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border/70 bg-muted/10 px-3.5 py-2.5 text-[12px] text-muted-foreground">
         <span>
-          {processed.length ? (current - 1) * size + 1 : 0}–
-          {Math.min(current * size, processed.length)} of {processed.length}
-          {processed.length !== rows.length ? ` (filtered from ${rows.length})` : ""}
+          Showing <span className="font-semibold text-foreground">{processed.length ? (current - 1) * size + 1 : 0}</span> to{" "}
+          <span className="font-semibold text-foreground">{Math.min(current * size, processed.length)}</span> of{" "}
+          <span className="font-semibold text-foreground">{processed.length}</span> entries
+          {processed.length !== rows.length ? ` (filtered from ${rows.length} total)` : ""}
         </span>
         <div className="flex items-center gap-2">
           <Select
             aria-label="Rows per page"
             value={String(size)}
             onChange={(e) => setSize(Number(e.target.value))}
-            className="h-7 w-auto"
+            className="h-7.5 w-auto text-[11px] bg-surface"
           >
             {[12, 25, 50, 100].map((n) => (
               <option key={n} value={n}>
-                {n} / page
+                {n} per page
               </option>
             ))}
           </Select>
@@ -350,7 +357,7 @@ export function DataTable<T extends Row>({
           >
             Previous
           </Button>
-          <span className="tabular-nums">
+          <span className="tabular-nums px-1 font-medium text-foreground">
             Page {current} of {totalPages}
           </span>
           <Button

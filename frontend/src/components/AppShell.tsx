@@ -21,6 +21,7 @@ import {
   Grid2x2,
   Wallet,
   UserCheck,
+  LogOut,
 } from "lucide-react";
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -66,7 +67,7 @@ const NAV: { group: string; items: { to: string; label: string; icon: React.Elem
     items: [{ to: "/customers", label: "Customers", icon: Users, module: "customers" }],
   },
   {
-    group: "System",
+    group: "System & Administration",
     items: [{ to: "/users", label: "User Management", icon: UserCheck, module: "users" }],
   },
 ];
@@ -110,17 +111,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-40 flex h-12 items-center gap-3 border-b border-border bg-nav px-3 text-nav-foreground shadow-xs">
-        <Grid2x2 className="h-4 w-4 text-primary" />
-        <Link to="/" className="text-[15px] font-semibold tracking-tight text-foreground">
-          SupplyX <span className="font-normal text-muted-foreground">| Supply Chain Suite</span>
-        </Link>
+      <header className="sticky top-0 z-40 flex h-13 items-center gap-3 border-b border-border/80 bg-nav/95 backdrop-blur-md px-4 text-nav-foreground shadow-xs">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 border border-primary/25 text-primary shadow-xs">
+            <Grid2x2 className="h-4.5 w-4.5" />
+          </div>
+          <Link to="/" className="text-[15px] font-bold tracking-tight text-foreground flex items-center gap-1.5">
+            SupplyX <span className="font-medium text-[13px] text-muted-foreground hidden sm:inline-block">| Nexus SCM Suite</span>
+          </Link>
+        </div>
+
         <div className="relative mx-auto hidden w-full max-w-md md:block">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <input
-            placeholder="Search modules"
+            placeholder="Quick search modules (Press Enter)..."
             aria-label="Search modules"
-            className="h-7.5 w-full rounded-sm border border-border bg-muted/40 pl-8 pr-2 text-[12px] text-foreground placeholder:text-muted-foreground focus:bg-background focus:outline-none focus:ring-2 focus:ring-primary/40 transition-colors"
+            className="h-8.5 w-full rounded-md border border-border/80 bg-muted/30 pl-9 pr-3 text-[12px] text-foreground placeholder:text-muted-foreground focus:bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all shadow-xs"
             onKeyDown={(e) => {
               if (e.key !== "Enter") return;
               const q = (e.target as HTMLInputElement).value.trim().toLowerCase();
@@ -131,48 +137,53 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             }}
           />
         </div>
+
         <div className="ml-auto flex items-center gap-2">
           {user && (
-            <span className="hidden text-[12px] font-medium text-muted-foreground md:inline-block">
-              {user.name} <span className="text-[10px] bg-accent text-accent-foreground px-1.5 py-0.5 rounded-sm ml-1 font-semibold uppercase">{user.role}</span>
-            </span>
+            <div className="hidden items-center gap-2 md:flex border-r border-border/70 pr-3 mr-1">
+              <span className="text-[12px] font-medium text-foreground">{user.name}</span>
+              <span className="text-[10px] font-bold tracking-wide uppercase px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                {user.role}
+              </span>
+            </div>
           )}
-          <button className="rounded-sm p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors" aria-label="Notifications">
+          <button className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors" aria-label="Notifications">
             <Bell className="h-4 w-4" />
           </button>
-          <button className="rounded-sm p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors" aria-label="Help">
+          <button className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors" aria-label="Help">
             <HelpCircle className="h-4 w-4" />
           </button>
           {user && (
             <div
-              className="ml-1 flex h-7 w-7 items-center justify-center rounded-sm bg-primary text-[11px] font-semibold text-primary-foreground uppercase cursor-pointer"
-              title={user.name}
+              className="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-primary to-primary-hover text-[11px] font-bold text-primary-foreground uppercase shadow-xs cursor-pointer select-none"
+              title={`${user.name} (${user.role})`}
             >
               {user.name.split(" ").map((n) => n[0]).join("").substring(0, 2)}
             </div>
           )}
           <button
             onClick={logout}
-            className="ml-1 rounded-sm border border-border px-2.5 py-1 text-[11px] font-semibold text-foreground hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-colors"
+            className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-[12px] font-semibold text-foreground hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-colors ml-1 cursor-pointer"
+            title="Sign out of workspace"
           >
-            Logout
+            <LogOut className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline-block">Logout</span>
           </button>
         </div>
       </header>
 
       <div className="flex">
-        <aside className="sticky top-12 hidden h-[calc(100vh-3rem)] w-60 shrink-0 overflow-y-auto border-r border-sidebar-border bg-sidebar py-3 lg:block">
+        <aside className="sticky top-13 hidden h-[calc(100vh-3.25rem)] w-64 shrink-0 overflow-y-auto border-r border-sidebar-border bg-sidebar/95 p-3.5 lg:block">
           {filteredNAV.map((group) => (
-            <div key={group.group} className="mb-3">
-              <p className="px-4 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <div key={group.group} className="mb-4">
+              <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
                 {group.group}
               </p>
-              <nav>
+              <nav className="mt-1 space-y-0.5">
                 {group.items.map((item) => {
                   const active = pathname === item.to;
                   const Icon = item.icon;
                   
-                  // Compute dynamic alerts count per item
                   let alertBadge = null;
                   if (item.to === "/contracts" && expiringCount > 0) {
                     alertBadge = (
@@ -193,14 +204,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       key={item.to}
                       to={item.to}
                       className={cn(
-                        "relative flex items-center gap-2.5 px-4 py-1.5 text-[13px] text-sidebar-foreground transition-colors hover:bg-sidebar-accent",
-                        active && "bg-sidebar-accent font-semibold text-sidebar-accent-foreground",
+                        "relative flex items-center gap-2.5 rounded-md px-3 py-2 text-[13px] font-medium text-sidebar-foreground transition-all",
+                        active
+                          ? "bg-primary/10 text-primary font-semibold shadow-xs"
+                          : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                       )}
                     >
                       {active ? (
-                        <span className="absolute inset-y-1 left-0 w-[3px] rounded-sm bg-primary" />
+                        <span className="absolute inset-y-1.5 left-0 w-[3px] rounded-full bg-primary" />
                       ) : null}
-                      <Icon className="h-4 w-4 shrink-0 opacity-80" />
+                      <Icon className={cn("h-4 w-4 shrink-0", active ? "text-primary" : "opacity-75")} />
                       <span>{item.label}</span>
                       {alertBadge}
                     </Link>
@@ -209,22 +222,22 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </nav>
             </div>
           ))}
-          <p className="mt-4 border-t border-sidebar-border px-4 pt-3 text-[10px] leading-4 text-muted-foreground">
-            API endpoint
+          <div className="mt-6 border-t border-sidebar-border px-3 pt-3 text-[10px] leading-4 text-muted-foreground">
+            <span className="font-semibold text-foreground/80">SupplyX SCM API v2.0</span>
             <br />
-            <span className="break-all font-mono">{API_BASE}</span>
-          </p>
+            <span className="break-all font-mono text-[9px] opacity-75">{API_BASE}</span>
+          </div>
         </aside>
 
-        <main className="min-w-0 flex-1 px-4 py-5 lg:px-6">
-          <nav className="mb-3 flex gap-1 overflow-x-auto pb-1 lg:hidden">
+        <main className="min-w-0 flex-1 p-5 lg:p-7">
+          <nav className="mb-4 flex gap-1.5 overflow-x-auto pb-1.5 lg:hidden">
             {filteredNAV.flatMap((g) => g.items).map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
                 className={cn(
-                  "whitespace-nowrap rounded-sm border border-border bg-surface px-2.5 py-1 text-[12px]",
-                  pathname === item.to && "border-primary bg-accent text-primary",
+                  "whitespace-nowrap rounded-md border border-border bg-surface px-3 py-1.5 text-[12px] font-medium shadow-xs",
+                  pathname === item.to && "border-primary bg-primary/10 text-primary font-semibold",
                 )}
               >
                 {item.label}

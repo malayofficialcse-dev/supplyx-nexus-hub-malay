@@ -1,35 +1,59 @@
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils.js";
 
 export type Tone = "neutral" | "info" | "success" | "warning" | "danger" | "accent";
 
-const toneClass: Record<Tone, string> = {
-  neutral: "bg-secondary text-secondary-foreground border-border",
-  info: "bg-accent text-accent-foreground border-accent-foreground/20",
-  success: "bg-success/12 text-success border-success/30",
-  warning: "bg-warning/18 text-warning-foreground border-warning/40",
-  danger: "bg-destructive/10 text-destructive border-destructive/30",
-  accent: "bg-primary/10 text-primary border-primary/25",
+const toneClass: Record<Tone, { container: string; dot: string }> = {
+  neutral: {
+    container: "bg-secondary text-secondary-foreground border-border/80",
+    dot: "bg-muted-foreground",
+  },
+  info: {
+    container: "bg-blue-500/10 text-blue-600 border-blue-500/25",
+    dot: "bg-blue-500",
+  },
+  success: {
+    container: "bg-emerald-500/10 text-emerald-600 border-emerald-500/25",
+    dot: "bg-emerald-500",
+  },
+  warning: {
+    container: "bg-amber-500/10 text-amber-600 border-amber-500/30",
+    dot: "bg-amber-500",
+  },
+  danger: {
+    container: "bg-rose-500/10 text-rose-600 border-rose-500/25",
+    dot: "bg-rose-500",
+  },
+  accent: {
+    container: "bg-primary/10 text-primary border-primary/30",
+    dot: "bg-primary",
+  },
 };
 
 export function Badge({
   tone = "neutral",
   children,
   className,
+  showDot = true,
 }: {
   tone?: Tone;
   children: React.ReactNode;
   className?: string;
+  showDot?: boolean;
 }) {
+  const currentTone = toneClass[tone];
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-sm border px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide",
-        toneClass[tone],
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold tracking-wide shadow-xs transition-colors",
+        currentTone.container,
         className,
       )}
     >
-      {children}
+      {showDot && (
+        <span className={cn("h-1.5 w-1.5 rounded-full shrink-0 shadow-xs", currentTone.dot)} />
+      )}
+      <span>{children}</span>
     </span>
   );
 }

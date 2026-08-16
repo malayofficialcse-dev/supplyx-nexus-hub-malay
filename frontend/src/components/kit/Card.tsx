@@ -1,5 +1,5 @@
 import * as React from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils.js";
 
 export function Card({
   className,
@@ -9,7 +9,7 @@ export function Card({
   children: React.ReactNode;
 }) {
   return (
-    <div className={cn("rounded-sm border border-border bg-card shadow-flat", className)}>
+    <div className={cn("rounded-md border border-border/80 bg-card shadow-xs transition-shadow hover:shadow-sm", className)}>
       {children}
     </div>
   );
@@ -25,11 +25,11 @@ export function CardHeader({
   action?: React.ReactNode | undefined;
 }) {
   return (
-    <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+    <div className="flex items-center justify-between border-b border-border/70 px-4 py-3 bg-muted/20">
       <div>
-        <h2 className="text-[13px] font-semibold text-foreground">{title}</h2>
+        <h2 className="text-[13px] font-semibold text-foreground tracking-tight">{title}</h2>
         {subtitle ? (
-          <p className="text-[11px] text-muted-foreground">{subtitle}</p>
+          <p className="text-[11px] text-muted-foreground mt-0.5">{subtitle}</p>
         ) : null}
       </div>
       {action}
@@ -47,11 +47,11 @@ export function PageHeader({
   actions?: React.ReactNode | undefined;
 }) {
   return (
-    <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-3 border-b border-border/40 pb-4">
       <div>
-        <h1 className="text-[20px] font-semibold leading-tight text-foreground">{title}</h1>
+        <h1 className="text-[22px] font-bold tracking-tight text-foreground">{title}</h1>
         {description ? (
-          <p className="mt-0.5 text-[12px] text-muted-foreground">{description}</p>
+          <p className="mt-1 text-[13px] text-muted-foreground">{description}</p>
         ) : null}
       </div>
       <div className="flex flex-wrap items-center gap-2">{actions}</div>
@@ -72,25 +72,41 @@ export function StatCard({
   icon?: React.ReactNode | undefined;
   tone?: "default" | "success" | "warning" | "danger" | undefined;
 }) {
-  const bar = {
-    default: "bg-primary",
-    success: "bg-success",
-    warning: "bg-warning",
-    danger: "bg-destructive",
+  const toneStyles = {
+    default: {
+      bar: "bg-primary",
+      iconBg: "bg-primary/10 text-primary border-primary/20",
+    },
+    success: {
+      bar: "bg-emerald-500",
+      iconBg: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+    },
+    warning: {
+      bar: "bg-amber-500",
+      iconBg: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+    },
+    danger: {
+      bar: "bg-rose-500",
+      iconBg: "bg-rose-500/10 text-rose-600 border-rose-500/20",
+    },
   }[tone];
 
   return (
-    <Card className="relative overflow-hidden">
-      <span className={cn("absolute inset-y-0 left-0 w-[3px]", bar)} />
-      <div className="flex items-start justify-between gap-3 px-4 py-3">
+    <Card className="relative overflow-hidden group hover:-translate-y-0.5 transition-all duration-200">
+      <span className={cn("absolute inset-y-0 left-0 w-[3px]", toneStyles.bar)} />
+      <div className="flex items-start justify-between gap-3 p-4">
         <div className="min-w-0">
-          <p className="truncate text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <p className="truncate text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
             {label}
           </p>
-          <p className="mt-1 text-[22px] font-semibold leading-none text-foreground">{value}</p>
-          {hint ? <p className="mt-1.5 text-[11px] text-muted-foreground">{hint}</p> : null}
+          <p className="mt-1.5 text-[24px] font-bold leading-tight text-foreground tracking-tight">{value}</p>
+          {hint ? <p className="mt-1 text-[11px] text-muted-foreground">{hint}</p> : null}
         </div>
-        {icon ? <div className="text-primary">{icon}</div> : null}
+        {icon ? (
+          <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-md border shadow-xs transition-transform group-hover:scale-105", toneStyles.iconBg)}>
+            {icon}
+          </div>
+        ) : null}
       </div>
     </Card>
   );
