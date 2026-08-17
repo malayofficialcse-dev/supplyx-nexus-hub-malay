@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { DateFilterDef } from "@/components/kit/DataTable";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
@@ -24,6 +25,7 @@ export interface CrudPageProps {
   columns: Column<Row>[];
   fields?: FieldDef[] | undefined;
   filters?: FilterDef[] | undefined;
+  dateFilter?: DateFilterDef | undefined;
   searchKeys?: string[] | undefined;
   exportName?: string | undefined;
   canCreate?: boolean | undefined;
@@ -54,6 +56,7 @@ export function CrudPage({
   columns,
   fields = [],
   filters,
+  dateFilter,
   searchKeys,
   exportName,
   canCreate = true,
@@ -240,6 +243,7 @@ export function CrudPage({
         }}
         {...(searchKeys ? { searchKeys } : {})}
         {...(filters ? { filters } : {})}
+        {...(dateFilter ? { dateFilter } : {})}
         exportName={exportName ?? endpoint.replace(/\//g, "")}
         {...(toolbarExtra ? { toolbarExtra } : {})}
         rowActions={
