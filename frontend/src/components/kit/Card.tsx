@@ -9,7 +9,7 @@ export function Card({
   children: React.ReactNode;
 }) {
   return (
-    <div className={cn("rounded-md border border-border/80 bg-card shadow-xs transition-shadow hover:shadow-sm", className)}>
+    <div className={cn("rounded-md border border-border/80 bg-card shadow-xs transition-all duration-200 hover:shadow-sm hover:border-border-strong/70", className)}>
       {children}
     </div>
   );
@@ -25,7 +25,7 @@ export function CardHeader({
   action?: React.ReactNode | undefined;
 }) {
   return (
-    <div className="flex items-center justify-between border-b border-border/70 px-4 py-3 bg-muted/20">
+    <div className="flex items-center justify-between border-b border-border/70 px-4 py-3 bg-gradient-to-r from-muted/30 via-indigo-50/20 to-transparent">
       <div>
         <h2 className="text-[13px] font-semibold text-foreground tracking-tight">{title}</h2>
         {subtitle ? (
@@ -47,8 +47,9 @@ export function PageHeader({
   actions?: React.ReactNode | undefined;
 }) {
   return (
-    <div className="mb-5 flex flex-wrap items-end justify-between gap-3 border-b border-border/40 pb-4">
-      <div>
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-3 border-b border-border/40 pb-4 relative">
+      <div className="relative pl-3">
+        <span className="absolute left-0 top-1 bottom-1 w-[3px] rounded-full bg-gradient-to-b from-primary via-indigo-500 to-sky-400" />
         <h1 className="text-[22px] font-bold tracking-tight text-foreground">{title}</h1>
         {description ? (
           <p className="mt-1 text-[13px] text-muted-foreground">{description}</p>
@@ -70,12 +71,16 @@ export function StatCard({
   value: React.ReactNode;
   hint?: string | undefined;
   icon?: React.ReactNode | undefined;
-  tone?: "default" | "success" | "warning" | "danger" | undefined;
+  tone?: "default" | "success" | "warning" | "danger" | "iris" | undefined;
 }) {
   const toneStyles = {
     default: {
       bar: "bg-primary",
       iconBg: "bg-primary/10 text-primary border-primary/20",
+    },
+    iris: {
+      bar: "bg-indigo-500",
+      iconBg: "bg-indigo-500/10 text-indigo-700 border-indigo-500/25",
     },
     success: {
       bar: "bg-emerald-500",

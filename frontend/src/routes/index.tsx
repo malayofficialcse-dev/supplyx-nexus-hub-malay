@@ -139,6 +139,7 @@ function Dashboard() {
           label="Committed PO spend"
           value={formatCurrency(totalSpend)}
           hint={`${formatNumber(orderRows.length)} purchase orders`}
+          tone="iris"
           icon={<ShoppingCart className="h-5 w-5" />}
         />
         <StatCard

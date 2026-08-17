@@ -116,7 +116,7 @@ export function CrudPage({
         return (
           <div className="flex flex-col text-[11px] leading-snug">
             <div className="flex items-center gap-1.5 font-medium text-foreground">
-              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary uppercase">
+              <span className="flex h-4 w-4 items-center justify-center rounded-full bg-indigo-500/12 text-[9px] font-bold text-indigo-700 border border-indigo-400/25 uppercase">
                 {updater.charAt(0)}
               </span>
               <span className="font-semibold text-[11px] text-foreground">{updater}</span>

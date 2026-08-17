@@ -157,14 +157,14 @@ export function DataTable<T extends Row>({
 
   return (
     <div className="rounded-md border border-border/80 bg-card shadow-xs overflow-hidden">
-      <div className="flex flex-wrap items-center gap-2.5 border-b border-border/70 bg-muted/20 px-3.5 py-3">
+      <div className="flex flex-wrap items-center gap-2.5 border-b border-border/70 bg-gradient-to-r from-muted/30 via-indigo-50/20 to-transparent px-3.5 py-3">
         <div className="relative min-w-[220px] flex-1 max-w-sm">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search records…"
-            className="pl-8 h-8 text-[12px] bg-surface"
+            className="pl-8 h-8 text-[12px] bg-surface focus-visible:border-indigo-400/80 focus-visible:ring-indigo-500/20"
             aria-label="Search records"
           />
         </div>
@@ -177,7 +177,7 @@ export function DataTable<T extends Row>({
             onChange={(e) =>
               setFilterValues((prev) => ({ ...prev, [f.key]: e.target.value }))
             }
-            className="h-8 text-[12px] w-auto min-w-[140px] bg-surface"
+            className="h-8 text-[12px] w-auto min-w-[140px] bg-surface focus-visible:border-indigo-400/80"
           >
             <option value="">All {f.label.toLowerCase()}</option>
             {(filterOptions[f.key] ?? []).map((opt) => (
@@ -196,7 +196,7 @@ export function DataTable<T extends Row>({
               setQuery("");
               setFilterValues({});
             }}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground hover:bg-indigo-50/50"
           >
             <X className="h-3.5 w-3.5" />
             Clear
@@ -228,7 +228,7 @@ export function DataTable<T extends Row>({
       <div className="overflow-x-auto">
         <table className="w-full border-collapse text-[13px]">
           <thead>
-            <tr className="border-b border-border/80 bg-muted/40 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <tr className="border-b border-border/80 bg-gradient-to-r from-muted/50 via-indigo-50/25 to-muted/40 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
               {columns.map((c) => (
                 <th
                   key={c.key}
@@ -247,15 +247,15 @@ export function DataTable<T extends Row>({
                       onClick={() => toggleSort(c.key)}
                       className={cn(
                         "inline-flex items-center gap-1.5 uppercase transition-colors hover:text-foreground cursor-pointer select-none",
-                        sort?.key === c.key && "text-primary font-bold",
+                        sort?.key === c.key && "text-indigo-600 font-bold",
                       )}
                     >
                       {c.label}
                       {sort?.key === c.key ? (
                         sort.dir === "asc" ? (
-                          <ArrowUp className="h-3.5 w-3.5 text-primary" />
+                          <ArrowUp className="h-3.5 w-3.5 text-indigo-600" />
                         ) : (
-                          <ArrowDown className="h-3.5 w-3.5 text-primary" />
+                          <ArrowDown className="h-3.5 w-3.5 text-indigo-600" />
                         )
                       ) : null}
                     </button>
@@ -287,7 +287,7 @@ export function DataTable<T extends Row>({
                   key={String(row['id'] ?? i)}
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
                   className={cn(
-                    "transition-colors hover:bg-primary/[0.025]",
+                    "transition-colors hover:bg-indigo-50/25",
                     onRowClick && "cursor-pointer",
                   )}
                 >

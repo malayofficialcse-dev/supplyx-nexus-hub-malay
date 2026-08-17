@@ -110,14 +110,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }).filter((group) => group.items.length > 0);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative flex flex-col">
+      {/* Global Lightweight Top Accent Bar */}
+      <div className="h-[2.5px] w-full bg-gradient-to-r from-primary via-indigo-500 to-sky-400 shrink-0" />
+      
       <header className="sticky top-0 z-40 flex h-13 items-center gap-3 border-b border-border/80 bg-nav/95 backdrop-blur-md px-4 text-nav-foreground shadow-xs">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 border border-primary/25 text-primary shadow-xs">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-primary via-indigo-600 to-primary-hover border border-indigo-400/30 text-white shadow-xs shadow-indigo-500/20">
             <Grid2x2 className="h-4.5 w-4.5" />
           </div>
-          <Link to="/" className="text-[15px] font-bold tracking-tight text-foreground flex items-center gap-1.5">
-            SupplyX <span className="font-medium text-[13px] text-muted-foreground hidden sm:inline-block">| Nexus SCM Suite</span>
+          <Link to="/" className="text-[15px] font-bold tracking-tight text-foreground flex items-center gap-1.5 group">
+            <span className="group-hover:text-primary transition-colors">SupplyX</span> <span className="font-medium text-[13px] text-muted-foreground hidden sm:inline-block">| Nexus SCM Suite</span>
           </Link>
         </div>
 
@@ -126,7 +129,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <input
             placeholder="Quick search modules (Press Enter)..."
             aria-label="Search modules"
-            className="h-8.5 w-full rounded-md border border-border/80 bg-muted/30 pl-9 pr-3 text-[12px] text-foreground placeholder:text-muted-foreground focus:bg-background focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all shadow-xs"
+            className="h-8.5 w-full rounded-md border border-border/80 bg-muted/30 pl-9 pr-3 text-[12px] text-foreground placeholder:text-muted-foreground focus:bg-background focus:outline-none focus:ring-2 focus:ring-indigo-500/25 focus:border-indigo-400/50 transition-all shadow-xs"
             onKeyDown={(e) => {
               if (e.key !== "Enter") return;
               const q = (e.target as HTMLInputElement).value.trim().toLowerCase();
@@ -142,20 +145,20 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {user && (
             <div className="hidden items-center gap-2 md:flex border-r border-border/70 pr-3 mr-1">
               <span className="text-[12px] font-medium text-foreground">{user.name}</span>
-              <span className="text-[10px] font-bold tracking-wide uppercase px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+              <span className="text-[10px] font-bold tracking-wide uppercase px-2 py-0.5 rounded-full bg-gradient-to-r from-indigo-500/10 to-primary/10 text-indigo-700 border border-indigo-400/25">
                 {user.role}
               </span>
             </div>
           )}
-          <button className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors" aria-label="Notifications">
+          <button className="rounded-md p-2 text-muted-foreground hover:bg-indigo-50/50 hover:text-foreground transition-colors" aria-label="Notifications">
             <Bell className="h-4 w-4" />
           </button>
-          <button className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors" aria-label="Help">
+          <button className="rounded-md p-2 text-muted-foreground hover:bg-indigo-50/50 hover:text-foreground transition-colors" aria-label="Help">
             <HelpCircle className="h-4 w-4" />
           </button>
           {user && (
             <div
-              className="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-primary to-primary-hover text-[11px] font-bold text-primary-foreground uppercase shadow-xs cursor-pointer select-none"
+              className="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-indigo-600 via-primary to-sky-600 text-[11px] font-bold text-white uppercase shadow-xs shadow-indigo-500/20 cursor-pointer select-none ring-1 ring-white/20"
               title={`${user.name} (${user.role})`}
             >
               {user.name.split(" ").map((n) => n[0]).join("").substring(0, 2)}
@@ -172,8 +175,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <div className="flex">
-        <aside className="sticky top-13 hidden h-[calc(100vh-3.25rem)] w-64 shrink-0 overflow-y-auto border-r border-sidebar-border bg-sidebar/95 p-3.5 lg:block">
+      <div className="flex flex-1">
+        <aside className="sticky top-[3.4rem] hidden h-[calc(100vh-3.4rem)] w-64 shrink-0 overflow-y-auto border-r border-sidebar-border bg-sidebar/95 p-3.5 lg:block">
           {filteredNAV.map((group) => (
             <div key={group.group} className="mb-4">
               <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
@@ -206,12 +209,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                       className={cn(
                         "relative flex items-center gap-2.5 rounded-md px-3 py-2 text-[13px] font-medium text-sidebar-foreground transition-all",
                         active
-                          ? "bg-primary/10 text-primary font-semibold shadow-xs"
+                          ? "bg-gradient-to-r from-indigo-500/12 via-primary/8 to-transparent text-primary font-semibold shadow-xs"
                           : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                       )}
                     >
                       {active ? (
-                        <span className="absolute inset-y-1.5 left-0 w-[3px] rounded-full bg-primary" />
+                        <span className="absolute inset-y-1.5 left-0 w-[3px] rounded-full bg-gradient-to-b from-primary to-indigo-500" />
                       ) : null}
                       <Icon className={cn("h-4 w-4 shrink-0", active ? "text-primary" : "opacity-75")} />
                       <span>{item.label}</span>
@@ -237,7 +240,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 to={item.to}
                 className={cn(
                   "whitespace-nowrap rounded-md border border-border bg-surface px-3 py-1.5 text-[12px] font-medium shadow-xs",
-                  pathname === item.to && "border-primary bg-primary/10 text-primary font-semibold",
+                  pathname === item.to && "border-indigo-400 bg-gradient-to-r from-primary/10 to-indigo-500/10 text-primary font-semibold",
                 )}
               >
                 {item.label}

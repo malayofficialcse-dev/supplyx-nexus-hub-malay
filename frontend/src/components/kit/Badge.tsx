@@ -1,7 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils.js";
 
-export type Tone = "neutral" | "info" | "success" | "warning" | "danger" | "accent";
+export type Tone = "neutral" | "info" | "success" | "warning" | "danger" | "accent" | "iris";
 
 const toneClass: Record<Tone, { container: string; dot: string }> = {
   neutral: {
@@ -11,6 +11,10 @@ const toneClass: Record<Tone, { container: string; dot: string }> = {
   info: {
     container: "bg-blue-500/10 text-blue-600 border-blue-500/25",
     dot: "bg-blue-500",
+  },
+  iris: {
+    container: "bg-indigo-500/10 text-indigo-700 border-indigo-500/25",
+    dot: "bg-indigo-500",
   },
   success: {
     container: "bg-emerald-500/10 text-emerald-600 border-emerald-500/25",
@@ -25,7 +29,7 @@ const toneClass: Record<Tone, { container: string; dot: string }> = {
     dot: "bg-rose-500",
   },
   accent: {
-    container: "bg-primary/10 text-primary border-primary/30",
+    container: "bg-gradient-to-r from-primary/10 to-indigo-500/10 text-primary border-primary/25",
     dot: "bg-primary",
   },
 };

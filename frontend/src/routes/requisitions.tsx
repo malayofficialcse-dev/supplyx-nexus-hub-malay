@@ -113,7 +113,7 @@ function RequisitionsPage() {
               const req = String(r["requester"] ?? "System");
               return (
                 <div className="flex items-center gap-1.5 font-medium">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary uppercase">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-500/12 text-[10px] font-bold text-indigo-700 border border-indigo-400/25 uppercase">
                     {req.charAt(0)}
                   </span>
                   <span>{req}</span>
