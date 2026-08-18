@@ -27,7 +27,9 @@ import { authenticateToken, autoAuthorize } from "./middleware/auth.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.join(__dirname, ".env") });
+// Keep the environment file resolution stable for both `src` execution and
+// compiled `dist` execution. The .env file lives at the backend root.
+dotenv.config({ path: path.resolve(__dirname, "..", ".env") });
 
 const app = express();
 const PORT = process.env.PORT || 5006;

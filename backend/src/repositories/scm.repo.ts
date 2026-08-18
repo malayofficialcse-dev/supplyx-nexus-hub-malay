@@ -1,5 +1,5 @@
-import {
-  PrismaClient,
+import { PrismaClient } from "@prisma/client";
+import type {
   Warehouse,
   Shipment,
   LogisticsRoute,
