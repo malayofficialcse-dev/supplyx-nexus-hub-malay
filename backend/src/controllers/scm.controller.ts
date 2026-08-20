@@ -10,6 +10,7 @@ import {
   PaymentService,
   GoodsReceiptService,
   InventoryService,
+  AttachmentService,
 } from "../services/scm.service.js";
 
 const warehouseService = new WarehouseService();
@@ -555,6 +556,40 @@ export class GoodsReceiptController {
         items: items || [],
       });
       return res.status(201).json(newGR);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+}
+
+const attachmentService = new AttachmentService();
+
+export class AttachmentController {
+  async addAttachment(req: Request, res: Response) {
+    try {
+      const { entityType, id } = req.params;
+      const { name, size, type, dataUrl } = req.body || {};
+      const uploader = (req as any).user?.name || "System";
+      if (!name) return res.status(400).json({ error: "File name is required" });
+
+      const result = await attachmentService.addAttachment(entityType, id, {
+        name,
+        size,
+        type,
+        dataUrl,
+        uploader,
+      });
+      return res.status(201).json(result);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  async deleteAttachment(req: Request, res: Response) {
+    try {
+      const { entityType, id, attachmentId } = req.params;
+      const result = await attachmentService.deleteAttachment(entityType, id, attachmentId);
+      return res.json(result);
     } catch (error: any) {
       return res.status(500).json({ error: error.message });
     }

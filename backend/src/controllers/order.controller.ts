@@ -86,4 +86,13 @@ export class OrderController {
       return res.status(500).json({ error: error.message });
     }
   }
+
+  async getQuantityVarianceReport(req: Request, res: Response) {
+    try {
+      const report = await orderService.getQuantityVarianceReport();
+      return res.json(report);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
 }

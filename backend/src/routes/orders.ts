@@ -4,6 +4,7 @@ import { OrderController } from "../controllers/order.controller.js";
 const router = Router();
 const controller = new OrderController();
 
+router.get("/variance-report", controller.getQuantityVarianceReport.bind(controller));
 router.get("/:id/pdf", controller.downloadPdf.bind(controller));
 router.get("/:id", controller.getOrderById.bind(controller));
 router.get("/", controller.getOrders.bind(controller));

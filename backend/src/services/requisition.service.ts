@@ -40,16 +40,59 @@ export class RequisitionService {
     return newReq;
   }
 
-  async approveRequisition(id: string, approverName: string): Promise<Requisition> {
+  async approveRequisition(
+    id: string,
+    approverData: { name: string; role?: string; decision?: string; notes?: string }
+  ): Promise<Requisition> {
     const existing = await requisitionRepo.getById(id);
     if (!existing) throw new Error("Requisition not found");
-    
-    let targetStatus = `Approved by ${approverName}`;
-    if (existing.total > 10000 && existing.status === "Pending Approval") {
-      targetStatus = `Approved L1 by ${approverName} (Needs Finance L2)`;
+
+    const decision = (approverData.decision || "approve").toLowerCase();
+    const isReject = decision === "reject" || decision === "rejected";
+    const approverName = approverData.name || "Manager";
+    const approverRole = approverData.role || (existing.total > 10000 && existing.status.includes("L1") ? "Finance Director" : "Manager");
+
+    const isL2Required = existing.total > 10000;
+    const isCurrentlyL1Approved = existing.status.includes("Approved L1") || existing.status.includes("Finance");
+
+    let targetStatus = "Approved";
+    let level = "L1";
+
+    if (isReject) {
+      targetStatus = isL2Required && isCurrentlyL1Approved ? `Rejected L2 by ${approverName} (Finance)` : `Rejected by ${approverName}`;
+      level = isL2Required && isCurrentlyL1Approved ? "L2" : "L1";
+    } else {
+      if (isL2Required) {
+        if (!isCurrentlyL1Approved) {
+          targetStatus = `Approved L1 by ${approverName} (Awaiting L2 Finance)`;
+          level = "L1";
+        } else {
+          targetStatus = `Approved L2 by ${approverName} (Final Approved)`;
+          level = "L2";
+        }
+      } else {
+        targetStatus = `Approved by ${approverName}`;
+        level = "L1";
+      }
     }
-    
-    const updated = await requisitionRepo.updateStatus(id, targetStatus);
+
+    const existingApprovals = Array.isArray(existing.approvals) ? (existing.approvals as any[]) : [];
+    const newApprovalEntry = {
+      level,
+      approver: approverName,
+      role: approverRole,
+      decision: isReject ? "Rejected" : "Approved",
+      notes: approverData.notes || "",
+      timestamp: new Date().toISOString(),
+    };
+
+    const updated = await requisitionRepo.updateApproval(id, {
+      status: targetStatus,
+      approvalNotes: isReject ? null : approverData.notes || existing.approvalNotes,
+      rejectionReason: isReject ? approverData.notes || "Rejected by reviewer" : null,
+      approvals: [...existingApprovals, newApprovalEntry],
+    });
+
     await deleteCache("scm:dashboard:analytics");
     return updated;
   }

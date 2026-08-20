@@ -46,9 +46,18 @@ export class RequisitionController {
   async approveRequisition(req: CustomRequest, res: Response) {
     try {
       const { id } = req.params;
+      const { decision, notes, approved } = req.body || {};
       if (!id) return res.status(400).json({ error: "Missing requisition id" });
       const approverName = req.user?.name || "System";
-      const updated = await requisitionService.approveRequisition(id, approverName);
+      const approverRole = req.user?.role || "Manager";
+      const resolvedDecision = decision || (approved === false ? "reject" : "approve");
+
+      const updated = await requisitionService.approveRequisition(id, {
+        name: approverName,
+        role: approverRole,
+        decision: resolvedDecision,
+        notes,
+      });
       return res.json(updated);
     } catch (error: any) {
       return res.status(500).json({ error: error.message });

@@ -33,6 +33,10 @@ export class RequisitionRepository {
     return prisma.requisition.update({ where: { id }, data: { status } });
   }
 
+  async updateApproval(id: string, data: { status: string; approvalNotes?: string | null; rejectionReason?: string | null; approvals?: any }): Promise<Requisition> {
+    return prisma.requisition.update({ where: { id }, data });
+  }
+
   async countPending(): Promise<number> {
     return prisma.requisition.count({
       where: { status: "Pending Approval" },

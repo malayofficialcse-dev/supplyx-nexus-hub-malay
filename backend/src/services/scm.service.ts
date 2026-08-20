@@ -238,8 +238,71 @@ export class ContractService {
 }
 
 export class InvoiceService {
-  async getInvoices(): Promise<Invoice[]> {
-    return invoiceRepo.getAll();
+  async getInvoices(): Promise<any[]> {
+    const list = await invoiceRepo.getAll();
+    const now = new Date();
+
+    return list.map((inv: any) => {
+      const terms = inv.paymentTerms || "NET_30";
+      let dueDate = inv.dueDate;
+
+      if (!dueDate && inv.date) {
+        const invDate = new Date(inv.date);
+        if (!isNaN(invDate.getTime())) {
+          let netDays = 30;
+          if (terms.includes("NET_")) {
+            netDays = parseInt(terms.replace(/.*?NET_/, ""), 10) || 30;
+          } else if (terms === "IMMEDIATE" || terms === "COD") {
+            netDays = 0;
+          }
+          dueDate = new Date(invDate.getTime() + netDays * 86400000).toISOString().split("T")[0];
+        }
+      }
+
+      let daysOverdue = 0;
+      let isOverdue = false;
+      let daysUntilDue = 0;
+
+      if (dueDate && inv.status !== "Paid") {
+        const dDate = new Date(dueDate);
+        if (!isNaN(dDate.getTime())) {
+          const diffDays = Math.ceil((now.getTime() - dDate.getTime()) / (1000 * 60 * 60 * 24));
+          if (diffDays > 0) {
+            daysOverdue = diffDays;
+            isOverdue = true;
+          } else {
+            daysUntilDue = Math.abs(diffDays);
+          }
+        }
+      }
+
+      const is210Terms = terms.includes("2/10") || terms.includes("DISCOUNT");
+      let earlyPayDiscountAmount = 0;
+      let earlyPayDeadline: string | null = null;
+      let isEarlyPayEligible = false;
+
+      if (is210Terms && inv.date) {
+        const invDate = new Date(inv.date);
+        if (!isNaN(invDate.getTime())) {
+          const discountEnd = new Date(invDate.getTime() + 10 * 86400000);
+          earlyPayDeadline = discountEnd.toISOString().split("T")[0];
+          earlyPayDiscountAmount = Number((inv.amount * 0.02).toFixed(2));
+          isEarlyPayEligible = now.getTime() <= discountEnd.getTime() && inv.status !== "Paid";
+        }
+      }
+
+      return {
+        ...inv,
+        paymentTerms: terms,
+        dueDate: dueDate || inv.date,
+        daysOverdue,
+        isOverdue,
+        daysUntilDue,
+        earlyPayDiscountAmount,
+        earlyPayDeadline,
+        isEarlyPayEligible,
+      };
+    });
   }
 
   async getInvoiceById(id: string): Promise<Invoice | null> {
@@ -540,5 +603,66 @@ export class GoodsReceiptService {
     }, 100);
 
     return createdReceipt;
+  }
+}
+
+export class AttachmentService {
+  async addAttachment(
+    entityType: string,
+    id: string,
+    fileData: { name: string; size?: number; type?: string; dataUrl?: string; uploader?: string }
+  ): Promise<any> {
+    const rawType = entityType.toLowerCase();
+    const modelName =
+      rawType.includes("invoice") ? "invoice"
+      : rawType.includes("contract") ? "contract"
+      : rawType.includes("order") ? "order"
+      : "goodsReceipt";
+
+    const record = await (prisma as any)[modelName].findUnique({ where: { id } });
+    if (!record) throw new Error(`${modelName} with id ${id} not found`);
+
+    const existingAttachments = Array.isArray(record.attachments) ? record.attachments : [];
+    const attachmentId = `ATT-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+    const newAttachment = {
+      id: attachmentId,
+      name: fileData.name || "document.pdf",
+      size: fileData.size || 0,
+      type: fileData.type || "application/pdf",
+      dataUrl: fileData.dataUrl || "",
+      uploader: fileData.uploader || "System",
+      uploadedAt: new Date().toISOString(),
+    };
+
+    const updated = await (prisma as any)[modelName].update({
+      where: { id },
+      data: { attachments: [...existingAttachments, newAttachment] },
+    });
+
+    await deleteCache("scm:dashboard:analytics");
+    return { attachment: newAttachment, record: updated };
+  }
+
+  async deleteAttachment(entityType: string, id: string, attachmentId: string): Promise<any> {
+    const rawType = entityType.toLowerCase();
+    const modelName =
+      rawType.includes("invoice") ? "invoice"
+      : rawType.includes("contract") ? "contract"
+      : rawType.includes("order") ? "order"
+      : "goodsReceipt";
+
+    const record = await (prisma as any)[modelName].findUnique({ where: { id } });
+    if (!record) throw new Error(`${modelName} with id ${id} not found`);
+
+    const existingAttachments = Array.isArray(record.attachments) ? record.attachments : [];
+    const filtered = existingAttachments.filter((a: any) => a.id !== attachmentId && a.name !== attachmentId);
+
+    const updated = await (prisma as any)[modelName].update({
+      where: { id },
+      data: { attachments: filtered },
+    });
+
+    await deleteCache("scm:dashboard:analytics");
+    return { success: true, record: updated };
   }
 }
