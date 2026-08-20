@@ -150,41 +150,41 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               <Command.Item
                 value="action new purchase order po"
                 onSelect={() => handleSelect(() => navigate({ to: "/orders" }))}
-                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-200 outline-none data-[selected=true]:bg-primary/20 data-[selected=true]:text-primary hover:bg-white/5 transition-colors"
+                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-700 outline-none data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary hover:bg-slate-100 transition-colors"
               >
                 <PlusCircle className="mr-2.5 h-3.5 w-3.5 text-indigo-400" />
                 <span>Create Purchase Order</span>
-                <span className="ml-auto text-[10px] text-slate-400 font-mono">/orders</span>
+                <span className="ml-auto text-[10px] text-slate-500 font-mono">/orders</span>
               </Command.Item>
 
               <Command.Item
                 value="action new invoice pay supplier"
                 onSelect={() => handleSelect(() => navigate({ to: "/invoices" }))}
-                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-200 outline-none data-[selected=true]:bg-primary/20 data-[selected=true]:text-primary hover:bg-white/5 transition-colors"
+                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-700 outline-none data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary hover:bg-slate-100 transition-colors"
               >
                 <FileText className="mr-2.5 h-3.5 w-3.5 text-teal-400" />
                 <span>Review & Pay Invoices</span>
-                <span className="ml-auto text-[10px] text-slate-400 font-mono">/invoices</span>
+                <span className="ml-auto text-[10px] text-slate-500 font-mono">/invoices</span>
               </Command.Item>
 
               <Command.Item
                 value="action view analytics spend intelligence"
                 onSelect={() => handleSelect(() => navigate({ to: "/analytics" }))}
-                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-200 outline-none data-[selected=true]:bg-primary/20 data-[selected=true]:text-primary hover:bg-white/5 transition-colors"
+                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-700 outline-none data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary hover:bg-slate-100 transition-colors"
               >
                 <Sparkles className="mr-2.5 h-3.5 w-3.5 text-amber-400" />
                 <span>Launch Spend Analytics Hub</span>
-                <span className="ml-auto text-[10px] text-slate-400 font-mono">/analytics</span>
+                <span className="ml-auto text-[10px] text-slate-500 font-mono">/analytics</span>
               </Command.Item>
 
               <Command.Item
                 value="action recalculate department budgets"
                 onSelect={() => handleSelect(() => navigate({ to: "/budget" }))}
-                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-200 outline-none data-[selected=true]:bg-primary/20 data-[selected=true]:text-primary hover:bg-white/5 transition-colors"
+                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-700 outline-none data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary hover:bg-slate-100 transition-colors"
               >
                 <RotateCw className="mr-2.5 h-3.5 w-3.5 text-emerald-400" />
                 <span>Audit & Recalculate Budgets</span>
-                <span className="ml-auto text-[10px] text-slate-400 font-mono">/budget</span>
+                <span className="ml-auto text-[10px] text-slate-500 font-mono">/budget</span>
               </Command.Item>
             </Command.Group>
 
@@ -199,12 +199,12 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                     key={o.id || o.orderId}
                     value={`order ${o.orderId} ${o.supplier}`}
                     onSelect={() => handleSelect(() => navigate({ to: "/orders" }))}
-                    className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-200 outline-none data-[selected=true]:bg-primary/20 data-[selected=true]:text-primary hover:bg-white/5 transition-colors"
+                    className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-700 outline-none data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary hover:bg-slate-100 transition-colors"
                   >
                     <ShoppingCart className="mr-2.5 h-3.5 w-3.5 text-blue-400" />
                     <span className="font-mono text-blue-400 mr-2 font-semibold">{o.orderId}</span>
                     <span>{o.supplier}</span>
-                    <span className="ml-auto text-[11px] font-bold text-slate-200">
+                    <span className="ml-auto text-[11px] font-bold text-slate-700">
                       ${Number(o.amount || 0).toLocaleString()}
                     </span>
                   </Command.Item>
@@ -222,12 +222,12 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                     key={inv.id || inv.invoiceId}
                     value={`invoice ${inv.invoiceId} ${inv.supplier}`}
                     onSelect={() => handleSelect(() => navigate({ to: "/invoices" }))}
-                    className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-200 outline-none data-[selected=true]:bg-primary/20 data-[selected=true]:text-primary hover:bg-white/5 transition-colors"
+                    className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-700 outline-none data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary hover:bg-slate-100 transition-colors"
                   >
                     <FileText className="mr-2.5 h-3.5 w-3.5 text-teal-400" />
                     <span className="font-mono text-teal-400 mr-2 font-semibold">{inv.invoiceId}</span>
                     <span>{inv.supplier}</span>
-                    <span className="ml-auto text-[11px] font-bold text-slate-200">
+                    <span className="ml-auto text-[11px] font-bold text-slate-700">
                       ${Number(inv.amount || 0).toLocaleString()} ({inv.status})
                     </span>
                   </Command.Item>
@@ -245,12 +245,12 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                     key={s.id || s.supId}
                     value={`supplier ${s.name} ${s.category}`}
                     onSelect={() => handleSelect(() => navigate({ to: "/suppliers" }))}
-                    className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-200 outline-none data-[selected=true]:bg-primary/20 data-[selected=true]:text-primary hover:bg-white/5 transition-colors"
+                    className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-700 outline-none data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary hover:bg-slate-100 transition-colors"
                   >
                     <Building2 className="mr-2.5 h-3.5 w-3.5 text-indigo-400" />
-                    <span className="font-semibold text-slate-100 mr-2">{s.name}</span>
-                    <span className="text-[11px] text-slate-400">({s.category || "General"})</span>
-                    <span className="ml-auto text-[10px] text-slate-400 font-mono">{s.supId}</span>
+                    <span className="font-semibold text-slate-800 mr-2">{s.name}</span>
+                    <span className="text-[11px] text-slate-500">({s.category || "General"})</span>
+                    <span className="ml-auto text-[10px] text-slate-500 font-mono">{s.supId}</span>
                   </Command.Item>
                 ))}
               </Command.Group>
@@ -264,7 +264,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               <Command.Item
                 value="nav dashboard overview kpis"
                 onSelect={() => handleSelect(() => navigate({ to: "/" }))}
-                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-200 outline-none data-[selected=true]:bg-primary/20 data-[selected=true]:text-primary hover:bg-white/5 transition-colors"
+                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-700 outline-none data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary hover:bg-slate-100 transition-colors"
               >
                 <Gauge className="mr-2.5 h-3.5 w-3.5 opacity-75" />
                 <span>Executive Dashboard</span>
@@ -273,7 +273,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               <Command.Item
                 value="nav suppliers vendor partners directory"
                 onSelect={() => handleSelect(() => navigate({ to: "/suppliers" }))}
-                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-200 outline-none data-[selected=true]:bg-primary/20 data-[selected=true]:text-primary hover:bg-white/5 transition-colors"
+                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-700 outline-none data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary hover:bg-slate-100 transition-colors"
               >
                 <Building2 className="mr-2.5 h-3.5 w-3.5 opacity-75" />
                 <span>Suppliers Directory & Scorecards</span>
@@ -282,7 +282,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               <Command.Item
                 value="nav requisitions internal purchase requests"
                 onSelect={() => handleSelect(() => navigate({ to: "/requisitions" }))}
-                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-200 outline-none data-[selected=true]:bg-primary/20 data-[selected=true]:text-primary hover:bg-white/5 transition-colors"
+                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-700 outline-none data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary hover:bg-slate-100 transition-colors"
               >
                 <ClipboardList className="mr-2.5 h-3.5 w-3.5 opacity-75" />
                 <span>Purchase Requisitions</span>
@@ -291,7 +291,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               <Command.Item
                 value="nav rfqs request quotation vendor quotes"
                 onSelect={() => handleSelect(() => navigate({ to: "/rfqs" }))}
-                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-200 outline-none data-[selected=true]:bg-primary/20 data-[selected=true]:text-primary hover:bg-white/5 transition-colors"
+                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-700 outline-none data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary hover:bg-slate-100 transition-colors"
               >
                 <FileSpreadsheet className="mr-2.5 h-3.5 w-3.5 opacity-75" />
                 <span>RFQs & Supplier Sourcing</span>
@@ -300,7 +300,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               <Command.Item
                 value="nav orders purchase orders po 3-way match"
                 onSelect={() => handleSelect(() => navigate({ to: "/orders" }))}
-                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-200 outline-none data-[selected=true]:bg-primary/20 data-[selected=true]:text-primary hover:bg-white/5 transition-colors"
+                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-700 outline-none data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary hover:bg-slate-100 transition-colors"
               >
                 <ShoppingCart className="mr-2.5 h-3.5 w-3.5 opacity-75" />
                 <span>Purchase Orders & 3-Way Match</span>
@@ -309,7 +309,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               <Command.Item
                 value="nav goods receipts inbound delivery notes"
                 onSelect={() => handleSelect(() => navigate({ to: "/goods-receipts" }))}
-                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-200 outline-none data-[selected=true]:bg-primary/20 data-[selected=true]:text-primary hover:bg-white/5 transition-colors"
+                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-700 outline-none data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary hover:bg-slate-100 transition-colors"
               >
                 <PackageCheck className="mr-2.5 h-3.5 w-3.5 opacity-75" />
                 <span>Goods Receipts & Receiving</span>
@@ -318,7 +318,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               <Command.Item
                 value="nav invoices accounts payable bills"
                 onSelect={() => handleSelect(() => navigate({ to: "/invoices" }))}
-                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-200 outline-none data-[selected=true]:bg-primary/20 data-[selected=true]:text-primary hover:bg-white/5 transition-colors"
+                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-700 outline-none data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary hover:bg-slate-100 transition-colors"
               >
                 <FileText className="mr-2.5 h-3.5 w-3.5 opacity-75" />
                 <span>Invoices & Accounts Payable</span>
@@ -327,7 +327,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               <Command.Item
                 value="nav payments settlement disbursements"
                 onSelect={() => handleSelect(() => navigate({ to: "/payments" }))}
-                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-200 outline-none data-[selected=true]:bg-primary/20 data-[selected=true]:text-primary hover:bg-white/5 transition-colors"
+                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-700 outline-none data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary hover:bg-slate-100 transition-colors"
               >
                 <Banknote className="mr-2.5 h-3.5 w-3.5 opacity-75" />
                 <span>Payments & Audit Trail</span>
@@ -336,7 +336,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               <Command.Item
                 value="nav budgets ledger department spend"
                 onSelect={() => handleSelect(() => navigate({ to: "/budget" }))}
-                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-200 outline-none data-[selected=true]:bg-primary/20 data-[selected=true]:text-primary hover:bg-white/5 transition-colors"
+                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-700 outline-none data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary hover:bg-slate-100 transition-colors"
               >
                 <Wallet className="mr-2.5 h-3.5 w-3.5 opacity-75" />
                 <span>Department Budgets & Ledger</span>
@@ -345,7 +345,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               <Command.Item
                 value="nav contracts agreements renewals"
                 onSelect={() => handleSelect(() => navigate({ to: "/contracts" }))}
-                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-200 outline-none data-[selected=true]:bg-primary/20 data-[selected=true]:text-primary hover:bg-white/5 transition-colors"
+                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-700 outline-none data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary hover:bg-slate-100 transition-colors"
               >
                 <FileSignature className="mr-2.5 h-3.5 w-3.5 opacity-75" />
                 <span>Contracts & Expirations</span>
@@ -354,7 +354,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               <Command.Item
                 value="nav warehouses inventory storage locations"
                 onSelect={() => handleSelect(() => navigate({ to: "/warehouses" }))}
-                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-200 outline-none data-[selected=true]:bg-primary/20 data-[selected=true]:text-primary hover:bg-white/5 transition-colors"
+                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-700 outline-none data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary hover:bg-slate-100 transition-colors"
               >
                 <Warehouse className="mr-2.5 h-3.5 w-3.5 opacity-75" />
                 <span>Warehouses & Capacity</span>
@@ -363,7 +363,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               <Command.Item
                 value="nav inventory stock levels reorder alerts"
                 onSelect={() => handleSelect(() => navigate({ to: "/inventory" }))}
-                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-200 outline-none data-[selected=true]:bg-primary/20 data-[selected=true]:text-primary hover:bg-white/5 transition-colors"
+                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-700 outline-none data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary hover:bg-slate-100 transition-colors"
               >
                 <Boxes className="mr-2.5 h-3.5 w-3.5 opacity-75" />
                 <span>Inventory & Low Stock Alerts</span>
@@ -372,7 +372,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               <Command.Item
                 value="nav shipments logistics carriers"
                 onSelect={() => handleSelect(() => navigate({ to: "/shipments" }))}
-                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-200 outline-none data-[selected=true]:bg-primary/20 data-[selected=true]:text-primary hover:bg-white/5 transition-colors"
+                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-700 outline-none data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary hover:bg-slate-100 transition-colors"
               >
                 <Truck className="mr-2.5 h-3.5 w-3.5 opacity-75" />
                 <span>Shipments & In-Transit Tracking</span>
@@ -381,7 +381,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               <Command.Item
                 value="nav users permissions roles security"
                 onSelect={() => handleSelect(() => navigate({ to: "/users" }))}
-                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-200 outline-none data-[selected=true]:bg-primary/20 data-[selected=true]:text-primary hover:bg-white/5 transition-colors"
+                className="relative flex cursor-pointer select-none items-center rounded-md px-2.5 py-2 text-xs font-medium text-slate-700 outline-none data-[selected=true]:bg-primary/10 data-[selected=true]:text-primary hover:bg-slate-100 transition-colors"
               >
                 <Users className="mr-2.5 h-3.5 w-3.5 opacity-75" />
                 <span>User Management & Permissions</span>
