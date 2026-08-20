@@ -10,6 +10,18 @@ export class OrderController {
             return res.status(500).json({ error: error.message });
         }
     }
+    async getOrderById(req, res) {
+        try {
+            const { id } = req.params;
+            const order = await orderService.getById(id);
+            if (!order)
+                return res.status(404).json({ error: "Purchase Order not found" });
+            return res.json(order);
+        }
+        catch (error) {
+            return res.status(500).json({ error: error.message });
+        }
+    }
     async createOrder(req, res) {
         try {
             const { supplier, amount, deliveryDate, description, items } = req.body;
@@ -27,6 +39,18 @@ export class OrderController {
         }
         catch (error) {
             return res.status(500).json({ error: error.message });
+        }
+    }
+    async downloadPdf(req, res) {
+        try {
+            const { id } = req.params;
+            const pdfBuffer = await orderService.getOrderPdf(id);
+            res.setHeader("Content-Type", "application/pdf");
+            res.setHeader("Content-Disposition", `attachment; filename=PurchaseOrder-${id}.pdf`);
+            return res.send(pdfBuffer);
+        }
+        catch (error) {
+            return res.status(404).json({ error: error.message });
         }
     }
     async threeWayMatch(req, res) {

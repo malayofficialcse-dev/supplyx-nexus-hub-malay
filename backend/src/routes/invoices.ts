@@ -5,9 +5,12 @@ const router = Router();
 const controller = new InvoiceController();
 
 router.get("/check-duplicate", controller.checkDuplicate.bind(controller));
+router.get("/:id/pdf", controller.downloadPdf.bind(controller));
 router.get("/", controller.getInvoices.bind(controller));
 router.get("/:id", controller.getInvoiceById.bind(controller));
+router.post("/:id/pay", controller.payInvoice.bind(controller));
 router.post("/", controller.createInvoice.bind(controller));
 router.put("/:id", controller.updateInvoice.bind(controller));
+router.delete("/:id", controller.deleteInvoice.bind(controller));
 
 export default router;

@@ -38,8 +38,51 @@ export class OrderService {
 
     // Invalidate dashboard analytics cache
     await deleteCache("scm:dashboard:analytics");
+    await deleteCache("scm:analytics:advanced");
+
+    // Feature 10: Budget Auto-Tracking
+    // Asynchronously match supplier's category and increment BudgetCategory.spent
+    setTimeout(async () => {
+      try {
+        const { prisma } = await import("../repositories/scm.repo.js");
+        const sup = await (prisma as any).supplier.findFirst({
+          where: { name: { equals: data.supplier, mode: "insensitive" } },
+        });
+        const categoryName = sup?.category || data.description || "General";
+        const budgetCat = await (prisma as any).budgetCategory.findFirst({
+          where: { category: { equals: categoryName, mode: "insensitive" } },
+        });
+        if (budgetCat) {
+          await (prisma as any).budgetCategory.update({
+            where: { id: budgetCat.id },
+            data: { spent: budgetCat.spent + Number(data.amount) },
+          });
+          console.log(`📊 Auto-incremented budget for '${budgetCat.category}' by $${data.amount}`);
+        }
+
+        // Feature 7: Supplier Scorecard Auto-Recomputation
+        if (sup) {
+          const { SupplierService } = await import("./supplier.service.js");
+          const supplierService = new SupplierService();
+          await supplierService.computeSupplierScorecard(sup.id);
+        }
+      } catch (err) {
+        console.error("Budget auto-tracking / scorecard update error:", err);
+      }
+    }, 100);
 
     return newOrder;
+  }
+
+  async getOrderPdf(id: string): Promise<Buffer> {
+    const order =
+      (await orderRepo.getById(id)) ||
+      (await orderRepo.getByOrderId(id));
+    if (!order) {
+      throw new Error("Purchase Order not found");
+    }
+    const { PDFService } = await import("./pdf.service.js");
+    return PDFService.generatePurchaseOrderPDF(order);
   }
 
   async threeWayMatch(

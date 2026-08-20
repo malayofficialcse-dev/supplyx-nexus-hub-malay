@@ -1,8 +1,13 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
-import { AlertCircle, AlertTriangle, CheckCircle2, DollarSign, Wallet } from "lucide-react";
+import { AlertCircle, AlertTriangle, CheckCircle2, DollarSign, RefreshCw, RotateCw, Wallet } from "lucide-react";
+import * as React from "react";
+import { toast } from "sonner";
 import { CrudPage, useResourceList } from "@/components/CrudPage";
+import { Button } from "@/components/kit/Button";
 import type { Row } from "@/components/kit/DataTable";
+import { api } from "@/lib/api";
 import { formatCurrency, formatNumber } from "@/lib/format";
 
 export const Route = createFileRoute("/budget")({
@@ -16,8 +21,33 @@ export const Route = createFileRoute("/budget")({
 });
 
 function BudgetPage() {
+  const qc = useQueryClient();
   const budgetsQuery = useResourceList("/suppliers/budget");
   const budgetRows = (budgetsQuery.data ?? []) as Row[];
+
+  const recalcSingle = useMutation({
+    mutationFn: async (id: string) => {
+      return api.patch(`/suppliers/budget/${id}/recalculate`);
+    },
+    onSuccess: (data: any) => {
+      toast.success(`Recalculated spend for '${data.category}' from ${data.matchingOrdersCount || 0} active PO orders!`);
+      void qc.invalidateQueries({ queryKey: ["/suppliers/budget"] });
+      void qc.invalidateQueries({ queryKey: ["/analytics/dashboard"] });
+    },
+    onError: (err: Error) => toast.error(`Recalculation error: ${err.message}`),
+  });
+
+  const recalcAll = useMutation({
+    mutationFn: async () => {
+      return api.post("/suppliers/budget/recalculate-all");
+    },
+    onSuccess: () => {
+      toast.success("Successfully synchronized and audited all department budgets with live PO spend!");
+      void qc.invalidateQueries({ queryKey: ["/suppliers/budget"] });
+      void qc.invalidateQueries({ queryKey: ["/analytics/dashboard"] });
+    },
+    onError: (err: Error) => toast.error(`Recalculation error: ${err.message}`),
+  });
 
   const totalAllocated = budgetRows.reduce((s, r) => s + Number(r['allocated'] ?? 0), 0);
   const totalSpent = budgetRows.reduce((s, r) => s + Number(r['spent'] ?? 0), 0);
@@ -61,7 +91,19 @@ function BudgetPage() {
 
       {chartData.length > 0 && (
         <div className="mb-4 rounded-sm border border-border bg-card p-4">
-          <h3 className="text-sm font-semibold text-foreground mb-3">Allocation vs Spend Analysis</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-foreground">Allocation vs Spend Analysis</h3>
+            <Button
+              variant="subtle"
+              size="sm"
+              disabled={recalcAll.isPending}
+              onClick={() => recalcAll.mutate()}
+              className="text-xs"
+            >
+              <RotateCw className={`mr-1.5 h-3 w-3 ${recalcAll.isPending ? "animate-spin" : ""}`} />
+              {recalcAll.isPending ? "Auditing POs..." : "Audit & Recalculate All"}
+            </Button>
+          </div>
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
@@ -121,6 +163,18 @@ function BudgetPage() {
           { name: "spent", label: "Spent to date", type: "number", required: false, defaultValue: 0 },
           { name: "year", label: "Fiscal year", type: "number", required: true, defaultValue: new Date().getFullYear() },
         ]}
+        rowActionsExtra={(row) => (
+          <Button
+            variant="subtle"
+            size="sm"
+            disabled={recalcSingle.isPending}
+            onClick={() => recalcSingle.mutate(String(row['id']))}
+            title="Recalculate live spend from matching Purchase Orders"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${recalcSingle.isPending ? "animate-spin" : ""}`} />
+            Recalculate
+          </Button>
+        )}
       />
     </>
   );

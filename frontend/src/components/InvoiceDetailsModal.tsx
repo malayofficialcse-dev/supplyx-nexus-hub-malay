@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, CreditCard, DollarSign, FileText, Printer, ShieldCheck, XCircle } from "lucide-react";
+import { CheckCircle2, CreditCard, DollarSign, Download, FileText, Printer, ShieldCheck, XCircle } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/kit/Button";
@@ -7,6 +7,7 @@ import type { Row } from "@/components/kit/DataTable";
 import { Modal } from "@/components/kit/Modal";
 import { api } from "@/lib/api";
 import { formatCurrency } from "@/lib/format";
+import { PAYMENT_METHODS } from "@/lib/scm";
 
 export function InvoiceDetailsModal({
   open,
@@ -20,49 +21,58 @@ export function InvoiceDetailsModal({
   onStatusUpdated?: () => void;
 }) {
   const qc = useQueryClient();
+  const [payModalOpen, setPayModalOpen] = React.useState(false);
+  const [selectedMethod, setSelectedMethod] = React.useState("Bank Transfer");
+  const [paymentNotes, setPaymentNotes] = React.useState("");
+  const [isDownloading, setIsDownloading] = React.useState(false);
 
-  const updateMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const res = await api.put(`/invoices/${id}`, { status });
-      if (status === "Paid") {
-        try {
-          await api.post("/payments", {
-            paymentId: `PAY-${Date.now().toString().slice(-4)}`,
-            invoiceId,
-            supplier,
-            amount: total,
-            status: "Paid",
-            method: "Bank Transfer",
-            auditTrail: { paidAt: new Date().toISOString() },
-          });
-        } catch {
-          // ignore duplicate payment error
-        }
-      }
-      return res;
+  const invoiceId = String(invoiceRow?.['invoiceId'] ?? invoiceRow?.['id'] ?? "INV-0000");
+  const supplier = String(invoiceRow?.['supplier'] ?? "Unknown Supplier");
+  const date = String(invoiceRow?.['date'] ?? new Date().toLocaleDateString());
+  const status = String(invoiceRow?.['status'] ?? "Draft");
+
+  const approveMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return api.put(`/invoices/${id}`, { status: "Approved" });
     },
-    onSuccess: (_, variables) => {
-      toast.success(
-        variables.status === "Paid"
-          ? "Invoice paid and payment record generated!"
-          : `Invoice status updated to ${variables.status}`
-      );
+    onSuccess: () => {
+      toast.success(`Invoice ${invoiceId} approved for disbursement.`);
       void qc.invalidateQueries({ queryKey: ["/invoices"] });
-      void qc.invalidateQueries({ queryKey: ["/payments"] });
       onStatusUpdated?.();
-      onOpenChange(false);
     },
-    onError: (err: Error) => {
-      toast.error(`Failed to update invoice: ${err.message}`);
-    },
+    onError: (err: Error) => toast.error(err.message),
   });
 
-  if (!invoiceRow) return null;
+  const payMutation = useMutation({
+    mutationFn: async ({ id, method, notes }: { id: string; method: string; notes: string }) => {
+      return api.post(`/invoices/${id}/pay`, { method, notes });
+    },
+    onSuccess: (data: any) => {
+      toast.success(data?.message || `Invoice ${invoiceId} paid & settled successfully!`);
+      void qc.invalidateQueries({ queryKey: ["/invoices"] });
+      void qc.invalidateQueries({ queryKey: ["/payments"] });
+      void qc.invalidateQueries({ queryKey: ["/analytics/dashboard"] });
+      onStatusUpdated?.();
+      setPayModalOpen(false);
+      onOpenChange(false);
+    },
+    onError: (err: Error) => toast.error(`Settlement error: ${err.message}`),
+  });
 
-  const invoiceId = String(invoiceRow['invoiceId'] ?? invoiceRow['id'] ?? "INV-0000");
-  const supplier = String(invoiceRow['supplier'] ?? "Unknown Supplier");
-  const date = String(invoiceRow['date'] ?? new Date().toLocaleDateString());
-  const status = String(invoiceRow['status'] ?? "Draft");
+  const handleDownloadPdf = async () => {
+    if (!invoiceRow) return;
+    setIsDownloading(true);
+    try {
+      await api.download(`/invoices/${invoiceRow.id}/pdf`, `Invoice-${invoiceId}.pdf`);
+      toast.success(`Downloaded official PDF for Invoice ${invoiceId}`);
+    } catch (err: any) {
+      toast.error(`PDF download failed: ${err.message}`);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  if (!invoiceRow) return null;
   const rawItems = Array.isArray(invoiceRow['items']) ? invoiceRow['items'] : [];
 
   const items = rawItems.map((it: any, idx: number) => {
@@ -94,16 +104,22 @@ export function InvoiceDetailsModal({
       width="lg"
       footer={
         <div className="flex items-center justify-between w-full">
-          <Button variant="subtle" onClick={handlePrint}>
-            <Printer className="mr-1.5 h-3.5 w-3.5" />
-            Print Bill
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="subtle" onClick={handleDownloadPdf} disabled={isDownloading}>
+              <Download className="mr-1.5 h-3.5 w-3.5 text-primary" />
+              {isDownloading ? "Downloading..." : "Download PDF"}
+            </Button>
+            <Button variant="subtle" onClick={handlePrint}>
+              <Printer className="mr-1.5 h-3.5 w-3.5" />
+              Print
+            </Button>
+          </div>
           <div className="flex items-center gap-2">
             {status !== "Approved" && status !== "Paid" && (
               <Button
                 variant="default"
-                disabled={updateMutation.isPending}
-                onClick={() => updateMutation.mutate({ id: String(invoiceRow['id']), status: "Approved" })}
+                disabled={approveMutation.isPending}
+                onClick={() => approveMutation.mutate(String(invoiceRow['id']))}
               >
                 <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" />
                 Approve Invoice
@@ -111,13 +127,12 @@ export function InvoiceDetailsModal({
             )}
             {status !== "Paid" && (
               <Button
-                variant="subtle"
-                disabled={updateMutation.isPending}
-                onClick={() => updateMutation.mutate({ id: String(invoiceRow['id']), status: "Paid" })}
-                className="bg-emerald-600 text-white hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-700"
+                variant="primary"
+                onClick={() => setPayModalOpen(true)}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
               >
                 <CreditCard className="mr-1.5 h-3.5 w-3.5" />
-                Mark as Paid
+                1-Click Pay
               </Button>
             )}
             <Button variant="subtle" onClick={() => onOpenChange(false)}>
@@ -127,6 +142,72 @@ export function InvoiceDetailsModal({
         </div>
       }
     >
+      {/* 1-Click Pay Confirmation Submodal */}
+      <Modal
+        open={payModalOpen}
+        onOpenChange={setPayModalOpen}
+        title={`Authorize Settlement — ${invoiceId}`}
+        description={`Execute real-time accounts payable disbursement of ${formatCurrency(total)} to ${supplier}`}
+        width="md"
+        footer={
+          <>
+            <Button onClick={() => setPayModalOpen(false)}>Cancel</Button>
+            <Button
+              variant="primary"
+              disabled={payMutation.isPending}
+              onClick={() =>
+                payMutation.mutate({
+                  id: String(invoiceRow['id']),
+                  method: selectedMethod,
+                  notes: paymentNotes,
+                })
+              }
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+            >
+              <CreditCard className="mr-1.5 h-3.5 w-3.5" />
+              {payMutation.isPending ? "Disbursing..." : `Confirm Payment of ${formatCurrency(total)}`}
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="rounded-sm border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-foreground">
+            <div className="flex items-center justify-between font-bold">
+              <span>Payable Recipient:</span>
+              <span className="text-emerald-700 dark:text-emerald-400">{supplier}</span>
+            </div>
+            <div className="flex items-center justify-between mt-1 text-sm font-extrabold">
+              <span>Settlement Amount:</span>
+              <span className="text-emerald-600 text-base">{formatCurrency(total)}</span>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-foreground mb-1.5">Disbursement Method</label>
+            <select
+              value={selectedMethod}
+              onChange={(e) => setSelectedMethod(e.target.value)}
+              className="w-full rounded-md border border-border bg-surface px-3 py-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              {PAYMENT_METHODS.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-foreground mb-1.5">Audit Settlement Notes (Optional)</label>
+            <input
+              value={paymentNotes}
+              onChange={(e) => setPaymentNotes(e.target.value)}
+              placeholder="e.g. Approved via Executive AP Schedule, Batch #09"
+              className="w-full rounded-md border border-border bg-surface px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+        </div>
+      </Modal>
       <div className="space-y-4 text-xs font-sans">
         {/* Invoice Header Document Card */}
         <div className="rounded-sm border border-border bg-card p-4">

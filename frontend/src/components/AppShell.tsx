@@ -30,6 +30,8 @@ import { cn } from "@/lib/utils.js";
 import { API_BASE } from "@/lib/api.js";
 import { useAuth } from "@/lib/auth.js";
 
+import { CommandPalette } from "./CommandPalette";
+
 const NAV: { group: string; items: { to: string; label: string; icon: React.ElementType; module?: string }[] }[] = [
   {
     group: "Overview",
@@ -75,6 +77,7 @@ const NAV: { group: string; items: { to: string; label: string; icon: React.Elem
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, logout, hasPermission } = useAuth();
+  const [cmdOpen, setCmdOpen] = React.useState(false);
 
   // P0 Tier 1 live alert queries
   const expiringContracts = useQuery({
@@ -111,6 +114,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background relative flex flex-col">
+      {/* Global Command Palette */}
+      <CommandPalette open={cmdOpen} onOpenChange={setCmdOpen} />
+
       {/* Global Lightweight Top Accent Bar */}
       <div className="h-[2.5px] w-full bg-gradient-to-r from-primary via-indigo-500 to-sky-400 shrink-0" />
       
@@ -125,20 +131,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className="relative mx-auto hidden w-full max-w-md md:block">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-          <input
-            placeholder="Quick search modules (Press Enter)..."
-            aria-label="Search modules"
-            className="h-8.5 w-full rounded-md border border-border/80 bg-muted/30 pl-9 pr-3 text-[12px] text-foreground placeholder:text-muted-foreground focus:bg-background focus:outline-none focus:ring-2 focus:ring-indigo-500/25 focus:border-indigo-400/50 transition-all shadow-xs"
-            onKeyDown={(e) => {
-              if (e.key !== "Enter") return;
-              const q = (e.target as HTMLInputElement).value.trim().toLowerCase();
-              const hit = filteredNAV.flatMap((g) => g.items).find((i) =>
-                i.label.toLowerCase().includes(q),
-              );
-              if (hit) window.location.assign(hit.to);
-            }}
-          />
+          <button
+            type="button"
+            onClick={() => setCmdOpen(true)}
+            className="flex h-8.5 w-full items-center justify-between rounded-md border border-border/80 bg-muted/30 px-3 text-[12px] text-muted-foreground hover:bg-muted/50 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/25 transition-all shadow-xs cursor-pointer"
+          >
+            <div className="flex items-center gap-2">
+              <Search className="h-3.5 w-3.5 text-primary" />
+              <span>Search modules, POs, suppliers...</span>
+            </div>
+            <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded border border-border/70 bg-background/80 px-1.5 py-0.5 font-mono text-[10px] font-bold text-muted-foreground">
+              ⌘K
+            </kbd>
+          </button>
         </div>
 
         <div className="ml-auto flex items-center gap-2">

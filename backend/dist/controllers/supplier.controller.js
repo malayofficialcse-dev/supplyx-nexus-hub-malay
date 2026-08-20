@@ -114,4 +114,23 @@ export class BudgetController {
             return res.status(500).json({ error: error.message });
         }
     }
+    async recalculateBudget(req, res) {
+        try {
+            const { id } = req.params;
+            const result = await budgetService.recalculateBudget(id);
+            return res.json(result);
+        }
+        catch (error) {
+            return res.status(500).json({ error: error.message });
+        }
+    }
+    async recalculateAllBudgets(req, res) {
+        try {
+            const results = await budgetService.recalculateAllBudgets();
+            return res.json(results);
+        }
+        catch (error) {
+            return res.status(500).json({ error: error.message });
+        }
+    }
 }

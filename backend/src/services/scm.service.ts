@@ -11,6 +11,7 @@ import {
   Inventory,
   InventoryMovement,
 } from "@prisma/client";
+import { deleteCache } from "../lib/redis.js";
 import { OrderRepository } from "../repositories/order.repo.js";
 import {
   WarehouseRepository,
@@ -245,6 +246,70 @@ export class InvoiceService {
   async updateInvoice(id: string, data: any): Promise<Invoice> {
     return invoiceRepo.update(id, data);
   }
+
+  async payInvoice(id: string, paymentData: { method?: string; actor?: string; notes?: string }): Promise<{ invoice: Invoice; payment: Payment }> {
+    const invoice = (await invoiceRepo.getById(id)) || (await (prisma as any).invoice.findUnique({ where: { invoiceId: id } }));
+    if (!invoice) {
+      throw new Error("Invoice not found");
+    }
+
+    if (invoice.status === "Paid") {
+      throw new Error("Invoice is already marked as Paid");
+    }
+
+    const method = paymentData.method || "Bank Transfer";
+    const actor = paymentData.actor || "Procurement Specialist";
+
+    const allPayments = await paymentRepo.getAll();
+    const paymentId = `PAY-${9000 + allPayments.length}`;
+
+    const auditTrail = [
+      {
+        action: "created_from_invoice",
+        actor,
+        invoiceId: invoice.invoiceId,
+        amount: invoice.amount,
+        method,
+        timestamp: new Date().toISOString(),
+        notes: paymentData.notes || "Auto-settlement processed via 1-Click Pay",
+      },
+    ];
+
+    const result = await prisma.$transaction(async (tx) => {
+      const payment = await tx.payment.create({
+        data: {
+          paymentId,
+          invoiceId: invoice.invoiceId,
+          supplier: invoice.supplier,
+          amount: invoice.amount,
+          status: "Processed",
+          method,
+          auditTrail: auditTrail as any,
+        },
+      });
+
+      const updatedInvoice = await tx.invoice.update({
+        where: { id: invoice.id },
+        data: { status: "Paid" },
+      });
+
+      return { invoice: updatedInvoice, payment };
+    });
+
+    await deleteCache("scm:dashboard:analytics");
+    await deleteCache("scm:analytics:advanced");
+
+    return result;
+  }
+
+  async getInvoicePdf(id: string): Promise<Buffer> {
+    const invoice = (await invoiceRepo.getById(id)) || (await (prisma as any).invoice.findUnique({ where: { invoiceId: id } }));
+    if (!invoice) {
+      throw new Error("Invoice not found");
+    }
+    const { PDFService } = await import("./pdf.service.js");
+    return PDFService.generateInvoicePDF(invoice);
+  }
 }
 
 export class PaymentService {
@@ -429,6 +494,22 @@ export class GoodsReceiptService {
 
       return gr;
     });
+
+    // Auto-recalculate supplier scorecard asynchronously in background
+    setTimeout(async () => {
+      try {
+        const { SupplierService } = await import("./supplier.service.js");
+        const supplierService = new SupplierService();
+        const sup = await (prisma as any).supplier.findFirst({
+          where: { name: { equals: data.supplier, mode: "insensitive" } },
+        });
+        if (sup) {
+          await supplierService.computeSupplierScorecard(sup.id);
+        }
+      } catch (err) {
+        console.error("Scorecard auto-recomputation background error:", err);
+      }
+    }, 100);
 
     return createdReceipt;
   }

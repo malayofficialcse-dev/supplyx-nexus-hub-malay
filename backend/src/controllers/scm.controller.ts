@@ -407,6 +407,47 @@ export class InvoiceController {
       return res.status(500).json({ error: error.message });
     }
   }
+
+  async payInvoice(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { method, notes } = req.body || {};
+      const user = (req as any).user;
+      const actor = user?.name || "Procurement Specialist";
+
+      const result = await invoiceService.payInvoice(id, { method, actor, notes });
+      return res.status(200).json({
+        message: `Invoice ${result.invoice.invoiceId} successfully settled and paid.`,
+        invoice: result.invoice,
+        payment: result.payment,
+      });
+    } catch (error: any) {
+      return res.status(400).json({ error: error.message });
+    }
+  }
+
+  async downloadPdf(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const pdfBuffer = await invoiceService.getInvoicePdf(id);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename=Invoice-${id}.pdf`);
+      return res.send(pdfBuffer);
+    } catch (error: any) {
+      return res.status(404).json({ error: error.message });
+    }
+  }
+
+  async deleteInvoice(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { prisma } = await import("../repositories/scm.repo.js");
+      const deleted = await (prisma as any).invoice.delete({ where: { id } });
+      return res.json(deleted);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
 }
 
 export class PaymentController {

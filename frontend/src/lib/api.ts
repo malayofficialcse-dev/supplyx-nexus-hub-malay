@@ -65,6 +65,22 @@ export const api = {
   patch: <T>(path: string, data?: unknown) =>
     request<T>(path, { method: "PATCH", body: JSON.stringify(data ?? {}) }),
   del: <T>(path: string) => request<T>(path, { method: "DELETE" }),
+  download: async (path: string, defaultFilename: string) => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("supplyx_token") : null;
+    const headers: Record<string, string> = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}${path}`, { headers });
+    if (!res.ok) throw new Error(`Download failed with status ${res.status}`);
+    const blob = await res.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = defaultFilename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    a.remove();
+  },
 };
 
 /** Backends vary: unwrap {data:[...]} / {items:[...]} / raw array shapes. */

@@ -1,11 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, Clock, DollarSign, FileText } from "lucide-react";
+import { CheckCircle2, Clock, CreditCard, DollarSign, Download, FileText } from "lucide-react";
 import * as React from "react";
+import { toast } from "sonner";
 import { CrudPage, useResourceList } from "@/components/CrudPage";
 import { InvoiceDetailsModal } from "@/components/InvoiceDetailsModal";
 import { Button } from "@/components/kit/Button";
 import type { Row } from "@/components/kit/DataTable";
 import { itemsSum } from "@/components/kit/ResourceForm";
+import { api } from "@/lib/api";
 import { formatCurrency } from "@/lib/format";
 import { col, STATUS } from "@/lib/scm";
 
@@ -46,6 +48,16 @@ function InvoicesPage() {
     .filter((r) => String(r['status']) === "Paid")
     .reduce((s, r) => s + (Number(r['amount']) || 0), 0);
 
+  const handleDownloadPdf = async (row: Row) => {
+    try {
+      const invId = String(row['invoiceId'] || row['id']);
+      await api.download(`/invoices/${String(row['id'])}/pdf`, `Invoice-${invId}.pdf`);
+      toast.success(`Downloaded PDF for ${invId}`);
+    } catch (err: any) {
+      toast.error(`Download failed: ${err.message}`);
+    }
+  };
+
   return (
     <>
       <CrudPage
@@ -55,8 +67,8 @@ function InvoicesPage() {
         exportName="invoices"
         labelKey="invoiceId"
         createLabel="New invoice"
-        canEdit={false}
-        canDelete={false}
+        canEdit={true}
+        canDelete={true}
         headerExtra={
           <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-sm border border-border bg-card p-3">
@@ -150,14 +162,24 @@ function InvoicesPage() {
           return { ...payload, amount, paymentTerms: terms, dueDate };
         }}
         rowActionsExtra={(row) => (
-          <Button
-            variant="subtle"
-            size="sm"
-            onClick={() => setSelectedInvoice(row)}
-          >
-            <FileText className="h-3.5 w-3.5" />
-            View Bill
-          </Button>
+          <>
+            <Button
+              variant="subtle"
+              size="sm"
+              onClick={() => setSelectedInvoice(row)}
+            >
+              <FileText className="h-3.5 w-3.5 text-primary" />
+              Bill
+            </Button>
+            <Button
+              variant="subtle"
+              size="sm"
+              onClick={() => handleDownloadPdf(row)}
+              title="Download PDF"
+            >
+              <Download className="h-3.5 w-3.5 text-muted-foreground" />
+            </Button>
+          </>
         )}
       />
 

@@ -13,6 +13,17 @@ export class OrderController {
     }
   }
 
+  async getOrderById(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const order = await orderService.getById(id);
+      if (!order) return res.status(404).json({ error: "Purchase Order not found" });
+      return res.json(order);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
   async createOrder(req: Request, res: Response) {
     try {
       const { supplier, amount, deliveryDate, description, items } = req.body;
@@ -29,6 +40,18 @@ export class OrderController {
       return res.status(201).json(newOrder);
     } catch (error: any) {
       return res.status(500).json({ error: error.message });
+    }
+  }
+
+  async downloadPdf(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const pdfBuffer = await orderService.getOrderPdf(id);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename=PurchaseOrder-${id}.pdf`);
+      return res.send(pdfBuffer);
+    } catch (error: any) {
+      return res.status(404).json({ error: error.message });
     }
   }
 

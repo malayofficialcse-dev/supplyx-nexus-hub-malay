@@ -115,7 +115,15 @@ function SuppliersPage() {
 }
 
 import { useQuery } from "@tanstack/react-query";
-import { Award, Activity, Clock, DollarSign, Calendar, AlertTriangle } from "lucide-react";
+import { Award, Activity, Clock, DollarSign, Calendar, AlertTriangle, RefreshCw } from "lucide-react";
+import {
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  Radar,
+  ResponsiveContainer,
+} from "recharts";
 import { Button } from "@/components/kit/Button";
 import { Modal } from "@/components/kit/Modal";
 import { api } from "@/lib/api";
@@ -150,6 +158,20 @@ function ScorecardModal({
   const spend = Number(data.totalOrderValue ?? 0);
   const rating = String(data.rating ?? "No Rating");
 
+  // Multi-dimensional metrics for Radar Chart
+  const qualityScore = Math.max(0, 100 - defect);
+  const leadTimeScore = Math.min(100, Math.max(20, Math.round(100 - leadTime * 3)));
+  const reliabilityScore = Math.min(100, Math.max(10, Math.round(onTime * 0.9 + qualityScore * 0.1)));
+  const complianceScore = Math.min(100, Math.max(30, Math.round(score * 0.95)));
+
+  const radarData = [
+    { subject: "On-Time", score: onTime, fullMark: 100 },
+    { subject: "Quality", score: qualityScore, fullMark: 100 },
+    { subject: "Lead Time", score: leadTimeScore, fullMark: 100 },
+    { subject: "Reliability", score: reliabilityScore, fullMark: 100 },
+    { subject: "Compliance", score: complianceScore, fullMark: 100 },
+  ];
+
   let scoreColor = "text-rose-500 bg-rose-500/10 border-rose-500/20";
   if (score >= 85) scoreColor = "text-emerald-500 bg-emerald-500/10 border-emerald-500/20";
   else if (score >= 70) scoreColor = "text-amber-500 bg-amber-500/10 border-amber-500/20";
@@ -158,10 +180,18 @@ function ScorecardModal({
     <Modal
       open={open}
       onOpenChange={onOpenChange}
-      title="Supplier Performance Scorecard"
-      description={`Quality audit and scorecard parameters for ${String(supplierRow['name'])}`}
-      width="md"
-      footer={<Button onClick={() => onOpenChange(false)}>Close Evaluation</Button>}
+      title="Supplier Performance & Quality Scorecard"
+      description={`Real-time automated evaluation metrics for ${String(supplierRow['name'])}`}
+      width="lg"
+      footer={
+        <div className="flex items-center justify-between w-full">
+          <Button variant="subtle" size="sm" onClick={() => void query.refetch()}>
+            <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+            Re-evaluate KPIs
+          </Button>
+          <Button onClick={() => onOpenChange(false)}>Close Scorecard</Button>
+        </div>
+      }
     >
       {query.isPending ? (
         <div className="py-8 text-center text-sm text-muted-foreground">Calculating KPIs & scoring matrix...</div>
@@ -176,7 +206,7 @@ function ScorecardModal({
                 <h4 className="text-xl font-bold mt-1">{rating}</h4>
               </div>
               <p className="text-xs mt-3 opacity-90">
-                Evaluation based on {data.totalOrders ?? 0} purchase orders and {data.totalDeliveries ?? 0} goods receipts.
+                Live calculated across {data.totalOrders ?? 0} Purchase Orders and {data.totalDeliveries ?? 0} Goods Receipts.
               </p>
             </div>
 
@@ -187,46 +217,76 @@ function ScorecardModal({
             </div>
           </div>
 
-          <div className="space-y-3">
-            <div>
-              <div className="flex justify-between text-xs font-semibold text-foreground mb-1">
-                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> On-Time Delivery Rate</span>
-                <span>{onTime}%</span>
+          {/* Radar Chart & Key Bars */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center border border-border/80 rounded-sm bg-card p-3">
+            <div className="h-48 w-full flex items-center justify-center">
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart data={radarData} margin={{ top: 10, right: 15, bottom: 10, left: 15 }}>
+                  <PolarGrid stroke="#334155" opacity={0.5} />
+                  <PolarAngleAxis dataKey="subject" stroke="#94a3b8" fontSize={10} />
+                  <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#475569" fontSize={9} />
+                  <Radar
+                    name="Performance Score"
+                    dataKey="score"
+                    stroke="var(--primary)"
+                    fill="var(--primary)"
+                    fillOpacity={0.4}
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="space-y-3 pr-2">
+              <div>
+                <div className="flex justify-between text-xs font-semibold text-foreground mb-1">
+                  <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> On-Time Delivery</span>
+                  <span>{onTime}%</span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                  <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${onTime}%` }} />
+                </div>
               </div>
-              <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-                <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${onTime}%` }} />
+
+              <div>
+                <div className="flex justify-between text-xs font-semibold text-foreground mb-1">
+                  <span className="flex items-center gap-1"><ShieldCheck className="h-3.5 w-3.5 text-blue-500" /> Inbound Quality Index</span>
+                  <span>{qualityScore}%</span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                  <div className="h-full rounded-full bg-blue-500 transition-all" style={{ width: `${qualityScore}%` }} />
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between text-xs font-semibold text-foreground mb-1">
+                  <span className="flex items-center gap-1"><AlertTriangle className="h-3.5 w-3.5 text-amber-500" /> Disputed / Defect Rate</span>
+                  <span className="text-amber-500 font-bold">{defect}%</span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                  <div className="h-full rounded-full bg-rose-500 transition-all" style={{ width: `${defect}%` }} />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 pt-1">
+            <div className="rounded-sm border border-border bg-card p-3 flex items-center gap-2.5">
+              <div className="rounded bg-primary/10 p-2 text-primary">
+                <Clock className="h-4 w-4" />
+              </div>
+              <div>
+                <div className="text-[10px] text-muted-foreground font-semibold">Avg Lead Time</div>
+                <div className="text-sm font-bold text-foreground">{leadTime} days</div>
               </div>
             </div>
 
-            <div>
-              <div className="flex justify-between text-xs font-semibold text-foreground mb-1">
-                <span className="flex items-center gap-1"><AlertTriangle className="h-3.5 w-3.5 text-amber-500" /> Inbound Defect / Dispute Rate</span>
-                <span>{defect}%</span>
+            <div className="rounded-sm border border-border bg-card p-3 flex items-center gap-2.5">
+              <div className="rounded bg-emerald-500/10 p-2 text-emerald-500">
+                <DollarSign className="h-4 w-4" />
               </div>
-              <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-                <div className="h-full rounded-full bg-rose-500 transition-all" style={{ width: `${defect}%` }} />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              <div className="rounded-sm border border-border bg-card p-3 flex items-center gap-2.5">
-                <div className="rounded bg-primary/10 p-2 text-primary">
-                  <Clock className="h-4 w-4" />
-                </div>
-                <div>
-                  <div className="text-[10px] text-muted-foreground font-semibold">Avg Lead Time</div>
-                  <div className="text-sm font-bold text-foreground">{leadTime} days</div>
-                </div>
-              </div>
-
-              <div className="rounded-sm border border-border bg-card p-3 flex items-center gap-2.5">
-                <div className="rounded bg-emerald-500/10 p-2 text-emerald-500">
-                  <DollarSign className="h-4 w-4" />
-                </div>
-                <div>
-                  <div className="text-[10px] text-muted-foreground font-semibold">Total PO Spend</div>
-                  <div className="text-sm font-bold text-foreground">{formatCurrency(spend)}</div>
-                </div>
+              <div>
+                <div className="text-[10px] text-muted-foreground font-semibold">Total PO Spend</div>
+                <div className="text-sm font-bold text-foreground">{formatCurrency(spend)}</div>
               </div>
             </div>
           </div>

@@ -140,6 +140,44 @@ export class BudgetService {
     async deleteBudget(id) {
         return prisma.budgetCategory.delete({ where: { id } });
     }
+    async recalculateBudget(id) {
+        const budget = await prisma.budgetCategory.findUnique({ where: { id } });
+        if (!budget)
+            throw new Error("Budget category not found");
+        const orders = await orderRepo.getAll();
+        const suppliers = await supplierRepo.getAll();
+        // Suppliers in this category
+        const matchingSuppliers = suppliers
+            .filter((s) => (s.category || "").toLowerCase() === budget.category.toLowerCase())
+            .map((s) => s.name.toLowerCase());
+        const matchingOrders = orders.filter((o) => {
+            const supMatch = matchingSuppliers.includes((o.supplier || "").toLowerCase());
+            const descMatch = (o.description || "").toLowerCase().includes(budget.category.toLowerCase());
+            return supMatch || descMatch;
+        });
+        const totalSpent = matchingOrders.reduce((sum, o) => sum + Number(o.amount || 0), 0);
+        const updated = await prisma.budgetCategory.update({
+            where: { id },
+            data: { spent: totalSpent },
+        });
+        await deleteCache("scm:dashboard:analytics");
+        return {
+            ...updated,
+            utilization: updated.allocated > 0 ? Math.round((updated.spent / updated.allocated) * 100) : 0,
+            remaining: Math.max(0, updated.allocated - updated.spent),
+            status: updated.spent > updated.allocated ? "Over Budget" : updated.spent / updated.allocated >= 0.9 ? "Near Limit" : "On Track",
+            matchingOrdersCount: matchingOrders.length,
+        };
+    }
+    async recalculateAllBudgets() {
+        const budgets = await prisma.budgetCategory.findMany();
+        const results = [];
+        for (const b of budgets) {
+            const res = await this.recalculateBudget(b.id);
+            results.push(res);
+        }
+        return results;
+    }
     async getBudgetSummary() {
         const list = await this.getBudgets();
         const totalAllocated = list.reduce((s, b) => s + b.allocated, 0);

@@ -1,3 +1,4 @@
+import { deleteCache } from "../lib/redis.js";
 import { OrderRepository } from "../repositories/order.repo.js";
 import { WarehouseRepository, ShipmentRepository, LogisticsRepository, CustomerRepository, CarrierRepository, ContractRepository, InvoiceRepository, PaymentRepository, GoodsReceiptRepository, InventoryRepository, InventoryMovementRepository, prisma, } from "../repositories/scm.repo.js";
 const warehouseRepo = new WarehouseRepository();
@@ -145,6 +146,59 @@ export class InvoiceService {
     async updateInvoice(id, data) {
         return invoiceRepo.update(id, data);
     }
+    async payInvoice(id, paymentData) {
+        const invoice = (await invoiceRepo.getById(id)) || (await prisma.invoice.findUnique({ where: { invoiceId: id } }));
+        if (!invoice) {
+            throw new Error("Invoice not found");
+        }
+        if (invoice.status === "Paid") {
+            throw new Error("Invoice is already marked as Paid");
+        }
+        const method = paymentData.method || "Bank Transfer";
+        const actor = paymentData.actor || "Procurement Specialist";
+        const allPayments = await paymentRepo.getAll();
+        const paymentId = `PAY-${9000 + allPayments.length}`;
+        const auditTrail = [
+            {
+                action: "created_from_invoice",
+                actor,
+                invoiceId: invoice.invoiceId,
+                amount: invoice.amount,
+                method,
+                timestamp: new Date().toISOString(),
+                notes: paymentData.notes || "Auto-settlement processed via 1-Click Pay",
+            },
+        ];
+        const result = await prisma.$transaction(async (tx) => {
+            const payment = await tx.payment.create({
+                data: {
+                    paymentId,
+                    invoiceId: invoice.invoiceId,
+                    supplier: invoice.supplier,
+                    amount: invoice.amount,
+                    status: "Processed",
+                    method,
+                    auditTrail: auditTrail,
+                },
+            });
+            const updatedInvoice = await tx.invoice.update({
+                where: { id: invoice.id },
+                data: { status: "Paid" },
+            });
+            return { invoice: updatedInvoice, payment };
+        });
+        await deleteCache("scm:dashboard:analytics");
+        await deleteCache("scm:analytics:advanced");
+        return result;
+    }
+    async getInvoicePdf(id) {
+        const invoice = (await invoiceRepo.getById(id)) || (await prisma.invoice.findUnique({ where: { invoiceId: id } }));
+        if (!invoice) {
+            throw new Error("Invoice not found");
+        }
+        const { PDFService } = await import("./pdf.service.js");
+        return PDFService.generateInvoicePDF(invoice);
+    }
 }
 export class PaymentService {
     async getPayments() {
@@ -285,6 +339,22 @@ export class GoodsReceiptService {
             }
             return gr;
         });
+        // Auto-recalculate supplier scorecard asynchronously in background
+        setTimeout(async () => {
+            try {
+                const { SupplierService } = await import("./supplier.service.js");
+                const supplierService = new SupplierService();
+                const sup = await prisma.supplier.findFirst({
+                    where: { name: { equals: data.supplier, mode: "insensitive" } },
+                });
+                if (sup) {
+                    await supplierService.computeSupplierScorecard(sup.id);
+                }
+            }
+            catch (err) {
+                console.error("Scorecard auto-recomputation background error:", err);
+            }
+        }, 100);
         return createdReceipt;
     }
 }
