@@ -1,4 +1,4 @@
-import { PrismaClient, } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 export const prisma = new PrismaClient();
 const normalizePagination = ({ page = 1, limit = 10 }) => ({
     page: page < 1 ? 1 : page,
