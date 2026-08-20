@@ -60,5 +60,15 @@ app.get("/health", (req, res) => {
 app.listen(PORT, () => {
     console.log(`\n📡 SupplyX SCM Backend v2.0 running on http://localhost:${PORT}`);
     console.log(`📋 API Docs: http://localhost:${PORT}/health\n`);
+    // Tier 1: Background contract auto-expiry scheduler
+    import("./services/scm.service.js").then(({ ContractService }) => {
+        const contractService = new ContractService();
+        // Run immediately on boot
+        contractService.autoExpireContracts().catch((err) => console.error("Initial contract auto-expiry error:", err));
+        // Run periodically every 1 hour
+        setInterval(() => {
+            contractService.autoExpireContracts().catch((err) => console.error("Periodic contract auto-expiry error:", err));
+        }, 60 * 60 * 1000);
+    });
 });
 export default app;

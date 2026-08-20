@@ -115,6 +115,31 @@ export class ContractService {
             .filter((c) => c.daysUntilExpiry !== null && c.daysUntilExpiry <= withinDays)
             .sort((a, b) => (a.daysUntilExpiry ?? 999) - (b.daysUntilExpiry ?? 999));
     }
+    async autoExpireContracts() {
+        const all = await contractRepo.findMany({});
+        const contracts = all.data ?? [];
+        const now = new Date();
+        const updatedIds = [];
+        for (const c of contracts) {
+            if (c.status !== "Expired") {
+                const endDate = new Date(c.end);
+                if (!isNaN(endDate.getTime()) && endDate.getTime() < now.getTime()) {
+                    try {
+                        await contractRepo.update(c.id, { status: "Expired" });
+                        updatedIds.push(c.id);
+                    }
+                    catch (err) {
+                        console.error(`Failed to auto-expire contract ${c.conId || c.id}:`, err);
+                    }
+                }
+            }
+        }
+        if (updatedIds.length > 0) {
+            await deleteCache("scm:dashboard:analytics");
+            console.log(`⏱️ Auto-expired ${updatedIds.length} contracts.`);
+        }
+        return { expiredCount: updatedIds.length, updatedIds };
+    }
 }
 export class InvoiceService {
     async getInvoices() {

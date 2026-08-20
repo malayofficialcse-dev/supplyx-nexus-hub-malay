@@ -38,6 +38,7 @@ export interface CrudPageProps {
   headerExtra?: React.ReactNode | undefined;
   toolbarExtra?: React.ReactNode | undefined;
   rowActionsExtra?: ((row: Row) => React.ReactNode) | undefined;
+  formExtra?: ((values: FormValues, isEdit: boolean) => React.ReactNode) | undefined;
   transformPayload?: ((payload: Record<string, unknown>, values: FormValues) => Record<string, unknown>) | undefined;
   summary?: ((rows: Row[]) => React.ReactNode) | undefined;
 }
@@ -69,6 +70,7 @@ export function CrudPage({
   headerExtra,
   toolbarExtra,
   rowActionsExtra,
+  formExtra,
   transformPayload,
   summary,
 }: CrudPageProps) {
@@ -288,6 +290,7 @@ export function CrudPage({
           </>
         }
       >
+        {formExtra ? formExtra(values, !!editing) : null}
         <ResourceForm
           fields={fields}
           values={values}

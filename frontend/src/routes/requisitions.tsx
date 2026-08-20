@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, FileSpreadsheet, ShoppingCart, User } from "lucide-react";
+import { CheckCircle2, FileSpreadsheet, GitFork, ShoppingCart, User } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
 import { CrudPage } from "@/components/CrudPage";
@@ -9,6 +9,7 @@ import type { Row } from "@/components/kit/DataTable";
 import { Field, Input, Select, Textarea } from "@/components/kit/Input";
 import { Modal } from "@/components/kit/Modal";
 import { itemsSum } from "@/components/kit/ResourceForm";
+import { RequisitionFlowModal } from "@/components/RequisitionFlowModal";
 import { api } from "@/lib/api.js";
 import { DEPARTMENTS, col, STATUS } from "@/lib/scm.js";
 import { useAuth } from "@/lib/auth.js";
@@ -39,6 +40,7 @@ function RequisitionsPage() {
   const [poFor, setPoFor] = React.useState<Row | null>(null);
   const [poSupplier, setPoSupplier] = React.useState("");
   const [poDeliveryDate, setPoDeliveryDate] = React.useState("");
+  const [flowReq, setFlowReq] = React.useState<Row | null>(null);
 
   const approve = useMutation({
     mutationFn: async () => {
@@ -169,46 +171,75 @@ function RequisitionsPage() {
           requester: payload['requester'] || user?.name || "System",
           total: itemsSum(values),
         })}
-        rowActionsExtra={(row) => (
-          <>
-            <Button
-              variant="subtle"
-              size="sm"
-              onClick={() => {
-                setApproving(row);
-                setDecision("approve");
-                setNotes("");
-              }}
-            >
-              <CheckCircle2 className="h-3.5 w-3.5 text-success" />
-              Review
-            </Button>
-            <Button
-              variant="subtle"
-              size="sm"
-              onClick={() => {
-                setRfqFor(row);
-                setRfqTitle(`RFQ for ${String(row['item'] ?? row['reqId'] ?? "")}`);
-                setRfqDeadline("");
-              }}
-            >
-              <FileSpreadsheet className="h-3.5 w-3.5" />
-              Create RFQ
-            </Button>
-            <Button
-              variant="subtle"
-              size="sm"
-              onClick={() => {
-                setPoFor(row);
-                setPoSupplier("");
-                setPoDeliveryDate(new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0]);
-              }}
-            >
-              <ShoppingCart className="h-3.5 w-3.5" />
-              Create PO
-            </Button>
-          </>
-        )}
+        rowActionsExtra={(row) => {
+          const status = String(row["status"] ?? "").toLowerCase();
+          const isConverted = status.includes("converted");
+          const isApproved = status.includes("approved");
+          const isPending = status.includes("pending") || status.includes("awaiting");
+          const isRejected = status.includes("rejected");
+
+          return (
+            <>
+              {/* Requisition Lifecycle & Delivery History Flow Button */}
+              <Button
+                variant="subtle"
+                size="sm"
+                onClick={() => setFlowReq(row)}
+                title="View Requisition Lifecycle Flow & Delivery History"
+                className="text-primary hover:text-primary font-medium"
+              >
+                <GitFork className="h-3.5 w-3.5 text-primary" />
+                View Flow
+              </Button>
+
+              {/* Review button only for pending / awaiting approval non-converted records */}
+              {!isConverted && !isRejected && isPending && (
+                <Button
+                  variant="subtle"
+                  size="sm"
+                  onClick={() => {
+                    setApproving(row);
+                    setDecision("approve");
+                    setNotes("");
+                  }}
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+                  Review
+                </Button>
+              )}
+
+              {/* Sourcing & Order conversion actions only for approved non-converted records */}
+              {!isConverted && !isRejected && isApproved && (
+                <>
+                  <Button
+                    variant="subtle"
+                    size="sm"
+                    onClick={() => {
+                      setRfqFor(row);
+                      setRfqTitle(`RFQ for ${String(row['item'] ?? row['reqId'] ?? "")}`);
+                      setRfqDeadline("");
+                    }}
+                  >
+                    <FileSpreadsheet className="h-3.5 w-3.5" />
+                    Create RFQ
+                  </Button>
+                  <Button
+                    variant="subtle"
+                    size="sm"
+                    onClick={() => {
+                      setPoFor(row);
+                      setPoSupplier("");
+                      setPoDeliveryDate(new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0]);
+                    }}
+                  >
+                    <ShoppingCart className="h-3.5 w-3.5" />
+                    Create PO
+                  </Button>
+                </>
+              )}
+            </>
+          );
+        }}
       />
 
       <Modal
@@ -306,9 +337,15 @@ function RequisitionsPage() {
               onChange={(e) => setPoDeliveryDate(e.target.value)}
             />
           </Field>
-        </div>
-      </Modal>
-    </>
-  );
-}
+          </div>
+        </Modal>
+
+        <RequisitionFlowModal
+          open={!!flowReq}
+          onOpenChange={(o) => !o && setFlowReq(null)}
+          reqRow={flowReq}
+        />
+      </>
+    );
+  }
 

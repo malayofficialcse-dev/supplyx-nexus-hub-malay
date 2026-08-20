@@ -26,7 +26,27 @@ export class SupplierService {
     if (!list || list.length === 0) {
       return DEFAULT_SUPPLIERS.map((s, idx) => ({ id: `sup-default-${idx}`, ...s }));
     }
-    return list;
+    return list.map((s: any) => {
+      const onTime = Number(s.onTimeDeliveryRate ?? 0);
+      const defect = Number(s.defectRate ?? 0);
+      const lead = Number(s.avgLeadTimeDays ?? 0);
+      const leadScore = Math.max(0, 100 - lead * 2);
+      const overallScore = Math.round(onTime * 0.5 + (100 - defect) * 0.3 + leadScore * 0.2);
+      const rating =
+        overallScore >= 85 ? "Excellent"
+        : overallScore >= 70 ? "Good"
+        : overallScore >= 50 ? "Satisfactory"
+        : "Needs Improvement";
+      return {
+        ...s,
+        onTimeDeliveryRate: onTime,
+        defectRate: defect,
+        avgLeadTimeDays: lead,
+        totalOrderValue: Number(s.totalOrderValue ?? 0),
+        overallScore,
+        rating,
+      };
+    });
   }
 
   async getSupplierById(id: string): Promise<any | null> {

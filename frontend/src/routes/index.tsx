@@ -16,7 +16,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Banknote, BarChart2, ClipboardList, ShoppingCart, Truck } from "lucide-react";
+import { AlertTriangle, Banknote, BarChart2, Boxes, ClipboardList, FileSignature, PackageX, ShoppingCart, Truck, Wallet } from "lucide-react";
 import { useResourceList } from "@/components/CrudPage";
 import { Button } from "@/components/kit/Button";
 import { Card, CardHeader, PageHeader, StatCard } from "@/components/kit/Card";
@@ -71,17 +71,35 @@ function Dashboard() {
   const invoices = useResourceList("/invoices");
   const shipments = useResourceList("/shipments");
   const warehouses = useResourceList("/warehouses");
+  const budgets = useResourceList("/suppliers/budget");
+
+  const stockAlerts = useQuery({
+    queryKey: ["/inventories/alerts"],
+    queryFn: async () => api.get("/inventories/alerts").catch(() => []),
+  });
+
+  const expiringContracts = useQuery({
+    queryKey: ["/contracts/expiring"],
+    queryFn: async () => api.get("/contracts/expiring?days=30").catch(() => []),
+  });
 
   const reqRows = (requisitions.data ?? []) as Row[];
   const orderRows = (orders.data ?? []) as Row[];
   const invoiceRows = (invoices.data ?? []) as Row[];
   const shipmentRows = (shipments.data ?? []) as Row[];
   const warehouseRows = (warehouses.data ?? []) as Row[];
+  const budgetRows = (budgets.data ?? []) as Row[];
+  const lowStockItems = Array.isArray(stockAlerts.data) ? stockAlerts.data : [];
+  const expiringList = Array.isArray(expiringContracts.data) ? expiringContracts.data : [];
 
   // Prefer advanced analytics data when available
   const monthlyTrend = advancedQuery.data?.monthlyTrend ?? [];
 
   const totalSpend = orderRows.reduce((s, o) => s + Number(o['amount'] ?? 0), 0);
+  const totalAllocatedBudget = budgetRows.reduce((s, b) => s + Number(b['allocated'] ?? 0), 0);
+  const totalBudgetSpent = budgetRows.reduce((s, b) => s + Number(b['spent'] ?? 0), 0);
+  const budgetUtilization = totalAllocatedBudget > 0 ? Math.round((totalBudgetSpent / totalAllocatedBudget) * 100) : 0;
+
   const openReqs = reqRows.filter((r) => /pending|draft/i.test(String(r['status'] ?? ""))).length;
   const inTransit = shipmentRows.filter((s) => /transit|scheduled/i.test(String(s['status'] ?? ""))).length;
   const payable = invoiceRows
@@ -134,6 +152,41 @@ function Dashboard() {
         </div>
       ) : null}
 
+      {/* Tier 1 Critical Compliance & Stock Alert Bar */}
+      {(expiringList.length > 0 || lowStockItems.length > 0) && (
+        <div className="mb-4 grid gap-2.5 sm:grid-cols-2">
+          {expiringList.length > 0 && (
+            <Link
+              to="/contracts"
+              className="flex items-center justify-between gap-2 rounded-sm border border-amber-500/30 bg-amber-500/10 px-3.5 py-2.5 text-[12px] text-amber-700 dark:text-amber-300 hover:bg-amber-500/15 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <FileSignature className="h-4 w-4 text-amber-600 shrink-0" />
+                <span>
+                  <strong>Contract Compliance:</strong> {expiringList.length} vendor agreement(s) expiring within 30 days.
+                </span>
+              </div>
+              <span className="text-[11px] font-bold uppercase tracking-wider underline">Review →</span>
+            </Link>
+          )}
+
+          {lowStockItems.length > 0 && (
+            <Link
+              to="/inventory"
+              className="flex items-center justify-between gap-2 rounded-sm border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-[12px] text-rose-700 dark:text-rose-300 hover:bg-rose-500/15 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <PackageX className="h-4 w-4 text-rose-600 shrink-0" />
+                <span>
+                  <strong>Stock Alerts:</strong> {lowStockItems.length} inventory item(s) below reorder threshold.
+                </span>
+              </div>
+              <span className="text-[11px] font-bold uppercase tracking-wider underline">Reorder →</span>
+            </Link>
+          )}
+        </div>
+      )}
+
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           label="Committed PO spend"
@@ -143,11 +196,18 @@ function Dashboard() {
           icon={<ShoppingCart className="h-5 w-5" />}
         />
         <StatCard
-          label="Open requisitions"
-          value={formatNumber(openReqs)}
-          hint={`${formatNumber(reqRows.length)} total raised`}
-          tone="warning"
-          icon={<ClipboardList className="h-5 w-5" />}
+          label="Budget spend-to-date"
+          value={formatCurrency(totalBudgetSpent)}
+          hint={totalAllocatedBudget > 0 ? `${budgetUtilization}% of ${formatCurrency(totalAllocatedBudget)} limit` : "Spend tracking"}
+          tone={budgetUtilization > 100 ? "danger" : budgetUtilization >= 90 ? "warning" : "success"}
+          icon={<Wallet className="h-5 w-5" />}
+        />
+        <StatCard
+          label="Stock reorder alerts"
+          value={formatNumber(lowStockItems.length)}
+          hint={lowStockItems.length > 0 ? "Items at or below reorder min" : "All warehouses optimal"}
+          tone={lowStockItems.length > 0 ? "danger" : "success"}
+          icon={<Boxes className="h-5 w-5" />}
         />
         <StatCard
           label="Outstanding payables"
@@ -155,13 +215,6 @@ function Dashboard() {
           hint={`${formatNumber(invoiceRows.length)} invoices on file`}
           tone="danger"
           icon={<Banknote className="h-5 w-5" />}
-        />
-        <StatCard
-          label="Shipments in motion"
-          value={formatNumber(inTransit)}
-          hint={`${formatNumber(shipmentRows.length)} shipments tracked`}
-          tone="success"
-          icon={<Truck className="h-5 w-5" />}
         />
       </div>
 

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Download, ScanSearch } from "lucide-react";
+import { AlertTriangle, Download, ScanSearch } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
 import { CrudPage, useResourceList } from "@/components/CrudPage";
@@ -8,6 +8,7 @@ import type { Row } from "@/components/kit/DataTable";
 import { itemsSum } from "@/components/kit/ResourceForm";
 import { ThreeWayMatchModal } from "@/components/ThreeWayMatchModal";
 import { api } from "@/lib/api";
+import { formatCurrency } from "@/lib/format";
 import { col, STATUS } from "@/lib/scm";
 
 export const Route = createFileRoute("/orders")({
@@ -25,9 +26,13 @@ export const Route = createFileRoute("/orders")({
 function OrdersPage() {
   const [matchRow, setMatchRow] = React.useState<Row | null>(null);
   const suppliersQuery = useResourceList("/suppliers");
+  const budgetsQuery = useResourceList("/suppliers/budget");
+  const supplierRows = (suppliersQuery.data ?? []) as Row[];
+  const budgetRows = (budgetsQuery.data ?? []) as Row[];
+
   const supplierOptions = Array.from(
     new Set(
-      ((suppliersQuery.data ?? []) as Row[])
+      supplierRows
         .map((s) => String(s['name'] ?? ""))
         .concat(["brb", "twe", "BTENE", "Acme Corporation"])
     )
@@ -76,6 +81,49 @@ function OrdersPage() {
           { name: "description", label: "Description", type: "textarea" },
           { name: "items", label: "Order lines", type: "items", required: true },
         ]}
+        formExtra={(values) => {
+          const supplier = String(values["supplier"] ?? "");
+          const sum = itemsSum(values);
+          if (!supplier || sum <= 0) return null;
+
+          const sup = supplierRows.find((s) => String(s["name"]).toLowerCase() === supplier.toLowerCase());
+          const category = String(sup?.["category"] ?? "General");
+
+          const budget = budgetRows.find((b) => String(b["category"]).toLowerCase() === category.toLowerCase()) ||
+            budgetRows.find((b) => String(b["category"]).toLowerCase() === "general");
+
+          if (!budget) return null;
+
+          const allocated = Number(budget["allocated"] ?? 0);
+          const spent = Number(budget["spent"] ?? 0);
+          const newTotal = spent + sum;
+          const isOver = newTotal > allocated;
+          const isNear = !isOver && allocated > 0 && newTotal / allocated >= 0.9;
+
+          if (!isOver && !isNear) return null;
+
+          return (
+            <div
+              className={`mb-4 flex items-start gap-2.5 rounded-sm border p-3 text-[12px] ${
+                isOver
+                  ? "border-rose-500/40 bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                  : "border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400"
+              }`}
+            >
+              <AlertTriangle className={`h-4 w-4 shrink-0 mt-0.5 ${isOver ? "text-rose-500" : "text-amber-500"}`} />
+              <div>
+                <strong className="font-semibold">
+                  {isOver ? "Budget Ceiling Exceeded:" : "Approaching Category Budget Limit:"}
+                </strong>
+                <p className="mt-0.5 text-foreground/90">
+                  This PO ({formatCurrency(sum)}) brings category <strong>'{String(budget["category"])}'</strong> to{" "}
+                  <strong>{formatCurrency(newTotal)}</strong> against an allocated ceiling of{" "}
+                  <strong>{formatCurrency(allocated)}</strong> ({Math.round((newTotal / (allocated || 1)) * 100)}% utilization).
+                </p>
+              </div>
+            </div>
+          );
+        }}
         transformPayload={(payload, values) => ({ ...payload, amount: itemsSum(values) })}
         rowActionsExtra={(row) => (
           <>

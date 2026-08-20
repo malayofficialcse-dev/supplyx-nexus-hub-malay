@@ -348,6 +348,15 @@ export class ContractController {
       return res.status(500).json({ error: error.message });
     }
   }
+
+  async autoExpire(req: Request, res: Response) {
+    try {
+      const result = await contractService.autoExpireContracts();
+      return res.json(result);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
 }
 
 export class InvoiceController {

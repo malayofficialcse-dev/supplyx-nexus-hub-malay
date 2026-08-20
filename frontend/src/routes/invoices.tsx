@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, Clock, CreditCard, DollarSign, Download, FileText } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clock, CreditCard, DollarSign, Download, FileText } from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
 import { CrudPage, useResourceList } from "@/components/CrudPage";
@@ -152,6 +152,35 @@ function InvoicesPage() {
           { name: "status", label: "Status", type: "select", options: STATUS.invoice, required: true, defaultValue: "Draft" },
           { name: "items", label: "Invoice lines", type: "items", required: true },
         ]}
+        formExtra={(values, isEdit) => {
+          const supplier = String(values["supplier"] ?? "");
+          const date = String(values["date"] ?? "");
+          const currentId = String(values["invoiceId"] ?? "");
+          const sum = itemsSum(values);
+          if (!supplier || !date || sum <= 0) return null;
+
+          const duplicate = invoiceRows.find(
+            (inv) =>
+              (!isEdit || String(inv["invoiceId"]) !== currentId) &&
+              String(inv["supplier"]).toLowerCase() === supplier.toLowerCase() &&
+              String(inv["date"]) === date &&
+              Math.abs(Number(inv["amount"] ?? 0) - sum) < 0.01
+          );
+
+          if (!duplicate) return null;
+
+          return (
+            <div className="mb-4 flex items-start gap-2.5 rounded-sm border border-amber-500/40 bg-amber-500/10 p-3 text-[12px] text-amber-600 dark:text-amber-400">
+              <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500 mt-0.5" />
+              <div>
+                <strong className="font-semibold">Possible Duplicate Invoice Detected:</strong>
+                <p className="mt-0.5 text-foreground/90">
+                  An invoice (<strong>{String(duplicate["invoiceId"])}</strong>) from <strong>{supplier}</strong> for <strong>{formatCurrency(sum)}</strong> on <strong>{date}</strong> already exists on record.
+                </p>
+              </div>
+            </div>
+          );
+        }}
         transformPayload={(payload, values) => {
           const amount = itemsSum(values);
           const terms = (values as any)["paymentTerms"] ?? "NET_30";

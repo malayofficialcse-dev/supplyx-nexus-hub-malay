@@ -5,6 +5,7 @@ const router = Router();
 const controller = new ContractController();
 
 router.get("/expiring", controller.getExpiringContracts.bind(controller));
+router.post("/auto-expire", controller.autoExpire.bind(controller));
 router.get("/", controller.getContracts.bind(controller));
 router.get("/:id", controller.getContractById.bind(controller));
 router.post("/", controller.createContract.bind(controller));

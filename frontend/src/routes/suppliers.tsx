@@ -73,9 +73,50 @@ function SuppliersPage() {
         col.code("supId", "Supplier ID"),
         col.text("name", "Company Name"),
         col.text("contact", "Primary Contact"),
-        col.text("email", "Email Address"),
-        col.text("phone", "Phone Number"),
         col.text("category", "Category"),
+        {
+          key: "scorecard",
+          label: "Performance Rating",
+          render: (r) => {
+            const rating = String(r["rating"] ?? "Good");
+            const score = Number(r["overallScore"] ?? 75);
+            let badgeClass = "bg-emerald-500/10 text-emerald-600 border-emerald-500/20";
+            if (rating === "Needs Improvement" || score < 50) {
+              badgeClass = "bg-rose-500/10 text-rose-600 border-rose-500/20";
+            } else if (rating === "Satisfactory" || score < 70) {
+              badgeClass = "bg-amber-500/10 text-amber-600 border-amber-500/20";
+            } else if (rating === "Good" || score < 85) {
+              badgeClass = "bg-sky-500/10 text-sky-600 border-sky-500/20";
+            }
+            return (
+              <div className="flex items-center gap-1.5">
+                <span className={`inline-flex items-center gap-1 rounded-sm border px-2 py-0.5 text-[11px] font-semibold ${badgeClass}`}>
+                  <span className="h-1.5 w-1.5 rounded-full bg-current" />
+                  {rating} ({score})
+                </span>
+              </div>
+            );
+          },
+        },
+        {
+          key: "onTimeDeliveryRate",
+          label: "On-Time %",
+          align: "right",
+          render: (r) => {
+            const onTime = Number(r["onTimeDeliveryRate"] ?? 0);
+            return (
+              <div className="flex flex-col items-end gap-1">
+                <span className="font-semibold text-xs text-foreground">{onTime}%</span>
+                <div className="h-1 w-16 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-emerald-500"
+                    style={{ width: `${Math.min(100, Math.max(5, onTime))}%` }}
+                  />
+                </div>
+              </div>
+            );
+          },
+        },
         col.status(),
       ]}
       fields={[
