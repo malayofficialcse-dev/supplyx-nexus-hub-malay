@@ -1,6 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Paperclip } from "lucide-react";
+import * as React from "react";
 import { CrudPage, useResourceList } from "@/components/CrudPage";
+import { Button } from "@/components/kit/Button";
 import type { FieldDef } from "@/components/kit/ResourceForm";
+import { AttachmentsModal, AttachmentBadge } from "@/components/AttachmentsModal";
 import { col, STATUS } from "@/lib/scm";
 import type { Row } from "@/components/kit/DataTable";
 
@@ -17,6 +21,7 @@ export const Route = createFileRoute("/goods-receipts")({
 });
 
 function GoodsReceiptsPage() {
+  const [attRow, setAttRow] = React.useState<Row | null>(null);
   const orders = useResourceList("/orders");
   const warehouses = useResourceList("/warehouses");
   const suppliersQuery = useResourceList("/suppliers");
@@ -45,46 +50,82 @@ function GoodsReceiptsPage() {
   ];
 
   return (
-    <CrudPage
-      title="Goods Receipts"
-      description="Inbound delivery confirmations that drive inventory movements."
-      endpoint="/goods-receipts"
-      exportName="goods-receipts"
-      labelKey="receiptId"
-      createLabel="Record receipt"
-      canEdit={false}
-      canDelete={false}
-      filters={[
-        { key: "status", label: "Status" },
-        { key: "supplier", label: "Supplier" },
-        { key: "warehouseId", label: "Warehouse" },
-      ]}
-      searchKeys={["receiptId", "orderId", "supplier", "warehouseId", "status"]}
-      columns={[
-        col.code("receiptId", "Receipt ID"),
-        col.text("orderId", "Order"),
-        col.text("supplier", "Supplier"),
-        {
-          key: "warehouseId",
-          label: "Warehouse",
-          render: (r) => {
-            const wid = String(r["warehouseId"] ?? "");
-            const wh = ((warehouses.data ?? []) as Row[]).find(
-              (w) => w["id"] === wid || w["whId"] === wid
-            );
-            if (!wh) return <span>{wid || "—"}</span>;
-            return (
-              <span className="font-medium text-foreground">
-                {String(wh["whId"] || "")} — {String(wh["name"] || "")}
-              </span>
-            );
+    <>
+      <CrudPage
+        title="Goods Receipts"
+        description="Inbound delivery confirmations and delivery note attachments that drive inventory movements."
+        endpoint="/goods-receipts"
+        exportName="goods-receipts"
+        labelKey="receiptId"
+        createLabel="Record receipt"
+        canEdit={false}
+        canDelete={false}
+        filters={[
+          { key: "status", label: "Status" },
+          { key: "supplier", label: "Supplier" },
+          { key: "warehouseId", label: "Warehouse" },
+        ]}
+        searchKeys={["receiptId", "orderId", "supplier", "warehouseId", "status"]}
+        columns={[
+          col.code("receiptId", "Receipt ID"),
+          col.text("orderId", "Order"),
+          col.text("supplier", "Supplier"),
+          {
+            key: "warehouseId",
+            label: "Warehouse",
+            render: (r) => {
+              const wid = String(r["warehouseId"] ?? "");
+              const wh = ((warehouses.data ?? []) as Row[]).find(
+                (w) => w["id"] === wid || w["whId"] === wid
+              );
+              if (!wh) return <span>{wid || "—"}</span>;
+              return (
+                <span className="font-medium text-foreground">
+                  {String(wh["whId"] || "")} — {String(wh["name"] || "")}
+                </span>
+              );
+            },
           },
-        },
-        col.date("deliveryDate", "Delivered"),
-        col.items("items", "Lines"),
-        col.status(),
-      ]}
-      fields={fields}
-    />
+          col.date("deliveryDate", "Delivered"),
+          col.items("items", "Lines"),
+          {
+            key: "attachments",
+            label: "Docs",
+            render: (row) => {
+              const attachments = (row["attachments"] as any[]) || [];
+              return (
+                <AttachmentBadge
+                  count={attachments.length}
+                  onClick={() => setAttRow(row)}
+                />
+              );
+            },
+          },
+          col.status(),
+        ]}
+        fields={fields}
+        rowActionsExtra={(row) => (
+          <Button
+            variant="subtle"
+            size="sm"
+            onClick={() => setAttRow(row)}
+            title="Manage Scanned Delivery Notes & Proof of Delivery"
+          >
+            <Paperclip className="h-3.5 w-3.5" />
+            Docs
+          </Button>
+        )}
+      />
+
+      <AttachmentsModal
+        open={!!attRow}
+        onOpenChange={(open) => !open && setAttRow(null)}
+        entityType="goods-receipts"
+        entityId={String(attRow?.["id"] ?? "")}
+        entityLabel={`Goods Receipt ${String(attRow?.["receiptId"] ?? "")}`}
+        attachments={(attRow?.["attachments"] as any[]) || []}
+        invalidateKey="/goods-receipts"
+      />
+    </>
   );
 }

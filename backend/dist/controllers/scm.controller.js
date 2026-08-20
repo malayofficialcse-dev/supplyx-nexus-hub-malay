@@ -1,4 +1,4 @@
-import { WarehouseService, ShipmentService, LogisticsService, CustomerService, CarrierService, ContractService, InvoiceService, PaymentService, GoodsReceiptService, InventoryService, } from "../services/scm.service.js";
+import { WarehouseService, ShipmentService, LogisticsService, CustomerService, CarrierService, ContractService, InvoiceService, PaymentService, GoodsReceiptService, InventoryService, AttachmentService, } from "../services/scm.service.js";
 const warehouseService = new WarehouseService();
 const shipmentService = new ShipmentService();
 const logisticsService = new LogisticsService();
@@ -552,6 +552,39 @@ export class GoodsReceiptController {
                 items: items || [],
             });
             return res.status(201).json(newGR);
+        }
+        catch (error) {
+            return res.status(500).json({ error: error.message });
+        }
+    }
+}
+const attachmentService = new AttachmentService();
+export class AttachmentController {
+    async addAttachment(req, res) {
+        try {
+            const { entityType, id } = req.params;
+            const { name, size, type, dataUrl } = req.body || {};
+            const uploader = req.user?.name || "System";
+            if (!name)
+                return res.status(400).json({ error: "File name is required" });
+            const result = await attachmentService.addAttachment(entityType, id, {
+                name,
+                size,
+                type,
+                dataUrl,
+                uploader,
+            });
+            return res.status(201).json(result);
+        }
+        catch (error) {
+            return res.status(500).json({ error: error.message });
+        }
+    }
+    async deleteAttachment(req, res) {
+        try {
+            const { entityType, id, attachmentId } = req.params;
+            const result = await attachmentService.deleteAttachment(entityType, id, attachmentId);
+            return res.json(result);
         }
         catch (error) {
             return res.status(500).json({ error: error.message });

@@ -17,6 +17,9 @@ export class RequisitionRepository {
     async updateStatus(id, status) {
         return prisma.requisition.update({ where: { id }, data: { status } });
     }
+    async updateApproval(id, data) {
+        return prisma.requisition.update({ where: { id }, data });
+    }
     async countPending() {
         return prisma.requisition.count({
             where: { status: "Pending Approval" },

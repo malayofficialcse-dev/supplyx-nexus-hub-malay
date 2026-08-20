@@ -11,6 +11,7 @@ import { Modal } from "@/components/kit/Modal";
 import { itemsSum } from "@/components/kit/ResourceForm";
 import { RequisitionFlowModal } from "@/components/RequisitionFlowModal";
 import { api } from "@/lib/api.js";
+import { formatCurrency } from "@/lib/format";
 import { DEPARTMENTS, col, STATUS } from "@/lib/scm.js";
 import { useAuth } from "@/lib/auth.js";
 
@@ -245,9 +246,9 @@ function RequisitionsPage() {
       <Modal
         open={!!approving}
         onOpenChange={(o) => !o && setApproving(null)}
-        title="Review requisition"
-        description={`Decision for ${String(approving?.['reqId'] ?? "")}`}
-        width="sm"
+        title="Multi-Level Requisition Review"
+        description={`Audit and decision review for ${String(approving?.['reqId'] ?? "")} (${formatCurrency(Number(approving?.['total'] ?? 0))})`}
+        width="md"
         footer={
           <>
             <Button onClick={() => setApproving(null)}>Cancel</Button>
@@ -256,21 +257,101 @@ function RequisitionsPage() {
               disabled={approve.isPending}
               onClick={() => approve.mutate()}
             >
-              {approve.isPending ? "Submitting…" : decision === "approve" ? "Approve" : "Reject"}
+              {approve.isPending
+                ? "Submitting Signoff…"
+                : decision === "approve"
+                ? Number(approving?.["total"] ?? 0) > 10000 && String(approving?.["status"]).includes("Approved L1")
+                  ? "Approve L2 (Finance Signoff)"
+                  : Number(approving?.["total"] ?? 0) > 10000
+                  ? "Approve L1 (Manager Signoff)"
+                  : "Approve Requisition"
+                : "Reject Requisition"}
             </Button>
           </>
         }
       >
-        <div className="space-y-3">
-          <Field label="Decision" required>
-            <Select value={decision} onChange={(e) => setDecision(e.target.value)}>
-              <option value="approve">Approve</option>
-              <option value="reject">Reject</option>
-            </Select>
-          </Field>
-          <Field label={decision === "approve" ? "Approval notes" : "Rejection reason"}>
-            <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
-          </Field>
+        <div className="space-y-4">
+          {/* Approval Policy Header */}
+          <div className="rounded-sm border border-border bg-muted/40 p-3 text-xs space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-foreground">
+                Approval Policy: {Number(approving?.["total"] ?? 0) > 10000 ? "Tier 2 (> $10,000)" : "Tier 1 (Standard ≤ $10,000)"}
+              </span>
+              <span
+                className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${
+                  Number(approving?.["total"] ?? 0) > 10000
+                    ? "bg-amber-500/10 text-amber-600 border border-amber-500/20"
+                    : "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
+                }`}
+              >
+                {Number(approving?.["total"] ?? 0) > 10000 ? "2-Level Approval (Manager + Finance)" : "1-Level (Manager)"}
+              </span>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              {Number(approving?.["total"] ?? 0) > 10000
+                ? "High-value requisitions require initial L1 Manager authorization followed by L2 Finance Director signoff before conversion to RFQ or PO."
+                : "Requisitions under $10,000 require standard departmental Manager approval."}
+            </p>
+          </div>
+
+          {/* Past Approval Signatures Timeline */}
+          {Array.isArray(approving?.["approvals"]) && (approving?.["approvals"] as any[]).length > 0 && (
+            <div className="space-y-1.5">
+              <h5 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                Signoff Audit Trail
+              </h5>
+              <div className="divide-y divide-border rounded border border-border bg-card p-2 text-xs space-y-2">
+                {(approving?.["approvals"] as any[]).map((sig: any, idx: number) => (
+                  <div key={idx} className="pt-1.5 first:pt-0">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-foreground">
+                        {sig.level} • {sig.approver} ({sig.role})
+                      </span>
+                      <span
+                        className={`rounded px-1.5 py-0.2 text-[9px] font-bold ${
+                          sig.decision === "Approved"
+                            ? "bg-emerald-500/10 text-emerald-600"
+                            : "bg-rose-500/10 text-rose-600"
+                        }`}
+                      >
+                        {sig.decision}
+                      </span>
+                    </div>
+                    {sig.notes && (
+                      <p className="text-[11px] text-muted-foreground italic mt-0.5">
+                        "{sig.notes}"
+                      </p>
+                    )}
+                    <span className="text-[9px] text-muted-foreground block mt-0.5">
+                      {new Date(sig.timestamp).toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            <Field label="Your Decision" required>
+              <Select value={decision} onChange={(e) => setDecision(e.target.value)}>
+                <option value="approve">
+                  {Number(approving?.["total"] ?? 0) > 10000 && String(approving?.["status"]).includes("Approved L1")
+                    ? "Approve L2 (Finance Signoff)"
+                    : Number(approving?.["total"] ?? 0) > 10000
+                    ? "Approve L1 (Manager Signoff)"
+                    : "Approve Requisition"}
+                </option>
+                <option value="reject">Reject Requisition</option>
+              </Select>
+            </Field>
+            <Field label={decision === "approve" ? "Signoff Notes & Justification" : "Rejection Reason"} required={decision === "reject"}>
+              <Textarea
+                placeholder={decision === "approve" ? "e.g. Budget verified and approved for Q3 project" : "e.g. Out of scope for this fiscal quarter"}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
+            </Field>
+          </div>
         </div>
       </Modal>
 

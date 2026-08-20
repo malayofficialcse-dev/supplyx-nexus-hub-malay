@@ -252,4 +252,80 @@ export class OrderService {
             }),
         };
     }
+    async getQuantityVarianceReport() {
+        const orders = await orderRepo.getAll();
+        const allGRs = await goodsReceiptRepo.getAll();
+        const allInvoices = await invoiceRepo.getAll();
+        const reportItems = orders.map((order) => {
+            const orderItems = Array.isArray(order.items) ? order.items : [];
+            const orderedQty = orderItems.reduce((sum, it) => sum + (Number(it.quantity || it.qty) || 0), 0) || 1;
+            // Find matching Goods Receipts
+            const matchingGRs = allGRs.filter((gr) => gr.orderId === order.orderId || gr.orderId === order.id);
+            let receivedQty = matchingGRs.reduce((sum, gr) => {
+                const grItems = Array.isArray(gr.items) ? gr.items : [];
+                return sum + grItems.reduce((s, it) => s + (Number(it.quantity || it.qty) || 0), 0);
+            }, 0);
+            if (receivedQty === 0 && (order.receivedQuantity || 0) > 0) {
+                receivedQty = order.receivedQuantity;
+            }
+            if (receivedQty === 0 && order.status === "Received") {
+                receivedQty = orderedQty;
+            }
+            // Find matching Invoices
+            const matchingInvoices = allInvoices.filter((inv) => inv.supplier && inv.supplier.toLowerCase() === order.supplier.toLowerCase());
+            const invoicedQty = matchingInvoices.reduce((sum, inv) => {
+                const invItems = Array.isArray(inv.items) ? inv.items : [];
+                return sum + invItems.reduce((s, it) => s + (Number(it.quantity || it.qty) || 0), 0);
+            }, 0) || orderedQty;
+            const varianceQty = Number((orderedQty - receivedQty).toFixed(2));
+            const fulfillmentRate = orderedQty > 0 ? Math.min(100, Math.round((receivedQty / orderedQty) * 100)) : 100;
+            const isShortfall = receivedQty > 0 && fulfillmentRate < 95;
+            const isPending = receivedQty === 0 && order.status !== "Received";
+            const isComplete = fulfillmentRate >= 100 || order.status === "Received";
+            let status = "Complete";
+            if (isPending)
+                status = "Pending Delivery";
+            else if (isShortfall)
+                status = "Shortfall";
+            else if (receivedQty > orderedQty)
+                status = "Over-delivered";
+            else if (fulfillmentRate < 100)
+                status = "Partial Delivery";
+            const unitPrice = order.amount / (orderedQty || 1);
+            const varianceValue = Number((varianceQty * unitPrice).toFixed(2));
+            return {
+                id: order.id,
+                orderId: order.orderId,
+                supplier: order.supplier,
+                deliveryDate: order.deliveryDate,
+                amount: order.amount,
+                orderedQty,
+                receivedQty,
+                invoicedQty,
+                varianceQty,
+                varianceValue: Math.max(0, varianceValue),
+                fulfillmentRate,
+                status,
+                hasDiscrepancy: isShortfall || (receivedQty > orderedQty),
+                matchingGRCount: matchingGRs.length,
+                matchingInvoiceCount: matchingInvoices.length,
+                createdAt: order.createdAt,
+            };
+        });
+        const totalOrdered = reportItems.reduce((s, r) => s + r.orderedQty, 0);
+        const totalReceived = reportItems.reduce((s, r) => s + r.receivedQty, 0);
+        const shortfallCount = reportItems.filter((r) => r.status === "Shortfall" || (r.hasDiscrepancy && r.varianceQty > 0)).length;
+        const totalShortfallValue = reportItems.reduce((s, r) => s + (r.hasDiscrepancy ? r.varianceValue : 0), 0);
+        return {
+            summary: {
+                totalOrders: orders.length,
+                totalOrdered,
+                totalReceived,
+                overallFulfillmentRate: totalOrdered > 0 ? Math.round((totalReceived / totalOrdered) * 100) : 100,
+                shortfallCount,
+                totalShortfallValue,
+            },
+            data: reportItems,
+        };
+    }
 }
