@@ -45,6 +45,10 @@ export class OrderRepository {
     return prisma.order.update({ where: { id }, data });
   }
 
+  async delete(id: string): Promise<Order> {
+    return prisma.order.delete({ where: { id } });
+  }
+
   async countSubmitted(): Promise<number> {
     return prisma.order.count({
       where: { status: "Submitted" },

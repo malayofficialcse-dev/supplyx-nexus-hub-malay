@@ -1,4 +1,4 @@
-import { prisma } from "./repositories/scm.repo.ts";
+import { prisma } from "./repositories/scm.repo.js";
 import bcrypt from "bcryptjs";
 const ALL_MODULES = [
     "analytics",

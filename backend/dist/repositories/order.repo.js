@@ -26,6 +26,9 @@ export class OrderRepository {
     async update(id, data) {
         return prisma.order.update({ where: { id }, data });
     }
+    async delete(id) {
+        return prisma.order.delete({ where: { id } });
+    }
     async countSubmitted() {
         return prisma.order.count({
             where: { status: "Submitted" },

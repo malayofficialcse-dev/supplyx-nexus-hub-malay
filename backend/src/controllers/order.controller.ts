@@ -43,6 +43,26 @@ export class OrderController {
     }
   }
 
+  async updateOrder(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const updated = await orderService.updateOrder(id, req.body);
+      return res.json(updated);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
+  async deleteOrder(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const deleted = await orderService.deleteOrder(id);
+      return res.json(deleted);
+    } catch (error: any) {
+      return res.status(500).json({ error: error.message });
+    }
+  }
+
   async downloadPdf(req: Request, res: Response) {
     try {
       const { id } = req.params;

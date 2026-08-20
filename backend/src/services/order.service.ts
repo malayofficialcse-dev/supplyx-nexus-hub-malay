@@ -74,6 +74,52 @@ export class OrderService {
     return newOrder;
   }
 
+  async updateOrder(id: string, data: any): Promise<Order> {
+    const updateData: any = {};
+    if (data.orderId !== undefined) updateData.orderId = data.orderId;
+    if (data.supplier !== undefined) updateData.supplier = data.supplier;
+    if (data.amount !== undefined) updateData.amount = parseFloat(data.amount);
+    if (data.deliveryDate !== undefined) updateData.deliveryDate = data.deliveryDate;
+    if (data.status !== undefined) updateData.status = data.status;
+    if (data.description !== undefined) updateData.description = data.description;
+    if (data.items !== undefined) updateData.items = data.items;
+    if (data.receivedQuantity !== undefined) updateData.receivedQuantity = parseFloat(data.receivedQuantity);
+
+    const updated = await orderRepo.update(id, updateData);
+
+    // Invalidate dashboard analytics cache
+    await deleteCache("scm:dashboard:analytics");
+    await deleteCache("scm:analytics:advanced");
+
+    // Recalculate supplier scorecard if needed
+    if (data.supplier) {
+      setTimeout(async () => {
+        try {
+          const { prisma } = await import("../repositories/scm.repo.js");
+          const sup = await (prisma as any).supplier.findFirst({
+            where: { name: { equals: data.supplier, mode: "insensitive" } },
+          });
+          if (sup) {
+            const { SupplierService } = await import("./supplier.service.js");
+            const supplierService = new SupplierService();
+            await supplierService.computeSupplierScorecard(sup.id);
+          }
+        } catch (err) {
+          console.error("Scorecard recomputation error on order update:", err);
+        }
+      }, 100);
+    }
+
+    return updated;
+  }
+
+  async deleteOrder(id: string): Promise<Order> {
+    const deleted = await orderRepo.delete(id);
+    await deleteCache("scm:dashboard:analytics");
+    await deleteCache("scm:analytics:advanced");
+    return deleted;
+  }
+
   async getOrderPdf(id: string): Promise<Buffer> {
     const order =
       (await orderRepo.getById(id)) ||
