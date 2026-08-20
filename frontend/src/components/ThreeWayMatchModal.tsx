@@ -1,457 +1,408 @@
-import { useMutation } from "@tanstack/react-query";
-import { AlertCircle, AlertTriangle, CheckCircle2, Clock, FileText, Package, Receipt, ShieldCheck } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Clock,
+  CreditCard,
+  DollarSign,
+  FileCheck,
+  FileText,
+  HelpCircle,
+  Layers,
+  Package,
+  PackageCheck,
+  PackageX,
+  ShieldAlert,
+  ShieldCheck,
+  Truck,
+  XCircle,
+  Zap,
+} from "lucide-react";
 import * as React from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/kit/Button";
-import type { Row } from "@/components/kit/DataTable";
 import { Modal } from "@/components/kit/Modal";
 import { api } from "@/lib/api";
-import { formatCurrency } from "@/lib/format";
+import { formatCurrency, formatDate } from "@/lib/format";
 
-export interface ThreeWayMatchResult {
-  matched: boolean;
-  status: "MATCHED" | "DISCREPANCY" | "PENDING_RECEIPT" | "PENDING_INVOICE" | "PENDING_BOTH" | "NOT_FOUND";
-  discrepancies: string[];
-  summary: {
-    orderAmount: number;
-    receivedTotal: number;
-    invoicedAmount: number;
-    amountVariance: number;
-    quantityVariance: number;
-    orderTotalQty: number;
-    grTotalQty: number;
-  };
-  order: Row;
-  selectedGoodsReceipt: Row | null;
-  availableGoodsReceipts: Array<{ id: string; receiptId: string; deliveryDate: string; status: string }>;
-  selectedInvoice: Row | null;
-  availableInvoices: Array<{ id: string; invoiceId: string; date: string; amount: number; status: string }>;
-  itemsBreakdown: Array<{
-    description: string;
-    orderedQty: number;
-    receivedQty: number;
-    unitPrice: number;
-    poTotal: number;
-    invTotal: number;
-    isQtyMatched: boolean;
-  }>;
+export interface ThreeWayMatchModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  invoiceId: string | null;
+  onPaymentSuccess?: () => void;
 }
 
 export function ThreeWayMatchModal({
   open,
   onOpenChange,
-  orderRow,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  orderRow: Row | null;
-}) {
-  const [data, setData] = React.useState<ThreeWayMatchResult | null>(null);
-  const [selectedGrId, setSelectedGrId] = React.useState<string>("");
-  const [selectedInvId, setSelectedInvId] = React.useState<string>("");
+  invoiceId,
+  onPaymentSuccess,
+}: ThreeWayMatchModalProps) {
+  const queryClient = useQueryClient();
+  const [overrideModal, setOverrideModal] = React.useState(false);
+  const [overrideNote, setOverrideNote] = React.useState("");
 
-  const matchMutation = useMutation({
-    mutationFn: async ({
-      orderId,
-      goodsReceiptId,
-      invoiceId,
-    }: {
-      orderId: string;
-      goodsReceiptId?: string;
-      invoiceId?: string;
-    }) => {
-      return api.post<ThreeWayMatchResult>(`/orders/${orderId}/3way`, {
-        goodsReceiptId,
-        invoiceId,
-      });
+  const { data: report, isLoading, error, refetch } = useQuery({
+    queryKey: ["/invoices", invoiceId, "three-way-match"],
+    queryFn: () => (invoiceId ? api.get<any>(`/invoices/${invoiceId}/three-way-match`) : null),
+    enabled: !!invoiceId && open,
+  });
+
+  const payMutation = useMutation({
+    mutationFn: () => api.post(`/invoices/${invoiceId}/pay`, {}),
+    onSuccess: () => {
+      toast.success("Payment authorized and settled successfully via 3-Way Match validation!");
+      void queryClient.invalidateQueries({ queryKey: ["/invoices"] });
+      void queryClient.invalidateQueries({ queryKey: ["/payments"] });
+      void queryClient.invalidateQueries({ queryKey: ["/analytics"] });
+      onPaymentSuccess?.();
+      onOpenChange(false);
     },
-    onSuccess: (res) => {
-      setData(res);
-      if (res.selectedGoodsReceipt?.['id']) {
-        setSelectedGrId(String(res.selectedGoodsReceipt['id']));
-      }
-      if (res.selectedInvoice?.['id']) {
-        setSelectedInvId(String(res.selectedInvoice['id']));
-      }
-    },
-    onError: (err: Error) => {
-      toast.error(`3-Way match error: ${err.message}`);
+    onError: (err: any) => {
+      toast.error(`Payment authorization failed: ${err.message}`);
     },
   });
 
-  const orderId = orderRow ? String(orderRow['id'] ?? orderRow['orderId'] ?? "") : "";
+  const resolveMutation = useMutation({
+    mutationFn: (data: { action: string; note?: string; overrideAmount?: number }) =>
+      api.post(`/invoices/${invoiceId}/resolve-match`, data),
+    onSuccess: (res: any) => {
+      toast.success(res?.message || "Discrepancy resolution logged.");
+      void refetch();
+      void queryClient.invalidateQueries({ queryKey: ["/invoices"] });
+      setOverrideModal(false);
+    },
+    onError: (err: any) => {
+      toast.error(`Failed to resolve discrepancy: ${err.message}`);
+    },
+  });
 
-  React.useEffect(() => {
-    if (open && orderId) {
-      setData(null);
-      setSelectedGrId("");
-      setSelectedInvId("");
-      matchMutation.mutate({ orderId });
-    }
-  }, [open, orderId]);
-
-  const handleSelectGR = (grId: string) => {
-    setSelectedGrId(grId);
-    matchMutation.mutate({ orderId, goodsReceiptId: grId, invoiceId: selectedInvId });
-  };
-
-  const handleSelectInv = (invId: string) => {
-    setSelectedInvId(invId);
-    matchMutation.mutate({ orderId, goodsReceiptId: selectedGrId, invoiceId: invId });
-  };
-
-  const handleApprove = () => {
-    toast.success(`Three-way match for PO ${String(orderRow?.['orderId'] ?? "")} approved & verified!`);
-    onOpenChange(false);
-  };
-
-  const getStatusBadge = (status?: string) => {
-    switch (status) {
-      case "MATCHED":
-        return (
-          <div className="flex items-center gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-emerald-600 dark:text-emerald-400">
-            <ShieldCheck className="h-5 w-5 shrink-0 text-emerald-500" />
-            <div>
-              <div className="text-[13px] font-semibold">3-Way Match Verified</div>
-              <div className="text-[12px] opacity-90">
-                Purchase Order terms, received quantities, and supplier invoice amounts match perfectly.
-              </div>
-            </div>
-          </div>
-        );
-      case "DISCREPANCY":
-        return (
-          <div className="flex items-center gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 p-3.5 text-amber-600 dark:text-amber-400">
-            <AlertTriangle className="h-5 w-5 shrink-0 text-amber-500" />
-            <div>
-              <div className="text-[13px] font-semibold">Discrepancy Identified</div>
-              <div className="text-[12px] opacity-90">
-                Variances detected between Purchase Order, Goods Receipt, or Supplier Invoice totals.
-              </div>
-            </div>
-          </div>
-        );
-      case "PENDING_RECEIPT":
-        return (
-          <div className="flex items-center gap-2 rounded-md border border-blue-500/30 bg-blue-500/10 p-3.5 text-blue-600 dark:text-blue-400">
-            <Clock className="h-5 w-5 shrink-0 text-blue-500" />
-            <div>
-              <div className="text-[13px] font-semibold">Pending Goods Receipt</div>
-              <div className="text-[12px] opacity-90">
-                No matching Goods Receipt has been submitted for this Purchase Order yet.
-              </div>
-            </div>
-          </div>
-        );
-      case "PENDING_INVOICE":
-        return (
-          <div className="flex items-center gap-2 rounded-md border border-indigo-500/30 bg-indigo-500/10 p-3.5 text-indigo-600 dark:text-indigo-400">
-            <Clock className="h-5 w-5 shrink-0 text-indigo-500" />
-            <div>
-              <div className="text-[13px] font-semibold">Pending Supplier Invoice</div>
-              <div className="text-[12px] opacity-90">
-                No invoice has been billed by the supplier for this order yet.
-              </div>
-            </div>
-          </div>
-        );
-      default:
-        return (
-          <div className="flex items-center gap-2 rounded-md border border-slate-500/30 bg-slate-500/10 p-3.5 text-slate-600 dark:text-slate-400">
-            <Clock className="h-5 w-5 shrink-0 text-slate-500" />
-            <div>
-              <div className="text-[13px] font-semibold">Awaiting Verification Records</div>
-              <div className="text-[12px] opacity-90">
-                Goods receipt or invoice details are missing for full 3-way reconciliation.
-              </div>
-            </div>
-          </div>
-        );
-    }
-  };
-
-  const summary = data?.summary;
-  const selectedGR = data?.selectedGoodsReceipt;
-  const selectedInv = data?.selectedInvoice;
+  if (!open) return null;
 
   return (
     <Modal
       open={open}
       onOpenChange={onOpenChange}
-      title="Three-Way Reconciliation Match"
-      description={`PO ${String(orderRow?.['orderId'] ?? "")} — Verification of PO, Goods Receipt & Supplier Invoice`}
+      title="Automated 3-Way / 4-Way Match Engine"
+      description="Cross-referencing Purchase Order (PO) ↔ Goods Receipt (GRN) ↔ QA Inspection ↔ Supplier Invoice"
       width="xl"
       footer={
-        <div className="flex items-center justify-end gap-2.5">
-          <Button variant="subtle" onClick={() => onOpenChange(false)}>
-            Close
-          </Button>
-          <Button
-            variant="default"
-            disabled={!data || matchMutation.isPending}
-            onClick={handleApprove}
-          >
-            <CheckCircle2 className="mr-1.5 h-4 w-4" />
-            Approve & Reconcile
-          </Button>
+        <div className="flex w-full flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="font-semibold text-foreground">Tolerance Threshold:</span>
+            <span>±1.5% or $5.00 auto-clear</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {report?.matchStatus !== "PERFECT_MATCH" && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    resolveMutation.mutate({
+                      action: "CREDIT_NOTE_REQUESTED",
+                      note: "Requested debit memo for line-item variance.",
+                    })
+                  }
+                  disabled={resolveMutation.isPending}
+                >
+                  Request Credit Note
+                </Button>
+
+                <Button
+                  variant="subtle"
+                  size="sm"
+                  onClick={() => setOverrideModal(true)}
+                  disabled={resolveMutation.isPending}
+                >
+                  Manager Override
+                </Button>
+              </>
+            )}
+
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => payMutation.mutate()}
+              disabled={payMutation.isPending || (report?.matchStatus !== "PERFECT_MATCH" && !report?.toleranceApplied)}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              {payMutation.isPending ? "Settling Outflow…" : "Authorize Payment Release"}
+            </Button>
+          </div>
         </div>
       }
     >
-      {matchMutation.isPending && !data ? (
-        <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
-          <Clock className="mr-2 h-4 w-4 animate-spin" />
-          Running 3-Way Match Verification…
+      {isLoading ? (
+        <div className="flex h-56 flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
+          <Zap className="h-6 w-6 animate-bounce text-primary" />
+          <span className="font-semibold text-foreground">Evaluating 4-Way Matching Verification…</span>
+          <span className="text-xs text-muted-foreground">Auditing PO quantities, GRN passed units, and billed unit prices</span>
         </div>
-      ) : data ? (
-        <div className="space-y-4 text-xs">
-          {/* Status Header Banner */}
-          {getStatusBadge(data.status)}
-
-          {/* Key Metric Tiles */}
-          <div className="grid grid-cols-4 gap-2.5">
-            <div className="rounded-sm border border-border bg-card p-2.5">
-              <div className="text-[11px] font-medium text-muted-foreground">1. PO Amount</div>
-              <div className="mt-1 text-sm font-semibold text-foreground">
-                {formatCurrency(summary?.orderAmount ?? 0)}
-              </div>
-              <div className="mt-0.5 text-[10px] text-muted-foreground">
-                Qty: {summary?.orderTotalQty ?? 0} items
-              </div>
-            </div>
-
-            <div className="rounded-sm border border-border bg-card p-2.5">
-              <div className="text-[11px] font-medium text-muted-foreground">2. Received Value</div>
-              <div className="mt-1 text-sm font-semibold text-foreground">
-                {formatCurrency(summary?.receivedTotal ?? 0)}
-              </div>
-              <div className="mt-0.5 text-[10px] text-muted-foreground">
-                Qty: {summary?.grTotalQty ?? 0} items
-              </div>
-            </div>
-
-            <div className="rounded-sm border border-border bg-card p-2.5">
-              <div className="text-[11px] font-medium text-muted-foreground">3. Invoiced Amount</div>
-              <div className="mt-1 text-sm font-semibold text-foreground">
-                {formatCurrency(summary?.invoicedAmount ?? 0)}
-              </div>
-              <div className="mt-0.5 text-[10px] text-muted-foreground">
-                {selectedInv ? String(selectedInv['invoiceId']) : "No invoice"}
-              </div>
-            </div>
-
-            <div className="rounded-sm border border-border bg-card p-2.5">
-              <div className="text-[11px] font-medium text-muted-foreground">Financial Variance</div>
+      ) : error ? (
+        <div className="rounded border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+          Failed to compile matching report: {(error as Error).message}
+        </div>
+      ) : !report ? null : (
+        <div className="space-y-4">
+          {/* Header Verdict Ribbon */}
+          <div
+            className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-sm border p-3.5 ${
+              report.matchStatus === "PERFECT_MATCH"
+                ? "border-emerald-500/30 bg-emerald-500/10"
+                : report.matchStatus === "GRN_PENDING"
+                  ? "border-amber-500/30 bg-amber-500/10"
+                  : "border-rose-500/30 bg-rose-500/10"
+            }`}
+          >
+            <div className="flex items-center gap-3">
               <div
-                className={`mt-1 text-sm font-semibold ${
-                  (summary?.amountVariance ?? 0) === 0
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-rose-600 dark:text-rose-400"
+                className={`rounded p-2 ${
+                  report.matchStatus === "PERFECT_MATCH"
+                    ? "bg-emerald-500 text-white"
+                    : report.matchStatus === "GRN_PENDING"
+                      ? "bg-amber-500 text-white"
+                      : "bg-rose-500 text-white"
                 }`}
               >
-                {formatCurrency(Math.abs(summary?.amountVariance ?? 0))}
+                {report.matchStatus === "PERFECT_MATCH" ? (
+                  <ShieldCheck className="h-5 w-5" />
+                ) : (
+                  <ShieldAlert className="h-5 w-5" />
+                )}
               </div>
-              <div className="mt-0.5 text-[10px] text-muted-foreground">
-                {(summary?.amountVariance ?? 0) === 0 ? "Zero variance" : "Discrepancy found"}
-              </div>
-            </div>
-          </div>
-
-          {/* 3-Document Alignment Matrix */}
-          <div className="grid grid-cols-3 gap-3">
-            {/* Purchase Order Card */}
-            <div className="rounded-sm border border-border bg-card/60 p-3">
-              <div className="flex items-center gap-1.5 font-medium text-foreground pb-2 border-b border-border mb-2">
-                <FileText className="h-3.5 w-3.5 text-blue-500" />
-                <span>Purchase Order</span>
-              </div>
-              <div className="space-y-1.5 text-[11px]">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">PO Number:</span>
-                  <span className="font-mono font-medium">{String(data.order['orderId'] ?? "")}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Supplier:</span>
-                  <span className="font-medium">{String(data.order['supplier'] ?? "")}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Status:</span>
-                  <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] font-medium">
-                    {String(data.order['status'] ?? "")}
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-foreground">
+                    {report.matchStatus === "PERFECT_MATCH"
+                      ? "3-Way Match Verified & Ready for Payment"
+                      : report.matchStatus === "GRN_PENDING"
+                        ? "Payment Hold: Awaiting Warehouse GRN"
+                        : report.matchStatus === "QUANTITY_MISMATCH"
+                          ? "Quantity Discrepancy Detected"
+                          : report.matchStatus === "PRICE_MISMATCH"
+                            ? "Unit Price Variance Flagged"
+                            : report.matchStatus === "QA_REJECTED"
+                              ? "Quality Inspection Defects Flagged"
+                              : "Unlinked Purchase Order (Rogue Spend)"}
                   </span>
+                  {report.toleranceApplied && (
+                    <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                      Within ±1.5% Tolerance
+                    </span>
+                  )}
                 </div>
-                <div className="flex justify-between pt-1 border-t border-border/50 font-medium">
-                  <span>PO Total:</span>
-                  <span>{formatCurrency(Number(data.order['amount'] ?? 0))}</span>
-                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Invoice {report.invoiceNumber} · Supplier: <strong>{report.supplier}</strong> · Total:{" "}
+                  <strong>{formatCurrency(report.invoiceAmount)}</strong>
+                </p>
               </div>
             </div>
 
-            {/* Goods Receipt Card */}
-            <div className="rounded-sm border border-border bg-card/60 p-3">
-              <div className="flex items-center justify-between font-medium text-foreground pb-2 border-b border-border mb-2">
-                <div className="flex items-center gap-1.5">
-                  <Package className="h-3.5 w-3.5 text-emerald-500" />
-                  <span>Goods Receipt</span>
-                </div>
+            <div className="text-right">
+              <span className="text-[10px] uppercase font-bold text-muted-foreground">Variance Delta</span>
+              <div
+                className={`text-base font-black font-mono ${
+                  Math.abs(report.totalAmountVariance) < 0.01
+                    ? "text-emerald-600"
+                    : "text-rose-600"
+                }`}
+              >
+                {report.totalAmountVariance > 0 ? `+${formatCurrency(report.totalAmountVariance)}` : formatCurrency(report.totalAmountVariance)}
               </div>
-
-              {data.availableGoodsReceipts.length > 1 && (
-                <div className="mb-2">
-                  <select
-                    className="w-full rounded border border-border bg-background px-2 py-1 text-[11px]"
-                    value={selectedGrId}
-                    onChange={(e) => handleSelectGR(e.target.value)}
-                  >
-                    {data.availableGoodsReceipts.map((gr) => (
-                      <option key={gr.id} value={gr.id}>
-                        {gr.receiptId} ({gr.deliveryDate})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {selectedGR ? (
-                <div className="space-y-1.5 text-[11px]">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">GR Number:</span>
-                    <span className="font-mono font-medium">{String(selectedGR['receiptId'] ?? "")}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Delivery Date:</span>
-                    <span>{String(selectedGR['deliveryDate'] ?? "N/A")}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Status:</span>
-                    <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] font-medium">
-                      {String(selectedGR['status'] ?? "")}
-                    </span>
-                  </div>
-                  <div className="flex justify-between pt-1 border-t border-border/50 font-medium">
-                    <span>Received Total:</span>
-                    <span>{formatCurrency(summary?.receivedTotal ?? 0)}</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="py-4 text-center text-muted-foreground text-[11px]">
-                  No Goods Receipt linked to PO.
-                </div>
-              )}
-            </div>
-
-            {/* Invoice Card */}
-            <div className="rounded-sm border border-border bg-card/60 p-3">
-              <div className="flex items-center justify-between font-medium text-foreground pb-2 border-b border-border mb-2">
-                <div className="flex items-center gap-1.5">
-                  <Receipt className="h-3.5 w-3.5 text-indigo-500" />
-                  <span>Supplier Invoice</span>
-                </div>
-              </div>
-
-              {data.availableInvoices.length > 1 && (
-                <div className="mb-2">
-                  <select
-                    className="w-full rounded border border-border bg-background px-2 py-1 text-[11px]"
-                    value={selectedInvId}
-                    onChange={(e) => handleSelectInv(e.target.value)}
-                  >
-                    {data.availableInvoices.map((inv) => (
-                      <option key={inv.id} value={inv.id}>
-                        {inv.invoiceId} ({formatCurrency(inv.amount)})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {selectedInv ? (
-                <div className="space-y-1.5 text-[11px]">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Invoice No:</span>
-                    <span className="font-mono font-medium">{String(selectedInv['invoiceId'] ?? "")}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Invoice Date:</span>
-                    <span>{String(selectedInv['date'] ?? "N/A")}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Status:</span>
-                    <span className="rounded bg-secondary px-1.5 py-0.5 text-[10px] font-medium">
-                      {String(selectedInv['status'] ?? "")}
-                    </span>
-                  </div>
-                  <div className="flex justify-between pt-1 border-t border-border/50 font-medium">
-                    <span>Billed Amount:</span>
-                    <span>{formatCurrency(Number(selectedInv['amount'] ?? 0))}</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="py-4 text-center text-muted-foreground text-[11px]">
-                  No Supplier Invoice linked.
-                </div>
-              )}
             </div>
           </div>
 
-          {/* Discrepancies Callout */}
-          {data.discrepancies.length > 0 && (
-            <div className="rounded-sm border border-amber-500/30 bg-amber-500/5 p-3">
-              <div className="flex items-center gap-1.5 text-[12px] font-semibold text-amber-600 dark:text-amber-400 mb-1">
-                <AlertCircle className="h-4 w-4 shrink-0" />
-                <span>Reconciliation Discrepancies ({data.discrepancies.length})</span>
+          {/* 3 Pillar Comparison Cards */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {/* Pillar 1: PO */}
+            <div className="rounded-sm border border-border bg-card p-3">
+              <div className="flex items-center justify-between text-xs font-semibold text-foreground mb-1.5">
+                <span className="flex items-center gap-1.5 text-primary">
+                  <FileText className="h-3.5 w-3.5" /> 1. Purchase Order
+                </span>
+                <span className="font-mono text-[11px] text-muted-foreground">{report.poNumber || "N/A"}</span>
               </div>
-              <ul className="list-disc pl-5 space-y-1 text-[11px] text-muted-foreground">
-                {data.discrepancies.map((disc, idx) => (
-                  <li key={idx}>{disc}</li>
+              <div className="text-sm font-bold text-foreground font-mono">
+                {report.poAmount !== null ? formatCurrency(report.poAmount) : "Unlinked"}
+              </div>
+              <span className="text-[10px] text-muted-foreground mt-0.5 block">
+                Agreed contracted ceiling rate
+              </span>
+            </div>
+
+            {/* Pillar 2: GRN & QA */}
+            <div className="rounded-sm border border-border bg-card p-3">
+              <div className="flex items-center justify-between text-xs font-semibold text-foreground mb-1.5">
+                <span className="flex items-center gap-1.5 text-blue-500">
+                  <PackageCheck className="h-3.5 w-3.5" /> 2. Warehouse GRN
+                </span>
+                <span className="font-mono text-[11px] text-muted-foreground">{report.grnNumber || "Pending"}</span>
+              </div>
+              <div className="text-sm font-bold text-foreground font-mono">
+                {report.grnDate ? formatDate(report.grnDate) : "Dock Receipt Pending"}
+              </div>
+              <span className="text-[10px] text-muted-foreground mt-0.5 block">
+                Physical dock inspection log
+              </span>
+            </div>
+
+            {/* Pillar 3: Invoice */}
+            <div className="rounded-sm border border-border bg-card p-3">
+              <div className="flex items-center justify-between text-xs font-semibold text-foreground mb-1.5">
+                <span className="flex items-center gap-1.5 text-emerald-500">
+                  <CreditCard className="h-3.5 w-3.5" /> 3. Supplier Invoice
+                </span>
+                <span className="font-mono text-[11px] text-muted-foreground">{report.invoiceNumber}</span>
+              </div>
+              <div className="text-sm font-bold text-foreground font-mono text-emerald-600">
+                {formatCurrency(report.invoiceAmount)}
+              </div>
+              <span className="text-[10px] text-muted-foreground mt-0.5 block">
+                Billed payable disbursement
+              </span>
+            </div>
+          </div>
+
+          {/* Warnings & Risk Flags */}
+          {report.flags.length > 0 && (
+            <div className="space-y-1.5 rounded border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-800 dark:text-amber-300">
+              <div className="flex items-center gap-1.5 font-bold">
+                <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
+                <span>Discrepancy Audit Findings:</span>
+              </div>
+              <ul className="list-disc pl-5 space-y-0.5 text-[11px]">
+                {report.flags.map((flag: string, i: number) => (
+                  <li key={i}>{flag}</li>
                 ))}
               </ul>
             </div>
           )}
 
-          {/* Line Item Comparison Table */}
-          <div className="rounded-sm border border-border overflow-hidden">
-            <div className="bg-muted/60 px-3 py-2 text-[11px] font-semibold text-foreground border-b border-border">
-              Line Item Validation & Quantity Breakdown
-            </div>
-            <div className="max-h-48 overflow-y-auto">
-              <table className="w-full text-left text-[11px]">
-                <thead className="sticky top-0 bg-background border-b border-border text-muted-foreground font-medium">
+          {/* Line-Item Comparison Matrix */}
+          <div>
+            <h4 className="text-xs font-bold text-foreground mb-2 flex items-center gap-1.5">
+              <Layers className="h-3.5 w-3.5 text-primary" /> Line-Item Audit Comparison Matrix
+            </h4>
+            <div className="overflow-x-auto rounded border border-border">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-muted/70 text-[10px] uppercase font-bold text-muted-foreground border-b border-border">
                   <tr>
-                    <th className="p-2 pl-3">Item Description</th>
-                    <th className="p-2 text-right">Ordered Qty</th>
-                    <th className="p-2 text-right">Received Qty</th>
-                    <th className="p-2 text-right">Unit Price</th>
-                    <th className="p-2 text-right">PO Total</th>
-                    <th className="p-2 text-right pr-3">Match</th>
+                    <th className="p-2.5">Line Item</th>
+                    <th className="p-2.5 text-center">PO Rate</th>
+                    <th className="p-2.5 text-center">GRN Passed</th>
+                    <th className="p-2.5 text-center">Billed Qty</th>
+                    <th className="p-2.5 text-center">Billed Rate</th>
+                    <th className="p-2.5 text-right">Variance</th>
+                    <th className="p-2.5 text-center">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border/60">
-                  {data.itemsBreakdown.map((item, i) => (
-                    <tr key={i} className="hover:bg-muted/30">
-                      <td className="p-2 pl-3 font-medium text-foreground">{item.description}</td>
-                      <td className="p-2 text-right">{item.orderedQty}</td>
-                      <td className="p-2 text-right">{item.receivedQty}</td>
-                      <td className="p-2 text-right">{formatCurrency(item.unitPrice)}</td>
-                      <td className="p-2 text-right">{formatCurrency(item.poTotal)}</td>
-                      <td className="p-2 text-right pr-3">
-                        {item.isQtyMatched ? (
-                          <span className="inline-flex items-center text-emerald-600 dark:text-emerald-400 font-medium">
-                            <CheckCircle2 className="mr-1 h-3 w-3" /> Matched
+                <tbody className="divide-y divide-border">
+                  {report.lineItems.map((item: any, idx: number) => {
+                    const isOk = item.status === "MATCHED";
+                    return (
+                      <tr key={idx} className="hover:bg-muted/30 transition-colors">
+                        <td className="p-2.5 font-semibold text-foreground">{item.item}</td>
+                        <td className="p-2.5 text-center font-mono text-muted-foreground">
+                          {formatCurrency(item.poUnitPrice)}
+                        </td>
+                        <td className="p-2.5 text-center font-mono">
+                          <span
+                            className={
+                              item.grnPassedQuantity < item.invoicedQuantity
+                                ? "text-rose-600 font-bold"
+                                : "text-foreground"
+                            }
+                          >
+                            {item.grnPassedQuantity}
                           </span>
-                        ) : (
-                          <span className="inline-flex items-center text-amber-600 dark:text-amber-400 font-medium">
-                            <AlertTriangle className="mr-1 h-3 w-3" /> Variance
+                        </td>
+                        <td className="p-2.5 text-center font-mono text-foreground font-bold">
+                          {item.invoicedQuantity}
+                        </td>
+                        <td className="p-2.5 text-center font-mono">
+                          <span
+                            className={
+                              item.invoicedUnitPrice > item.poUnitPrice
+                                ? "text-rose-600 font-bold"
+                                : "text-foreground"
+                            }
+                          >
+                            {formatCurrency(item.invoicedUnitPrice)}
                           </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="p-2.5 text-right font-mono font-bold">
+                          {Math.abs(item.amountVariance) < 0.01 ? (
+                            <span className="text-emerald-600">$0.00</span>
+                          ) : (
+                            <span className="text-rose-600">
+                              {item.amountVariance > 0 ? `+${formatCurrency(item.amountVariance)}` : formatCurrency(item.amountVariance)}
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-2.5 text-center">
+                          {isOk ? (
+                            <span className="inline-flex items-center gap-1 rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-bold text-emerald-600">
+                              <CheckCircle2 className="h-3 w-3" /> Matched
+                            </span>
+                          ) : item.status === "QTY_MISMATCH" ? (
+                            <span className="inline-flex items-center gap-1 rounded bg-rose-500/10 px-1.5 py-0.5 text-[10px] font-bold text-rose-600">
+                              <PackageX className="h-3 w-3" /> Qty Delta
+                            </span>
+                          ) : item.status === "PRICE_MISMATCH" ? (
+                            <span className="inline-flex items-center gap-1 rounded bg-rose-500/10 px-1.5 py-0.5 text-[10px] font-bold text-rose-600">
+                              <DollarSign className="h-3 w-3" /> Price Delta
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-bold text-amber-600">
+                              <Clock className="h-3 w-3" /> Awaiting GRN
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           </div>
+
+          {/* Manager Override Form */}
+          {overrideModal && (
+            <div className="rounded border border-primary/30 bg-primary/5 p-3 space-y-2">
+              <div className="text-xs font-bold text-foreground">
+                Manager Authorization & Audit Override
+              </div>
+              <textarea
+                value={overrideNote}
+                onChange={(e) => setOverrideNote(e.target.value)}
+                placeholder="Specify audit justification for price or quantity variance override (e.g. Authorized emergency freight surcharge)..."
+                className="w-full rounded border border-border bg-card p-2 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
+                rows={2}
+              />
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" size="xs" onClick={() => setOverrideModal(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="default"
+                  size="xs"
+                  onClick={() =>
+                    resolveMutation.mutate({
+                      action: "APPROVE_OVERRIDE",
+                      note: overrideNote,
+                    })
+                  }
+                  disabled={resolveMutation.isPending || !overrideNote.trim()}
+                >
+                  Confirm Override Approval
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
-      ) : null}
+      )}
     </Modal>
   );
 }
