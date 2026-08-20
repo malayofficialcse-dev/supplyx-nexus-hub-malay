@@ -12,7 +12,8 @@ export class AnalyticsController {
     }
     async getAdvancedAnalytics(req, res) {
         try {
-            const analytics = await analyticsService.getAdvancedAnalytics();
+            const { timeframe, department, category } = req.query;
+            const analytics = await analyticsService.getAdvancedAnalytics({ timeframe, department, category });
             return res.json(analytics);
         }
         catch (error) {
