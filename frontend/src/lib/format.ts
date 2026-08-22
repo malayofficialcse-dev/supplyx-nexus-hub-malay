@@ -54,18 +54,38 @@ export function toCsv(rows: Record<string, unknown>[], headers: { key: string; l
   return `${head}\n${body}`;
 }
 
-export function downloadCsv(
-  filename: string,
-  rows: Record<string, unknown>[],
-  headers: { key: string; label: string }[],
-) {
-  const blob = new Blob([toCsv(rows, headers)], { type: "text/csv;charset=utf-8;" });
+function downloadWorkbook(filename: string, workbook: XLSX.WorkBook) {
+  const bytes = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+  const blob = new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${filename}-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.download = `${filename}-${new Date().toISOString().slice(0, 10)}.xlsx`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
+export function downloadExcel(
+  filename: string,
+  rows: Record<string, unknown>[],
+  headers: { key: string; label: string }[],
+) {
+  const value = (raw: unknown) => raw === null || raw === undefined ? "" : typeof raw === "object" ? JSON.stringify(raw) : raw;
+  const sheet = XLSX.utils.aoa_to_sheet([
+    headers.map((header) => header.label),
+    ...rows.map((row) => headers.map((header) => value(row[header.key]))),
+  ]);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, sheet, "Export");
+  downloadWorkbook(filename, workbook);
+}
+
+export function downloadExcelMatrix(filename: string, rows: unknown[][], sheetName = "Report") {
+  const sheet = XLSX.utils.aoa_to_sheet(rows);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, sheet, sheetName.slice(0, 31));
+  downloadWorkbook(filename, workbook);
+}
+import * as XLSX from "xlsx";

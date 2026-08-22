@@ -49,7 +49,7 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { api } from "@/lib/api";
-import { formatCurrency } from "@/lib/format";
+import { downloadExcelMatrix, formatCurrency } from "@/lib/format";
 import { Button } from "@/components/kit/Button";
 
 export const Route = createFileRoute("/analytics")({
@@ -129,8 +129,8 @@ function AnalyticsPage() {
           (r: any) => String(r.department).toLowerCase() === selectedDept.toLowerCase()
         );
 
-  // CSV Report Generator
-  const handleExportCSV = () => {
+  // Excel report generator
+  const handleExportExcel = () => {
     const rows = [
       ["SupplyX SCM Analytics Executive Report"],
       [`Generated at: ${new Date().toISOString()}`, `Timeframe: ${timeframe}`, `Department: ${selectedDept}`],
@@ -160,16 +160,7 @@ function AnalyticsPage() {
       ...supplierRisk.map((s: any) => [s.supplier, s.spend, `${s.concentration}%`, `${s.otifRate ?? 95}%`, s.riskScore]),
     ];
 
-    const csvContent =
-      "data:text/csv;charset=utf-8," +
-      rows.map((e) => e.map((val) => `"${String(val).replace(/"/g, '""')}"`).join(",")).join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `SupplyX_Analytics_${timeframe}_${Date.now()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadExcelMatrix(`SupplyX_Analytics_${timeframe}`, rows, "Analytics Report");
   };
 
   if (isLoading) {
@@ -277,12 +268,12 @@ function AnalyticsPage() {
           <Button
             variant="subtle"
             size="sm"
-            onClick={handleExportCSV}
-            title="Download CSV Analytics Report"
+            onClick={handleExportExcel}
+            title="Download Excel Analytics Report"
             className="flex items-center gap-1 text-xs"
           >
             <Download className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Export CSV</span>
+            <span className="hidden sm:inline">Export Excel</span>
           </Button>
 
           <Button

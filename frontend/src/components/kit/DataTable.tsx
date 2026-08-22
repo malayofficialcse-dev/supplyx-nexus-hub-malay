@@ -2,7 +2,7 @@ import { AlertCircle, ArrowDown, ArrowUp, Calendar, Download, Inbox, RefreshCw, 
 import * as React from "react";
 import { Button } from "./Button";
 import { Input, Select } from "./Input";
-import { downloadCsv } from "@/lib/format";
+import { downloadExcel } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export type Row = Record<string, unknown>;
@@ -218,7 +218,7 @@ export function DataTable<T extends Row>({
       }
       return obj;
     });
-    downloadCsv(exportName, data, headers);
+    downloadExcel(exportName, data, headers);
   }
 
   function toggleSort(key: string) {
@@ -285,7 +285,7 @@ export function DataTable<T extends Row>({
           ) : null}
           <Button variant="secondary" size="sm" onClick={handleExport} disabled={!processed.length}>
             <Download className="h-3.5 w-3.5 mr-1" />
-            Export CSV
+            Export Excel
           </Button>
         </div>
       </div>
