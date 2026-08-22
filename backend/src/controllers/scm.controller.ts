@@ -311,11 +311,11 @@ export class ContractController {
 
   async createContract(req: Request, res: Response) {
     try {
-      const { conId, initials, supplier, start, end, status } = req.body;
+      const { conId, initials, supplier, start, end, status, spendLimit, autoRenew, renewalNoticeDays } = req.body;
       if (!conId || !initials || !supplier || !start || !end || !status) {
         return res.status(400).json({ error: "Missing required fields (conId, initials, supplier, start, end, status)" });
       }
-      const created = await contractService.createContract({ conId, initials, supplier, start, end, status });
+      const created = await contractService.createContract({ conId, initials, supplier, start, end, status, spendLimit: spendLimit == null ? null : parseNumber(spendLimit, 0), autoRenew: Boolean(autoRenew), renewalNoticeDays: parseNumber(renewalNoticeDays, 90) });
       return res.status(201).json(created);
     } catch (error: any) {
       return res.status(500).json({ error: error.message });

@@ -53,6 +53,9 @@ model Contract {
   start       String
   end         String
   status      String
+  spendLimit  Float?
+  autoRenew   Boolean @default(false)
+  renewalNoticeDays Int @default(90)
   attachments Json?    // Tier 2: uploaded doc links
   createdAt   DateTime @default(now())
 }
@@ -169,6 +172,8 @@ model BudgetCategory {
   allocated Float
   spent     Float
   year      Int
+  alertThreshold Float @default(80)
+  carryForward Boolean @default(false)
   createdAt DateTime @default(now())
 }
 
@@ -390,5 +395,169 @@ model InventoryBatch {
   createdAt   DateTime @default(now())
 
   @@unique([inventoryId, batchNumber, serialNumber])
+}
+
+model WarehouseBin {
+  id          String   @id @default(uuid())
+  warehouseId String
+  code        String
+  name        String
+  capacity    Float    @default(0)
+  status      String   @default("Available")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([warehouseId, code])
+}
+
+model PutawayTask {
+  id           String   @id @default(uuid())
+  taskId       String   @unique
+  goodsReceiptId String
+  inventoryId  String?
+  binId        String
+  quantity     Float
+  status       String   @default("Open")
+  assignedTo   String?
+  completedAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model FulfillmentTask {
+  id          String   @id @default(uuid())
+  orderId     String
+  status      String   @default("Pick Pending")
+  lines       Json
+  pickedAt    DateTime?
+  packedAt    DateTime?
+  shippedAt   DateTime?
+  assignedTo  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([orderId])
+}
+
+model CycleCount {
+  id            String   @id @default(uuid())
+  countId       String   @unique
+  warehouseId   String
+  binId         String?
+  inventoryId   String?
+  expectedQty   Float
+  countedQty    Float?
+  variance      Float?
+  status        String   @default("Open")
+  countedBy     String?
+  approvedBy    String?
+  countedAt     DateTime?
+  approvedAt    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model StockAdjustment {
+  id          String   @id @default(uuid())
+  adjustmentId String  @unique
+  inventoryId String
+  quantity    Float
+  reason      String
+  status      String   @default("Pending Approval")
+  createdBy   String
+  approvedBy  String?
+  approvedAt  DateTime?
+  createdAt   DateTime @default(now())
+}
+
+model ContractVersion {
+  id          String   @id @default(uuid())
+  contractId  String
+  version     Int
+  summary     String?
+  documentUrl String?
+  effectiveFrom DateTime
+  effectiveTo DateTime?
+  status      String   @default("Draft")
+  createdBy   String
+  createdAt   DateTime @default(now())
+
+  @@unique([contractId, version])
+}
+
+model ContractObligation {
+  id          String   @id @default(uuid())
+  contractId  String
+  title       String
+  description String?
+  dueDate     DateTime
+  owner       String?
+  status      String   @default("Open")
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ContractComplianceDocument {
+  id          String   @id @default(uuid())
+  contractId  String
+  documentType String
+  documentUrl String?
+  expiresAt   DateTime
+  status      String   @default("Valid")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model BudgetReservation {
+  id            String   @id @default(uuid())
+  budgetId      String
+  requisitionId String
+  amount        Float
+  status        String   @default("Reserved")
+  createdBy     String
+  releasedAt    DateTime?
+  createdAt     DateTime @default(now())
+
+  @@index([budgetId, status])
+}
+
+model BudgetTransferRequest {
+  id           String   @id @default(uuid())
+  transferId   String   @unique
+  fromBudgetId String
+  toBudgetId   String
+  amount       Float
+  reason       String
+  status       String   @default("Pending Approval")
+  requestedBy  String
+  approvedBy   String?
+  approvedAt   DateTime?
+  createdAt    DateTime @default(now())
+}
+
+model SupplierComplianceCheck {
+  id           String   @id @default(uuid())
+  supplierId   String
+  documentType String
+  documentUrl  String?
+  expiresAt    DateTime?
+  status       String   @default("Pending")
+  checkedAt    DateTime?
+  checkedBy    String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model SupplierRiskAssessment {
+  id                  String   @id @default(uuid())
+  supplierId          String
+  riskScore           Float    @default(0)
+  sanctionsStatus     String   @default("Not Checked")
+  financialHealth     String   @default("Unknown")
+  concentrationScore  Float    @default(0)
+  notes               String?
+  assessedAt          DateTime @default(now())
+  assessedBy          String
 }
 

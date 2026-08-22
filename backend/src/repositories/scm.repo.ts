@@ -91,6 +91,9 @@ export class WarehouseRepository {
     capacity: number;
     fillLevel: number;
     status: string;
+    spendLimit?: number | null;
+    autoRenew?: boolean;
+    renewalNoticeDays?: number;
   }): Promise<Warehouse> {
     return prisma.warehouse.create({ data });
   }

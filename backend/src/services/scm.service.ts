@@ -171,6 +171,9 @@ export class ContractService {
     start: string;
     end: string;
     status: string;
+    spendLimit?: number | null;
+    autoRenew?: boolean;
+    renewalNoticeDays?: number;
   }): Promise<Contract> {
     return contractRepo.create(data);
   }

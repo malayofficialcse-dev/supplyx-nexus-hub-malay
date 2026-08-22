@@ -32,6 +32,19 @@ export class RequisitionService {
             department: data.department,
             costCenter: "Unassigned",
         });
+        // Reserve the matching fiscal budget when a department budget exists.
+        // Budget reservation is intentionally non-blocking for legacy tenants
+        // that have not configured department budgets yet.
+        try {
+            const budget = await (await import("../repositories/scm.repo.js")).prisma.budgetCategory.findFirst({
+                where: { category: data.department, year: new Date().getFullYear() },
+            });
+            if (budget)
+                await operationsService.reserveBudget({ budgetId: budget.id, requisitionId: newReq.id, amount: data.total }, data.requester);
+        }
+        catch (budgetError) {
+            console.warn("Budget reservation skipped:", budgetError);
+        }
         // Invalidate dashboard analytics cache
         await deleteCache("scm:dashboard:analytics");
         return newReq;

@@ -103,6 +103,123 @@ export class OperationsService {
     return db.inventoryTransfer.create({ data: { transferId: `TRF-${String(1000 + count).padStart(5, "0")}`, item: data.item, sku: data.sku || null, quantity: Number(data.quantity), fromWarehouseId: data.fromWarehouseId, toWarehouseId: data.toWarehouseId, requestedBy: actorName } });
   }
   async listTransfers() { return db.inventoryTransfer.findMany({ orderBy: { createdAt: "desc" } }); }
+  async listBins(warehouseId?: string) { return db.warehouseBin.findMany({ where: warehouseId ? { warehouseId } : undefined, orderBy: { code: "asc" } }); }
+  async createBin(data: any) {
+    return db.warehouseBin.create({ data: { warehouseId: data.warehouseId, code: data.code, name: data.name || data.code, capacity: Number(data.capacity || 0), status: data.status || "Available" } });
+  }
+  async createPutaway(data: any, actorName: string) {
+    const count = await db.putawayTask.count();
+    return db.putawayTask.create({ data: { taskId: `PUT-${String(1000 + count).padStart(5, "0")}`, goodsReceiptId: data.goodsReceiptId, inventoryId: data.inventoryId || null, binId: data.binId, quantity: Number(data.quantity), assignedTo: data.assignedTo || actorName } });
+  }
+  async listPutaway(status?: string) { return db.putawayTask.findMany({ where: status ? { status } : undefined, orderBy: { createdAt: "desc" } }); }
+  async completePutaway(id: string, actor: any) {
+    const task = await db.putawayTask.findUnique({ where: { id } });
+    if (!task || task.status === "Completed") throw new Error("Put-away task is not available");
+    const result = await db.putawayTask.update({ where: { id }, data: { status: "Completed", completedAt: new Date() } });
+    await this.audit(actor, "PUTAWAY_COMPLETED", "PutawayTask", id, task, result);
+    return result;
+  }
+  async createFulfillment(data: any) { return db.fulfillmentTask.upsert({ where: { orderId: data.orderId }, update: { lines: data.lines || [], status: "Pick Pending" }, create: { orderId: data.orderId, lines: data.lines || [] } }); }
+  async listFulfillment(status?: string) { return db.fulfillmentTask.findMany({ where: status ? { status } : undefined, orderBy: { createdAt: "desc" } }); }
+  async advanceFulfillment(id: string, status: string, actor: any) {
+    const allowed = ["Pick Pending", "Picked", "Packed", "Shipped"];
+    if (!allowed.includes(status)) throw new Error("Invalid fulfillment status");
+    const data: any = { status };
+    if (status === "Picked") data.pickedAt = new Date();
+    if (status === "Packed") data.packedAt = new Date();
+    if (status === "Shipped") data.shippedAt = new Date();
+    const result = await db.fulfillmentTask.update({ where: { id }, data });
+    await this.audit(actor, `FULFILLMENT_${status.toUpperCase().replace(" ", "_")}`, "FulfillmentTask", id, undefined, result);
+    return result;
+  }
+  async createCycleCount(data: any, actorName: string) {
+    const inventory = data.inventoryId ? await db.inventory.findUnique({ where: { id: data.inventoryId } }) : null;
+    const count = await db.cycleCount.count();
+    return db.cycleCount.create({ data: { countId: `CNT-${String(1000 + count).padStart(5, "0")}`, warehouseId: data.warehouseId, binId: data.binId || null, inventoryId: data.inventoryId || null, expectedQty: Number(inventory?.quantity || data.expectedQty || 0), countedBy: actorName } });
+  }
+  async listCycleCounts(status?: string) { return db.cycleCount.findMany({ where: status ? { status } : undefined, orderBy: { createdAt: "desc" } }); }
+  async submitCycleCount(id: string, countedQty: number, actor: any) {
+    const count = await db.cycleCount.findUnique({ where: { id } });
+    if (!count) throw new Error("Cycle count not found");
+    return db.cycleCount.update({ where: { id }, data: { countedQty: Number(countedQty), variance: Number(countedQty) - Number(count.expectedQty), countedBy: actor?.name, countedAt: new Date(), status: "Pending Approval" } });
+  }
+  async approveCycleCount(id: string, actor: any) {
+    const count = await db.cycleCount.findUnique({ where: { id } });
+    if (!count || count.status !== "Pending Approval") throw new Error("Cycle count is not awaiting approval");
+    const result = await db.$transaction(async (tx: any) => {
+      if (count.inventoryId && count.countedQty != null) await tx.inventory.update({ where: { id: count.inventoryId }, data: { quantity: count.countedQty } });
+      return tx.cycleCount.update({ where: { id }, data: { status: "Approved", approvedBy: actor?.name, approvedAt: new Date() } });
+    });
+    await this.audit(actor, "CYCLE_COUNT_APPROVED", "CycleCount", id, count, result);
+    return result;
+  }
+  async createStockAdjustment(data: any, actorName: string) { const count = await db.stockAdjustment.count(); return db.stockAdjustment.create({ data: { adjustmentId: `ADJ-${String(1000 + count).padStart(5, "0")}`, inventoryId: data.inventoryId, quantity: Number(data.quantity), reason: data.reason, createdBy: actorName } }); }
+  async listStockAdjustments(status?: string) { return db.stockAdjustment.findMany({ where: status ? { status } : undefined, orderBy: { createdAt: "desc" } }); }
+  async approveStockAdjustment(id: string, actor: any) {
+    const adjustment = await db.stockAdjustment.findUnique({ where: { id } });
+    if (!adjustment || adjustment.status !== "Pending Approval") throw new Error("Stock adjustment is not awaiting approval");
+    const result = await db.$transaction(async (tx: any) => {
+      const inventory = await tx.inventory.update({ where: { id: adjustment.inventoryId }, data: { quantity: { increment: adjustment.quantity } } });
+      const updated = await tx.stockAdjustment.update({ where: { id }, data: { status: "Approved", approvedBy: actor?.name, approvedAt: new Date() } });
+      return { adjustment: updated, inventory };
+    });
+    await this.audit(actor, "STOCK_ADJUSTMENT_APPROVED", "StockAdjustment", id, adjustment, result, adjustment.reason);
+    return result;
+  }
+  async contractOverview(contractId: string) {
+    const contract = await db.contract.findFirst({ where: { OR: [{ id: contractId }, { conId: contractId }] } });
+    if (!contract) throw new Error("Contract not found");
+    const [versions, obligations, documents, orders] = await Promise.all([
+      db.contractVersion.findMany({ where: { contractId: contract.id }, orderBy: { version: "desc" } }),
+      db.contractObligation.findMany({ where: { contractId: contract.id }, orderBy: { dueDate: "asc" } }),
+      db.contractComplianceDocument.findMany({ where: { contractId: contract.id }, orderBy: { expiresAt: "asc" } }),
+      db.order.findMany({ where: { supplier: contract.supplier } }),
+    ]);
+    const committedSpend = orders.reduce((sum: number, o: any) => sum + Number(o.amount || 0), 0);
+    return { contract, versions, obligations, documents, committedSpend, spendLimit: contract.spendLimit, utilization: contract.spendLimit ? Math.round((committedSpend / Number(contract.spendLimit)) * 100) : null, orderCount: orders.length };
+  }
+  async createContractVersion(contractId: string, data: any, actorName: string) { const last = await db.contractVersion.findFirst({ where: { contractId }, orderBy: { version: "desc" } }); return db.contractVersion.create({ data: { contractId, version: Number(last?.version || 0) + 1, summary: data.summary, documentUrl: data.documentUrl, effectiveFrom: new Date(data.effectiveFrom || new Date()), effectiveTo: data.effectiveTo ? new Date(data.effectiveTo) : null, status: data.status || "Draft", createdBy: actorName } }); }
+  async createObligation(contractId: string, data: any) { return db.contractObligation.create({ data: { contractId, title: data.title, description: data.description, dueDate: new Date(data.dueDate), owner: data.owner || null } }); }
+  async listContractAlerts() {
+    const now = new Date(); const horizon = new Date(Date.now() + 90 * 86400000);
+    const [documents, obligations] = await Promise.all([db.contractComplianceDocument.findMany({ where: { expiresAt: { lte: horizon } }, orderBy: { expiresAt: "asc" } }), db.contractObligation.findMany({ where: { status: "Open", dueDate: { lte: horizon } }, orderBy: { dueDate: "asc" } })]);
+    return { documents: documents.map((d: any) => ({ ...d, alert: d.expiresAt < now ? "Expired" : "Expiring" })), obligations };
+  }
+  async budgetAvailability(budgetId: string) { const budget = await db.budgetCategory.findUnique({ where: { id: budgetId } }); if (!budget) throw new Error("Budget not found"); const reserved = await db.budgetReservation.aggregate({ where: { budgetId, status: "Reserved" }, _sum: { amount: true } }); return { ...budget, reserved: Number(reserved._sum.amount || 0), available: Number(budget.allocated) - Number(budget.spent) - Number(reserved._sum.amount || 0) }; }
+  async reserveBudget(data: any, actorName: string) { const availability = await this.budgetAvailability(data.budgetId); if (Number(data.amount) > availability.available) throw new Error(`Insufficient budget availability: ${availability.available}`); return db.budgetReservation.create({ data: { budgetId: data.budgetId, requisitionId: data.requisitionId, amount: Number(data.amount), createdBy: actorName } }); }
+  async listBudgetReservations(status?: string) { return db.budgetReservation.findMany({ where: status ? { status } : undefined, orderBy: { createdAt: "desc" } }); }
+  async createBudgetTransfer(data: any, actorName: string) { const count = await db.budgetTransferRequest.count(); return db.budgetTransferRequest.create({ data: { transferId: `BTR-${String(1000 + count).padStart(5, "0")}`, fromBudgetId: data.fromBudgetId, toBudgetId: data.toBudgetId, amount: Number(data.amount), reason: data.reason, requestedBy: actorName } }); }
+  async listBudgetTransfers(status?: string) { return db.budgetTransferRequest.findMany({ where: status ? { status } : undefined, orderBy: { createdAt: "desc" } }); }
+  async approveBudgetTransfer(id: string, actor: any) { const transfer = await db.budgetTransferRequest.findUnique({ where: { id } }); if (!transfer || transfer.status !== "Pending Approval") throw new Error("Budget transfer is not awaiting approval"); const result = await db.$transaction(async (tx: any) => { await tx.budgetCategory.update({ where: { id: transfer.fromBudgetId }, data: { allocated: { decrement: transfer.amount } } }); await tx.budgetCategory.update({ where: { id: transfer.toBudgetId }, data: { allocated: { increment: transfer.amount } } }); return tx.budgetTransferRequest.update({ where: { id }, data: { status: "Approved", approvedBy: actor?.name, approvedAt: new Date() } }); }); await this.audit(actor, "BUDGET_TRANSFER_APPROVED", "BudgetTransferRequest", id, transfer, result, transfer.reason); return result; }
+  async budgetAlerts(year?: number) {
+    const budgets = await db.budgetCategory.findMany({ where: year ? { year } : undefined });
+    const reservations = await db.budgetReservation.findMany({ where: { status: "Reserved" } });
+    return budgets.map((b: any) => { const reserved = reservations.filter((r: any) => r.budgetId === b.id).reduce((s: number, r: any) => s + Number(r.amount || 0), 0); const utilization = Number(b.allocated) ? ((Number(b.spent) + reserved) / Number(b.allocated)) * 100 : 0; return { ...b, reserved, available: Number(b.allocated) - Number(b.spent) - reserved, utilization: Math.round(utilization * 10) / 10, alert: utilization >= Number(b.alertThreshold || 80) ? utilization > 100 ? "Over Budget" : "Near Limit" : "On Track" }; }).filter((b: any) => b.alert !== "On Track");
+  }
+  async rolloverBudgets(fromYear: number, toYear: number, actor: any) {
+    const source = await db.budgetCategory.findMany({ where: { year: fromYear, carryForward: true } });
+    const result = await Promise.all(source.map((b: any) => db.budgetCategory.upsert({ where: { category: `${b.category}-${toYear}` }, update: {}, create: { category: `${b.category}-${toYear}`, allocated: Math.max(0, Number(b.allocated) - Number(b.spent)), spent: 0, year: toYear, alertThreshold: b.alertThreshold, carryForward: b.carryForward } })));
+    await this.audit(actor, "BUDGET_FISCAL_ROLLOVER", "BudgetCategory", String(toYear), undefined, result, `Rolled budgets from ${fromYear}`);
+    return result;
+  }
+  async supplierRisk(supplierId: string, actorName: string) {
+    const supplier = await db.supplier.findUnique({ where: { id: supplierId } }); if (!supplier) throw new Error("Supplier not found");
+    const [compliance, suppliers, orders] = await Promise.all([db.supplierComplianceCheck.findMany({ where: { supplierId } }), db.supplier.findMany(), db.order.findMany()]);
+    const supplierSpend = orders.filter((o: any) => o.supplier === supplier.name).reduce((sum: number, o: any) => sum + Number(o.amount || 0), 0);
+    const totalSpend = orders.reduce((sum: number, o: any) => sum + Number(o.amount || 0), 0);
+    const concentrationScore = totalSpend ? Math.round((supplierSpend / totalSpend) * 100) : 0;
+    const expiredDocs = compliance.filter((c: any) => c.expiresAt && new Date(c.expiresAt) < new Date()).length;
+    const sanctionsStatus = compliance.some((c: any) => c.documentType.toLowerCase().includes("sanction") && c.status === "Blocked") ? "Blocked" : compliance.some((c: any) => c.documentType.toLowerCase().includes("sanction")) ? "Clear" : "Not Checked";
+    const riskScore = Math.min(100, Math.round((100 - Number(supplier.onTimeDeliveryRate || 0)) * 0.25 + Number(supplier.defectRate || 0) * 0.25 + concentrationScore * 0.25 + expiredDocs * 15 + (sanctionsStatus === "Not Checked" ? 15 : sanctionsStatus === "Blocked" ? 40 : 0)));
+    const financialHealth = Number(supplier.totalOrderValue || 0) > 1000000 ? "Review Required" : "Stable";
+    return db.supplierRiskAssessment.create({ data: { supplierId, riskScore, sanctionsStatus, financialHealth, concentrationScore, notes: `${expiredDocs} expired compliance document(s). ${suppliers.length} suppliers assessed.`, assessedBy: actorName } });
+  }
+  async supplierRiskSummary() {
+    const suppliers = await db.supplier.findMany();
+    return Promise.all(suppliers.map(async (s: any) => await db.supplierRiskAssessment.findFirst({ where: { supplierId: s.id }, orderBy: { assessedAt: "desc" } }) || this.supplierRisk(s.id, "System")));
+  }
+  async supplierCompliance(supplierId?: string) { return db.supplierComplianceCheck.findMany({ where: supplierId ? { supplierId } : undefined, orderBy: { expiresAt: "asc" } }); }
+  async createSupplierCompliance(data: any, actorName: string) { return db.supplierComplianceCheck.create({ data: { supplierId: data.supplierId, documentType: data.documentType, documentUrl: data.documentUrl, expiresAt: data.expiresAt ? new Date(data.expiresAt) : null, status: data.status || "Pending", checkedBy: actorName, checkedAt: new Date() } }); }
   async audit(actor: any, action: string, entityType: string, entityId: string, beforeData?: any, afterData?: any, reason?: string) { return db.auditLog.create({ data: { actorId: actor?.id, actorName: actor?.name || "System", action, entityType, entityId, beforeData, afterData, reason } }); }
   async auditLogs(entityType?: string, entityId?: string) { return db.auditLog.findMany({ where: entityType ? { entityType, ...(entityId ? { entityId } : {}) } : undefined, orderBy: { createdAt: "desc" }, take: 500 }); }
 }
