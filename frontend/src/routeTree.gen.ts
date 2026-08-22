@@ -20,6 +20,7 @@ import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as InvoicesRouteImport } from './routes/invoices'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LogisticsRouteImport } from './routes/logistics'
+import { Route as OperationsRouteImport } from './routes/operations'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as PaymentsRouteImport } from './routes/payments'
 import { Route as RequisitionsRouteImport } from './routes/requisitions'
@@ -84,6 +85,11 @@ const LogisticsRoute = LogisticsRouteImport.update({
   path: '/logistics',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OperationsRoute = OperationsRouteImport.update({
+  id: '/operations',
+  path: '/operations',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OrdersRoute = OrdersRouteImport.update({
   id: '/orders',
   path: '/orders',
@@ -137,6 +143,7 @@ export interface FileRoutesByFullPath {
   '/invoices': typeof InvoicesRoute
   '/login': typeof LoginRoute
   '/logistics': typeof LogisticsRoute
+  '/operations': typeof OperationsRoute
   '/orders': typeof OrdersRoute
   '/payments': typeof PaymentsRoute
   '/requisitions': typeof RequisitionsRoute
@@ -158,6 +165,7 @@ export interface FileRoutesByTo {
   '/invoices': typeof InvoicesRoute
   '/login': typeof LoginRoute
   '/logistics': typeof LogisticsRoute
+  '/operations': typeof OperationsRoute
   '/orders': typeof OrdersRoute
   '/payments': typeof PaymentsRoute
   '/requisitions': typeof RequisitionsRoute
@@ -180,6 +188,7 @@ export interface FileRoutesById {
   '/invoices': typeof InvoicesRoute
   '/login': typeof LoginRoute
   '/logistics': typeof LogisticsRoute
+  '/operations': typeof OperationsRoute
   '/orders': typeof OrdersRoute
   '/payments': typeof PaymentsRoute
   '/requisitions': typeof RequisitionsRoute
@@ -203,6 +212,7 @@ export interface FileRouteTypes {
     | '/invoices'
     | '/login'
     | '/logistics'
+    | '/operations'
     | '/orders'
     | '/payments'
     | '/requisitions'
@@ -224,6 +234,7 @@ export interface FileRouteTypes {
     | '/invoices'
     | '/login'
     | '/logistics'
+    | '/operations'
     | '/orders'
     | '/payments'
     | '/requisitions'
@@ -245,6 +256,7 @@ export interface FileRouteTypes {
     | '/invoices'
     | '/login'
     | '/logistics'
+    | '/operations'
     | '/orders'
     | '/payments'
     | '/requisitions'
@@ -267,6 +279,7 @@ export interface RootRouteChildren {
   InvoicesRoute: typeof InvoicesRoute
   LoginRoute: typeof LoginRoute
   LogisticsRoute: typeof LogisticsRoute
+  OperationsRoute: typeof OperationsRoute
   OrdersRoute: typeof OrdersRoute
   PaymentsRoute: typeof PaymentsRoute
   RequisitionsRoute: typeof RequisitionsRoute
@@ -356,6 +369,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LogisticsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/operations': {
+      id: '/operations'
+      path: '/operations'
+      fullPath: '/operations'
+      preLoaderRoute: typeof OperationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/orders': {
       id: '/orders'
       path: '/orders'
@@ -427,6 +447,7 @@ const rootRouteChildren: RootRouteChildren = {
   InvoicesRoute: InvoicesRoute,
   LoginRoute: LoginRoute,
   LogisticsRoute: LogisticsRoute,
+  OperationsRoute: OperationsRoute,
   OrdersRoute: OrdersRoute,
   PaymentsRoute: PaymentsRoute,
   RequisitionsRoute: RequisitionsRoute,

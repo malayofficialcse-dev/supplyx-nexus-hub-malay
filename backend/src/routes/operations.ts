@@ -1,0 +1,27 @@
+import { Router } from "express";
+import { OperationsController } from "../controllers/operations.controller.js";
+
+const router = Router();
+const c = new OperationsController();
+router.get("/approval-rules", c.rules.bind(c));
+router.post("/approval-rules", c.createRule.bind(c));
+router.put("/approval-rules/:id", c.updateRule.bind(c));
+router.delete("/approval-rules/:id", c.deleteRule.bind(c));
+router.get("/approvals/inbox", c.inbox.bind(c));
+router.post("/approvals/:id/decision", c.decide.bind(c));
+router.get("/match/exceptions", c.exceptions.bind(c));
+router.post("/match/:invoiceId/run", c.match.bind(c));
+router.post("/match/exceptions/:id/resolve", c.resolveException.bind(c));
+router.get("/portal/invitations", c.invitations.bind(c));
+router.post("/portal/invitations", c.inviteSupplier.bind(c));
+router.get("/portal/rfqs", c.portalRfqs.bind(c));
+router.post("/rfqs/:rfqId/invitations", c.inviteToRfq.bind(c));
+router.get("/rfqs/:rfqId/comparison", c.comparison.bind(c));
+router.post("/quotes/:quoteId/score", c.scoreQuote.bind(c));
+router.get("/inventory/replenishment", c.replenishment.bind(c));
+router.post("/inventory/reservations", c.reserve.bind(c));
+router.post("/inventory/reservations/:id/release", c.release.bind(c));
+router.get("/inventory/transfers", c.transfers.bind(c));
+router.post("/inventory/transfers", c.transfer.bind(c));
+router.get("/audit-logs", c.audit.bind(c));
+export default router;

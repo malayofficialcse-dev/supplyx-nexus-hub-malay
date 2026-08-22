@@ -234,3 +234,161 @@ model User {
   updatedAt   DateTime @updatedAt
 }
 
+model ApprovalRule {
+  id          String   @id @default(uuid())
+  name        String
+  module      String   @default("requisitions")
+  minAmount   Float?
+  maxAmount   Float?
+  department  String?
+  category    String?
+  costCenter  String?
+  levels      Json
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ApprovalTask {
+  id           String   @id @default(uuid())
+  entityType   String
+  entityId     String
+  level        Int
+  approverRole String
+  approverId   String?
+  status       String   @default("Pending")
+  decision     String?
+  notes        String?
+  dueAt        DateTime?
+  decidedAt    DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([entityType, entityId])
+  @@index([approverId, status])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?
+  actorName  String
+  action     String
+  entityType String
+  entityId   String
+  beforeData Json?
+  afterData  Json?
+  reason     String?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model MatchException {
+  id          String   @id @default(uuid())
+  invoiceId   String
+  type        String
+  severity    String   @default("High")
+  message     String
+  status      String   @default("Open")
+  resolution  String?
+  resolvedBy  String?
+  resolvedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([invoiceId, status])
+}
+
+model MatchHistory {
+  id          String   @id @default(uuid())
+  invoiceId   String
+  matchStatus String
+  report      Json
+  runBy       String
+  createdAt   DateTime @default(now())
+
+  @@index([invoiceId, createdAt])
+}
+
+model SupplierPortalInvitation {
+  id          String   @id @default(uuid())
+  supplierId  String?
+  supplier    String
+  email       String
+  token       String   @unique
+  status      String   @default("Invited")
+  expiresAt   DateTime
+  lastLoginAt DateTime?
+  createdAt   DateTime @default(now())
+}
+
+model RFQInvitation {
+  id          String   @id @default(uuid())
+  rfqId       String
+  supplier    String
+  status      String   @default("Invited")
+  invitedAt   DateTime @default(now())
+  respondedAt DateTime?
+
+  @@unique([rfqId, supplier])
+}
+
+model QuoteScore {
+  id         String   @id @default(uuid())
+  quoteId    String   @unique
+  priceScore Float    @default(0)
+  deliveryScore Float @default(0)
+  qualityScore Float  @default(0)
+  supplierScore Float @default(0)
+  totalScore Float    @default(0)
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model InventoryReservation {
+  id          String   @id @default(uuid())
+  inventoryId String
+  quantity    Float
+  referenceType String
+  referenceId String
+  status      String   @default("Reserved")
+  expiresAt   DateTime?
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([inventoryId, status])
+}
+
+model InventoryTransfer {
+  id              String   @id @default(uuid())
+  transferId      String   @unique
+  item            String
+  sku             String?
+  quantity        Float
+  fromWarehouseId String
+  toWarehouseId   String
+  status          String   @default("Requested")
+  requestedBy     String
+  approvedBy      String?
+  completedAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model InventoryBatch {
+  id          String   @id @default(uuid())
+  inventoryId String
+  batchNumber String
+  serialNumber String?
+  quantity    Float
+  expiryDate  DateTime?
+  receivedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@unique([inventoryId, batchNumber, serialNumber])
+}
+

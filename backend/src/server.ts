@@ -24,6 +24,7 @@ import supplierRouter from "./routes/suppliers.js";
 import quoteRouter from "./routes/quotes.js";
 import userRouter from "./routes/users.js";
 import attachmentRouter from "./routes/attachments.js";
+import operationsRouter from "./routes/operations.js";
 import { authenticateToken, autoAuthorize } from "./middleware/auth.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -59,6 +60,7 @@ app.use("/api/payments", authenticateToken, autoAuthorize(), paymentRouter);
 app.use("/api/goods-receipts", authenticateToken, autoAuthorize(), goodsReceiptsRouter);
 app.use("/api/inventories", authenticateToken, autoAuthorize(), inventoryRouter);
 app.use("/api/attachments", authenticateToken, autoAuthorize(), attachmentRouter);
+app.use("/api/operations", authenticateToken, autoAuthorize(), operationsRouter);
 
 // Health check
 app.get("/health", (req, res) => {

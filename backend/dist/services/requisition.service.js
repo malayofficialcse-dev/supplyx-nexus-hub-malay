@@ -2,9 +2,11 @@ import { RequisitionRepository } from "../repositories/requisition.repo.js";
 import { RFQRepository } from "../repositories/rfq.repo.js";
 import { OrderRepository } from "../repositories/order.repo.js";
 import { deleteCache } from "../lib/redis.js";
+import { OperationsService } from "./operations.service.js";
 const requisitionRepo = new RequisitionRepository();
 const rfqRepo = new RFQRepository();
 const orderRepo = new OrderRepository();
+const operationsService = new OperationsService();
 export class RequisitionService {
     async getRequisitions() {
         return requisitionRepo.getAll();
@@ -22,6 +24,13 @@ export class RequisitionService {
             total: data.total,
             status: "Pending Approval",
             justification: null,
+        });
+        // Create durable approval work items from the active policy. The legacy
+        // status field remains for compatibility with existing clients.
+        await operationsService.createApprovalTasks("requisitions", newReq.id, {
+            amount: data.total,
+            department: data.department,
+            costCenter: "Unassigned",
         });
         // Invalidate dashboard analytics cache
         await deleteCache("scm:dashboard:analytics");

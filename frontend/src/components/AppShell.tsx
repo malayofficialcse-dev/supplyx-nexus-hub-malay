@@ -22,6 +22,9 @@ import {
   Wallet,
   UserCheck,
   LogOut,
+  ShieldCheck,
+  Menu,
+  X,
 } from "lucide-react";
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -38,6 +41,7 @@ const NAV: { group: string; items: { to: string; label: string; icon: React.Elem
     items: [
       { to: "/", label: "Dashboard", icon: Gauge },
       { to: "/analytics", label: "Analytics Hub", icon: BarChart2, module: "analytics" },
+      { to: "/operations", label: "Operations Center", icon: ShieldCheck, module: "analytics" },
     ],
   },
   {
@@ -78,6 +82,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, logout, hasPermission } = useAuth();
   const [cmdOpen, setCmdOpen] = React.useState(false);
+  const [sidebarOpen, setSidebarOpen] = React.useState(true);
 
   // P0 Tier 1 live alert queries
   const expiringContracts = useQuery({
@@ -121,6 +126,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="h-[2.5px] w-full bg-gradient-to-r from-primary via-indigo-500 to-sky-400 shrink-0" />
       
       <header className="sticky top-0 z-40 flex h-13 items-center gap-3 border-b border-border/80 bg-nav/95 backdrop-blur-md px-4 text-nav-foreground shadow-xs">
+        <button
+          type="button"
+          onClick={() => setSidebarOpen((open) => !open)}
+          className="rounded-md p-2 text-muted-foreground hover:bg-indigo-50/60 hover:text-foreground transition-colors"
+          aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
+          title={sidebarOpen ? "Close sidebar" : "Open sidebar"}
+        >
+          {sidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+        </button>
         <div className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-gradient-to-br from-primary via-indigo-600 to-primary-hover border border-indigo-400/30 text-white shadow-xs shadow-indigo-500/20">
             <Grid2x2 className="h-4.5 w-4.5" />
@@ -181,7 +195,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </header>
 
       <div className="flex flex-1">
-        <aside className="sticky top-[3.4rem] hidden h-[calc(100vh-3.4rem)] w-64 shrink-0 overflow-y-auto border-r border-sidebar-border bg-sidebar/95 p-3.5 lg:block">
+        {sidebarOpen ? (
+          <>
+            <button
+              type="button"
+              aria-label="Close sidebar overlay"
+              className="fixed inset-0 z-40 bg-slate-950/25 lg:hidden"
+              onClick={() => setSidebarOpen(false)}
+            />
+            <aside className="fixed inset-y-[3.25rem] left-0 z-50 w-72 overflow-y-auto border-r border-sidebar-border bg-sidebar p-3.5 shadow-xl lg:sticky lg:top-[3.4rem] lg:h-[calc(100vh-3.4rem)] lg:w-64 lg:shrink-0 lg:shadow-none">
+              <div className="mb-3 flex items-center justify-between px-3 lg:hidden">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Navigation</span>
+                <button
+                  type="button"
+                  onClick={() => setSidebarOpen(false)}
+                  className="rounded-md p-1.5 text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+                  aria-label="Close sidebar"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
           {filteredNAV.map((group) => (
             <div key={group.group} className="mb-4">
               <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80">
@@ -235,7 +268,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <br />
             <span className="break-all font-mono text-[9px] opacity-75">{API_BASE}</span>
           </div>
-        </aside>
+            </aside>
+          </>
+        ) : null}
 
         <main className="min-w-0 flex-1 p-5 lg:p-7">
           <nav className="mb-4 flex gap-1.5 overflow-x-auto pb-1.5 lg:hidden">
